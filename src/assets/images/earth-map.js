@@ -1,4 +1,3 @@
-console.log(THREE)
 // Vertex Shader: 传递 UV 坐标
 const vs = `
 varying vec2 vUv;
