@@ -1,4 +1,3 @@
-console.log(THREE)
 // 基类
 class Basic {
   constructor(dom) {
@@ -142,7 +141,7 @@ class Resources {
   }
   // 获取模型贴图
   getTextures() {
-    const fileSuffix = ['circle', 'gradient', 'redCircle', 'label', 'aperture', 'glow', 'light_column', 'aircraft'];
+    const fileSuffix = ['circle', 'gradient', 'redCircle', 'label', 'aperture', 'glow', 'light_column', 'aircraft', 'light_column_source'];
     const filePath = this.filePath;
     const textures = fileSuffix.map((item) => {
       // console.log(`检查贴图路径: ${filePath}${item}.png`)
@@ -270,6 +269,32 @@ function createLightPillar(options) {
   const material = new THREE.MeshBasicMaterial({
     map: options.textures.light_column,
     color: options.index == 0 ? options.punctuation.lightColumn.startColor : options.punctuation.lightColumn.endColor,
+    transparent: true,
+    side: THREE.DoubleSide,
+    depthWrite: false //是否对深度缓冲区有任何的影响
+  });
+  const mesh = new THREE.Mesh(geometry, material);
+  const group = new THREE.Group();
+  // 两个光柱交叉叠加
+  group.add(mesh, mesh.clone().rotateZ(Math.PI / 2)); //几何体绕x轴旋转了，所以mesh旋转轴变为z
+  // 经纬度转球面坐标
+  const SphereCoord = lon2xyz(options.radius, options.lon, options.lat); //SphereCoord球面坐标
+  group.position.set(SphereCoord.x, SphereCoord.y, SphereCoord.z); //设置mesh位置
+  const coordVec3 = new THREE.Vector3(SphereCoord.x, SphereCoord.y, SphereCoord.z).normalize();
+  const meshNormal = new THREE.Vector3(0, 0, 1);
+  group.quaternion.setFromUnitVectors(meshNormal, coordVec3);
+  return group;
+}
+// 创建资源光柱
+function createSourceLightPillar(options, { heightRate, radiusRate, type }){
+  const height = (options.radius * 0.3) / 3;
+  const geometry = new THREE.PlaneBufferGeometry(options.radius * 0.05 * radiusRate, height * heightRate);
+  geometry.rotateX(Math.PI / 2);
+  geometry.translate(0, 0, height / 2);
+  const material = new THREE.MeshBasicMaterial({
+    // map: options.textures.light_column_source,
+    map: options.textures.light_column,
+    color: options.sourceLightPillarColors[type],
     transparent: true,
     side: THREE.DoubleSide,
     depthWrite: false //是否对深度缓冲区有任何的影响
@@ -932,39 +957,102 @@ class Earth {
         WaveMesh.userData['positionName'] = item.startArray.name;
         this.markupPoint.add(WaveMesh);
         this.waveMeshArr.push(WaveMesh);
-        // await Promise.all(
-        //   item.endArray.map((obj) => {
-        //     const lon = obj.E; //经度
-        //     const lat = obj.N; //纬度
-        //     const mesh = createPointMesh({ radius, lon, lat, material: this.punctuationMaterial }); //光柱底座矩形平面
-        //     mesh.userData['selectable'] = true;
-        //     mesh.userData['positionName'] = obj.name;
-        //     this.markupPoint.add(mesh);
-        //     const LightPillar = createLightPillar({
-        //       radius: this.options.earth.radius,
-        //       lon,
-        //       lat,
-        //       index: 1,
-        //       textures: this.options.textures,
-        //       punctuation: this.options.punctuation
-        //     }); //光柱
-        //     LightPillar.userData['isLightPillar'] = true;
-        //     LightPillar.userData['selectable'] = true;
-        //     // @important - 为终点光柱添加点信息
-        //     LightPillar.userData['positionName'] = obj.name;
-        //     this.markupPoint.add(LightPillar);
-        //     const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); //波动光圈
-        //     WaveMesh.userData['isWaveMesh'] = true;
-        //     WaveMesh.userData['selectable'] = true;
-        //     WaveMesh.userData['positionName'] = obj.name;
-        //     this.markupPoint.add(WaveMesh);
-        //     this.waveMeshArr.push(WaveMesh);
-        //   })
-        // );
         this.markupPoint.userData['isMarkupPoint'] = true;
         this.earthGroup.add(this.markupPoint);
       })
     );
+  }
+  // 创建资源柱状点
+  /**
+   * 
+   * @param { name, N, E, type, radiusRate, heightRate } datas 
+   */
+  createSourcePoint(datas){
+    this.markupPoint.clear();
+    datas.forEach(item => {
+      const radius = this.options.earth.radius;
+      const lon = item.E; //经度
+      const lat = item.N; //纬度
+      // @important - 底座点位周边的材质(蓝色光圈)
+      this.punctuationMaterial = new THREE.MeshBasicMaterial({
+        // color: this.options.punctuation.circleColor,
+        // map: this.options.textures.label,
+        map: this.options.textures.circle,
+        transparent: true, //使用背景透明的png贴图，注意开启透明计算
+        depthWrite: false //禁止写入深度缓冲区数据
+      });
+
+      const mesh = createPointMesh({ radius, lon, lat, material: this.punctuationMaterial }); //光柱底座矩形平面
+      mesh.userData['selectable'] = true;
+      mesh.userData['positionName'] = item.name;
+      this.markupPoint.add(mesh);
+      const LightPillar = createSourceLightPillar({
+        radius: this.options.earth.radius,
+        lon,
+        lat,
+        index: 0,
+        textures: this.options.textures,
+        punctuation: this.options.punctuation,
+        sourceLightPillarColors: this.options.sourceLightPillarColors
+      }, {
+        heightRate: item.heightRate,
+        radiusRate: item.radiusRate,
+        type: item.type
+      }); //光柱
+      LightPillar.userData['isLightPillar'] = true;
+      LightPillar.userData['selectable'] = true;
+      LightPillar.userData['positionName'] = item.name;
+      this.markupPoint.add(LightPillar);
+      const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); //波动光圈
+      WaveMesh.userData['isWaveMesh'] = true;
+      WaveMesh.userData['selectable'] = true;
+      WaveMesh.userData['positionName'] = item.name;
+      this.markupPoint.add(WaveMesh);
+      this.waveMeshArr.push(WaveMesh);
+      this.markupPoint.userData['isMarkupPoint'] = true;
+      this.earthGroup.add(this.markupPoint);
+    })
+  }
+  // 为资源视图创建数据标签
+  createSourceSpriteLabel(datas){
+    let tempGroup = new THREE.Group();
+    datas.forEach(item => {
+      const p = lon2xyz(this.options.earth.radius * 1.001, item.E, item.N);
+      const div = `<h6 class="fire-label">${item.name}</h6>`;
+      const shareContent = document.getElementById('html2canvas');
+      shareContent.innerHTML = div;
+      const opts = {
+        backgroundColor: null, // 背景透明
+        scale: 6,
+        dpi: window.devicePixelRatio,
+        // @important 这个函数可以过滤遍历标签label的途径dom从而优化遍历路径和生成标签label的时间，大大减少加载速度
+        ignoreElements(e) {
+          if ((e.tagName !== 'META' && e.tagName !== 'DIV' && e.tagName !== 'STYLE') || e.contains(shareContent) || shareContent.contains(e) || e.tagName === 'HEAD' || e.tagName === 'LINK') {
+            return false;
+          }
+          return true;
+        }
+      };
+      html2canvas(document.getElementById('html2canvas'), opts).then((canvas) => {
+        const dataURL = canvas.toDataURL('image/png');
+        const map = new THREE.TextureLoader().load(dataURL);
+        const material = new THREE.SpriteMaterial({
+          map: map,
+          transparent: true
+        });
+        const sprite = new THREE.Sprite(material);
+        const len = 5 + (item.name.length - 2) * 2;
+        sprite.scale.set(len, 3, 1);
+        sprite.position.set(p.x * 1.1, p.y * 1.1, p.z * 1.1);
+        sprite.userData['type'] = 'label';
+        sprite.userData['selectable'] = true;
+        sprite.userData['positionName'] = item.name;
+        // this.earth.add(sprite);
+        tempGroup.add(sprite);
+      });
+    });
+    tempGroup.userData['isLabelGroup'] = true;
+    this.earthGroup.add(tempGroup);
   }
   async createSpriteLabel() {
     await Promise.all(
@@ -1201,7 +1289,7 @@ class Earth {
     }
   }
 }
-console.log('!!!!!!!')
+
 // 导出的地球组件
 const MyEarth = {
   template: `<div id="my-earth" class="my-earth">
@@ -1218,6 +1306,7 @@ const MyEarth = {
     </div>
     <h6 id="html2canvas" class="css3d-wapper">
       <h6 class="fire-div"></h6>
+      <h6 class="fire-label"></h6>
     </h6>
     <div id="earth-canvas"></div>
   </div>`,
@@ -1284,6 +1373,43 @@ const MyEarth = {
           yj: '',
           zd: ''
         };
+      }
+    },
+    // 资源视图的 9 种资源分类对应的颜色
+    sourceLightPillarColors: {
+      type: Object,
+      default() {
+        return {
+          // 边境 - 蓝!
+          bj: 0x0000FF,
+          // 卫星 - 紫!
+          wx: 0x800080,
+          // 云主机 - 绿
+          yzj: 0x20B2AA,
+          // 机场 - 金
+          jc: 0xFFD700,
+          // 住宅 - 橙!
+          zz: 0xFF8C00,
+          // 物联网 - 印度红!
+          wlw: 0xCD5C5C,
+          // 云专线 - 粉
+          yzx: 0xFFB6C1,
+          // 接入主机 - 亮蓝
+          jr: 0x00FFFF,
+          // 匿名 - 白!
+          nm: 0xffffff
+        }
+      }
+    },
+    // 资源视图中资源量对应等级下，光柱渲染时的h 和 radius比率
+    sourceLightPillarRank: {
+      type: Object,
+      default(){
+        return {
+          small: { h: 1, r: 2 },
+          middle: { h: 3, r: 6 },
+          large: { h: 5, r: 6 },
+        }
       }
     }
   },
@@ -1363,6 +1489,7 @@ const MyEarth = {
         this.scene.add(satelliteLight);
         this.satelliteLight = satelliteLight;
         const satLightObject = new THREE.Object3D();
+        satLightObject.name = 'satelliteLight'
         satLightObject.add(satelliteLight);
         this.earth.satLightOrbit = satLightObject;
         this.earth.earthGroup.add(satLightObject)
@@ -1427,7 +1554,9 @@ const MyEarth = {
           speed: 0.004 // 拖尾飞线的速度
         },
         lineColors: this.lineColors,
-        flyLineColors: this.flyLineColors
+        flyLineColors: this.flyLineColors,
+        // 传入的资源光柱颜色
+        sourceLightPillarColors: this.sourceLightPillarColors
       });
 
       this.scene.add(this.earth.group);
@@ -1537,6 +1666,20 @@ const MyEarth = {
       const target = lon2xyz(R, N, E);
       const position = getPointAlongRay(N, E, -distance, R);
       return { target, position };
+    },
+    outRenderSourcePoint(datas){
+      const that = this;
+      datas = datas.map(item => {
+        return {
+          ...item,
+          heightRate: that.sourceLightPillarRank[item.rank].h,
+          radiusRate: that.sourceLightPillarRank[item.rank].r
+        }
+      });
+      this.earth.createSourcePoint(datas);
+    },
+    outRenderSourceLabel(datas){
+      this.earth.createSourceSpriteLabel(datas);
     }
   }
 };
