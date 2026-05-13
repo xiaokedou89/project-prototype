@@ -24,7 +24,7 @@
       <uas-loading>
         <!-- 全屏背景平铺(1) -->
         <div class="earth-container">
-          <!-- <my-earth ref="earth" :line-colors="lineColors" :fly-line-colors="flyLineColors"></my-earth> -->
+          <div class="loading" v-if="viewChanging"></div>
           <my-earth ref="earth" :datas="jumps" :line-colors="lineColors" :fly-line-colors="flyLineColors"></my-earth>
           <earth-map ref="earthMap"></earth-map>
         </div>
@@ -124,42 +124,41 @@
               </div>
             </div>
           </div>
-          <div class="center-top-item-outer">
-            <div class="center-top-item" v-for="(item, index) in centerTop" :key="index">
-              <div class="left">
-                <img :src="`./img/homepage/center-top/ct${index}.svg`" />
-              </div>
-              <div class="right">
-                <h3 class="right-value">
-                  <div class="num-item-20" v-for="(num, ind) in formatNumsData(item.value, 1, 1).value" :key="ind"
-                    :class="{dot: num === '.'}">
-                    <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                      <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                    </div>
+          <!-- 四个数据展示项 -->
+          <div class="center-top-item" v-for="(item, index) in currentView.centerTop" :key="index">
+            <div class="left">
+              <img :src="`./img/homepage/center-top/${currentView.imgPre}${index}.svg`" />
+            </div>
+            <div class="right">
+              <h3 class="right-value">
+                <div class="num-item-20" v-for="(num, ind) in formatNumsData(item.value, 1, 1).value" :key="ind"
+                  :class="{dot: num === '.'}">
+                  <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                    <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
                   </div>
-                  <span class="num-item-inner-item">{{ formatNumsData(item.value).unit }}</span>
-                  <span class="num-item-inner-item" v-if="index === (centerTop.length - 1) || index === 1">%</span>
-                </h3>
-                <div class="right-label">{{ item.label }}</div>
-              </div>
+                </div>
+                <span class="num-item-inner-item">{{ formatNumsData(item.value).unit }}</span>
+                <!-- <span class="num-item-inner-item" v-if="index === (centerTop.length - 1) || index === 1">%</span> -->
+              </h3>
+              <div class="right-label">{{ item.label }}</div>
             </div>
           </div>
+
           <div class="position-center-top-track" v-show="positionTop.showTracks">
             <div class="track-item" :class="{active: !positionTop.showControls}" @click="activeShowControls"></div>
             <div class="track-item" :class="{active: positionTop.showControls}" @click="deactiveShowControls"></div>
           </div>
         </div>
         <!-- 地球上方-视图切换面板 -->
-        <transition name="common" mode="out-in">
-          <div class="position-center-top-bottom" :key="isEarthMap">
-            <div class="views-container" v-if="!isEarthMap">
-              <div class="views-button source" :class="{active: currentView.key === viewSource.key}" @click="showSourceView"></div>
-              <div class="views-button network" :class="{active: currentView.key === viewNetwork.key}" @click="showNetworkView"></div>
-              <div class="views-button task" :class="{active: currentView.key === viewTask.key}" @click="showTaskView"></div>
+        <div class="position-center-top-bottom">
+          <div class="views-container" v-if="!isEarthMap">
+            <div class="views-button source" :class="{active: currentView.key === viewSource.key}" @click="showSourceView"></div>
+            <div class="views-button network" :class="{active: currentView.key === viewNetwork.key}" @click="showNetworkView">
             </div>
-            <div v-else>2222</div>
+            <div class="views-button task" :class="{active: currentView.key === viewTask.key}" @click="showTaskView"></div>
           </div>
-        </transition>
+          <div v-else="isEarthMap">回退到地球</div>
+        </div>
         <!-- 地球下方(3) -->
         <div class="position-center-bottom" @click="test">
           <img src="./assets/earth/bottomBg.svg" />
@@ -179,7 +178,7 @@
             <!-- 上方的资源部分 -->
             <div class="position-common-section left-top-section">
               <!-- 资源池标题 -->
-              <div class="position-title" @click="animateUpToEarth">
+              <div class="position-title" @click="ttt">
                 <img class="position-title-content" src="./img/homepage/resource/title-pool-change.svg" />
               </div>
               <!-- 资源池 -->
@@ -1295,10 +1294,14 @@
             // ====================> resituation
             // 目前是否是展示中国地图模式 - 以此判断地球模式切换是否禁用
             isEarthMap: false,
+            // 切换视图时的loading动画开关
+            viewChanging: false,
+            // 当前视图对象
             currentView: null,
-            topTransitionName: 'common',
+            // 进入时的默认视图 - 地球数据和网络视图一致
             viewNow: {
               key: 'now',
+              imgPre: 'ct',
               centerTop: [
                 { label: '实时通道数量', value: '13820' },
                 { label: '实时网络负载', value: '1.52' },
@@ -1309,16 +1312,29 @@
             // 资源视图
             viewSource: {
               key: 'source',
+              imgPre: 'zy',
               centerTop: [
                 { label: '资源类型', value: '893' },
                 { label: '节点数量', value: '23' },
                 { label: '覆盖地区', value: '86' },
                 { label: '补给渠道', value: '236' }
+              ],
+              mapDatas: [
+                { E: 121.564438, N: 25.037555, name: "台北市", type: 'bj', rank: 'middle' },
+                { E: -77.48727, N: 39.04364, name: "阿什本", type: 'wx', rank: 'small' },
+                { E: 104.058986, N: 30.676235, name: "成都市", type: 'yzj', rank: 'large' },
+                { E: 118.766351, N: 32.053245, name: "南京市", type: 'jc', rank: 'middle' },
+                { E: 121.019789, N: 14.472021, name: "帕拉尼亚克", type: 'zz', rank: 'small' },
+                { E: -119.417932, N: 36.778261, name: "加利福尼亚州", type: 'wlw', rank: 'large' },
+                { E: 100.506322, N: 13.761612, name: "曼谷", type: 'yzx', rank: 'middle' },
+                { E: 103.762593, N: 1.470747, name: "新山", type: 'jr', rank: 'small' },
+                { E: 90.402832, N: 23.715806, name: "达卡", type: 'nm', rank: 'large' },
               ]
             },
             // 网络视图
             viewNetwork: {
               key: 'network',
+              imgPre: 'wl',
               centerTop: [
                 { label: '通道架构', value: '13820' },
                 { label: '隐匿传输模式', value: '1.52' },
@@ -1330,11 +1346,12 @@
             // 任务视图
             viewTask: {
               key: 'task',
+              imgPre: 'rw',
               centerTop: [
-                { label: '业务模式', value: '13820' },
-                { label: '分域分区', value: '1.52' },
-                { label: '任务数量', value: '236' },
-                { label: '任务支撑率', value: '532' }
+                { label: '业务模式', value: '23' },
+                { label: '分域分区', value: '56' },
+                { label: '任务数量', value: '678' },
+                { label: '任务支撑率', value: '98' }
               ]
             },
             // <====================
@@ -1838,12 +1855,16 @@
             // this.$refs.earth.clearAllDatas();
             // 地理坐标点 108.55, 34.32
             // console.log(this.$refs.earth)
-            this.isEarthMap = !this.isEarthMap;
-            console.log(this)
-            console.dir(Vue)
+
+
+            // 当切换isEarthMap时调用
+            // let positionTopBottom = document.querySelector('.position-center-top-bottom')
+            // positionTopBottom.style.opacity = 0;
+            // this.isEarthMap = !this.isEarthMap;
+            // gsap.fromTo('.position-center-top-bottom', { opacity: 0 }, { opacity: 1, duration: 0.8});
           },
           ttt(){
-            
+
           },
           render() {
             /*
@@ -2058,6 +2079,7 @@
                 ease: 'expo.out',
                 delay: 1.5,
                 onComplete() {
+                  gsap.fromTo('.position-center-top-bottom', { opacity: 0 }, { opacity: 1, duration: 0.5})
                   $app.animateNumberItemInner('.position-left-container')
                   $app.animateNumberItemInner('.position-right-container')
                   // 驱动地球上方数字滚动动画
@@ -2072,23 +2094,26 @@
           leaveAnimate(action) {
             this.positionTop.isfocusDisabled = true;
             $app.positionTop.showTracks = false;
-            gsap.fromTo('.position-right', { right: '0.0833rem', opacity: 1 }, { right: '-25.78%', opacity: 0, duration: 1, ease: 'expo.out' });
-            gsap.fromTo('.position-center-bottom', { bottom: '0.0833rem', opacity: 1 }, { bottom: '-1.27604rem', opacity: 0, duration: 1, ease: 'expo.out' });
-            gsap.fromTo('.position-left', { left: '0.0833rem', opacity: 1 }, { left: '-25.78%', opacity: 0, duration: 1, ease: 'expo.out' });
-            if (!$app.positionTop.showControls) {
-              gsap.fromTo('.center-top-item', { rotateY: '0deg' }, {
-                rotateY: '90deg', duration: 1, ease: 'expo.out', onComplete() {
-                  action()
-                }
-              });
-            } else {
-              gsap.fromTo('.center-control-item', { rotateY: '0deg' }, { rotateY: '90deg', duration: 1, ease: 'expo.out' });
-              gsap.fromTo('.center-earth-control', { rotateY: '0deg' }, {
-                rotateY: '90deg', duration: 1, ease: 'expo.out', onComplete() {
-                  action();
-                }
-              });
-            }
+            gsap.fromTo('.position-center-top-bottom', { opacity: 1 }, { opacity: 0, duraiton: 0.5, onComplete(){
+              gsap.fromTo('.position-right', { right: '0.0833rem', opacity: 1 }, { right: '-25.78%', opacity: 0, duration: 1, ease: 'expo.out' });
+              gsap.fromTo('.position-center-bottom', { bottom: '0.0833rem', opacity: 1 }, { bottom: '-1.27604rem', opacity: 0, duration: 1, ease: 'expo.out' });
+              gsap.fromTo('.position-left', { left: '0.0833rem', opacity: 1 }, { left: '-25.78%', opacity: 0, duration: 1, ease: 'expo.out' });
+              if (!$app.positionTop.showControls) {
+                gsap.fromTo('.center-top-item', { rotateY: '0deg' }, {
+                  rotateY: '90deg', duration: 1, ease: 'expo.out', onComplete() {
+                    action()
+                  }
+                });
+              } else {
+                gsap.fromTo('.center-control-item', { rotateY: '0deg' }, { rotateY: '90deg', duration: 1, ease: 'expo.out' });
+                gsap.fromTo('.center-earth-control', { rotateY: '0deg' }, {
+                  rotateY: '90deg', duration: 1, ease: 'expo.out', onComplete() {
+                    action();
+                  }
+                });
+              }
+            }});
+            
           },
           controlAnimate() {
             this.positionTop.isfocusDisabled = true;
@@ -2281,13 +2306,11 @@
               setTimeout(() => {
                 leftItem.classList.remove('show');
                 tl.play();
-                console.log('时间线play')
               }, 3000);
             }});
             tl.to('.left-item', { skewX: 50, height: '4%', opacity: 0, duration: 1, delay: 1});
             for (let item of $app.resourceStatis.center){
               let indexItemDom = document.querySelector(`.center-item-${item.index}`);
-              console.log(item.index);
               tl.to(`.center-item-${item.index}`, { rotateY: '0deg', opacity: 1, duration: 1, onComplete(){
                 indexItemDom.classList.add('show');
                 tl.pause();
@@ -2591,27 +2614,70 @@
           // resituation - 点击资源视图按钮 
           showSourceView(){
             if (this.isEarthMap) return;
-            this.changeTransitionName();
-            this.currentView = this.viewSource;
+            this.$refs.earth.clearAllDatas();
+            this.viewChanging = true;
+            // 只要点击了就会发生上面的四个小框变化，所以先驱动动画
+            gsap.fromTo('.center-top-item', { rotateY: '0deg' }, {
+              rotateY: '90deg', duration: 0.4, ease: 'power1.out', onComplete() {
+                if ($app.currentView.key === $app.viewSource.key){
+                  $app.currentView = $app.viewNow;
+                } else {
+                  $app.currentView = $app.viewSource;
+                }
+                gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg', duration: 2, ease: 'expo.out', onComplete(){ 
+                  $app.animateNumberItemInner('.position-center-top');
+                  $app.$refs.earth.outRenderSourcePoint($app.viewSource.mapDatas);
+                  $app.$refs.earth.outRenderSourceLabel($app.viewSource.mapDatas); 
+                  $app.viewChanging = false;
+                }})
+              }
+            });
             // renderDatas
             // clearAllDatas
           },
           // resituation - 点击网络视图按钮 
           showNetworkView() {
             if (this.isEarthMap) return;
-            this.changeTransitionName();
-            this.currentView = this.viewNetwork;
+            // 保存一下点击时的当前视图key 
+            let tempCurrentKey = this.currentView.key;
+            if (tempCurrentKey !== 'now' && tempCurrentKey !== 'network') {
+              this.$refs.earth.clearAllDatas();
+              this.viewChanging = true;
+            }
+            // 只要点击了就会发生上面的四个小框变化，所以先驱动动画
+            gsap.fromTo('.center-top-item', { rotateY: '0deg' }, {
+              rotateY: '90deg', duration: 0.4, ease: 'power1.out', onComplete() {
+                if ($app.currentView.key === $app.viewNetwork.key) {
+                  $app.currentView = $app.viewNow;
+                } else {
+                  $app.currentView = $app.viewNetwork;
+                }
+                gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg', duration: 2, ease: 'expo.out', onComplete() { 
+                  $app.animateNumberItemInner('.position-center-top'); 
+                  if (tempCurrentKey !== 'now' && tempCurrentKey !== 'network'){
+                    $app.$refs.earth.renderDatas($app.viewNetwork.mapDatas);
+                    console.log('加载完成')
+                    $app.viewChanging = false;
+                  }
+                }})
+              }
+            });
           },
           // resituation - 点击任务视图按钮 
           showTaskView() {
             if (this.isEarthMap) return;
-            this.changeTransitionName();
-            this.currentView = this.viewTask;
-          },
-          changeTransitionName(){
-            gsap.fromTo('.center-top-item', { rotateY: '0deg' }, { rotateY: '90deg', duration: 1, stagger: 0.1, ease: 'power1.out', onComplete(){
-              gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg',  duration: 2, stagger: 0.1, ease: 'expo.out' })
-            } });
+            this.$refs.earth.clearAllDatas();
+            // 只要点击了就会发生上面的四个小框变化，所以先驱动动画
+            gsap.fromTo('.center-top-item', { rotateY: '0deg' }, {
+              rotateY: '90deg', duration: 0.4, ease: 'power1.out', onComplete() {
+                if ($app.currentView.key === $app.viewTask.key) {
+                  $app.currentView = $app.viewNow;
+                } else {
+                  $app.currentView = $app.viewTask;
+                }
+                gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg', duration: 2, ease: 'expo.out', onComplete() { $app.animateNumberItemInner('.position-center-top'); } })
+              }
+            });
           },
           // ============> 数据函数
           // 获取地球的跳转数据
@@ -2806,7 +2872,6 @@
                 ];
                 $app.jumps = datas;
                 $app.$refs.earth.init();
-                console.log($app.$refs.earth)
               },
               function (err){
                 console.log(err);
@@ -2830,7 +2895,7 @@
                 console.log(res);
                 if (res.code === 200 && res.data && Array.isArray(res.data.edges) && Array.isArray(res.data.nodes) && res.data.edges.length === res.data.nodes.length){
                   let timeStart = Date.now();
-                  console.log(`开始 - ${timeStart}`)
+                  // console.log(`开始 - ${timeStart}`)
                   let { nodes, edges } = res.data;
                   let result = [];
                   edges.forEach((endArr, nodeIndex) => {
@@ -2876,9 +2941,9 @@
                     result.push(node);
                   });
                   let timeEnd = Date.now();
-                  console.log(`结束 - ${timeEnd}`)
-                  console.log(`处理地球数据用时: ${timeEnd - timeStart}ms`)
-                  console.log(result)
+                  // console.log(`结束 - ${timeEnd}`)
+                  // console.log(`处理地球数据用时: ${timeEnd - timeStart}ms`)
+                  // console.log(result)
                   $app.jumps = result;
                   $app.viewNetwork.mapDatas = result;
                 }
@@ -2891,10 +2956,7 @@
               function(){
                 $app.enterAnimate();
                 setTimeout(() => {
-                  console.log('执行启动旋转')
                   $app.changeRotation();
-                  console.log('初始化地球结束，显示相机信息')
-                  console.log($app.$refs.earth.camera)
                 }, 8000);
               }
             )
@@ -2907,10 +2969,10 @@
                   {},
                   function (res){
                     if (res.code === 200 && res.data){
-                      $app.centerTop[0].value = (res.data?.active_channel || '0') + '';
+                      $app.viewNow.centerTop[0].value = (res.data?.active_channel || '0') + '';
                       // $app.centerTop[1].value = (res.data?.network_load || '0') + '';
-                      $app.centerTop[1].value = typeof res.data.network_load === 'number' ? (res.data.network_load * 100).toFixed(2) : '0' + '';
-                      $app.centerTop[2].value = (res.data?.real_time_session || '0') + '';
+                      $app.viewNow.centerTop[1].value = typeof res.data.network_load === 'number' ? (res.data.network_load * 100).toFixed(2) : '0' + '';
+                      $app.viewNow.centerTop[2].value = (res.data?.real_time_session || '0') + '';
                     }
                     console.log('获取顶部的三个数')
                     console.log(res);
@@ -2928,9 +2990,9 @@
                   console.log('获取顶部最后一个数据')
                   console.log(res)
                   if (res.code === 200 && res.data && Array.isArray(res.data.list) && res.data.list.length > 0){
-                      $app.centerTop[3].value = (res.data.list.at(-1).success_rate || '100') + '';
+                      $app.viewNow.centerTop[3].value = (res.data.list.at(-1).success_rate || '100') + '';
                   } else {
-                      $app.centerTop[3].value = '100';
+                      $app.viewNow.centerTop[3].value = '100';
                   }
                 }, function (err){
                     console.log(err)
@@ -3050,8 +3112,6 @@
           // 获取地球左侧数据 - 资源池数据
           getResourcePool(isUpdate){
             $api.situation.newGetEarthLeftPool({}, function (res){
-              console.log('获取左侧数据 - 资源池')
-              console.log(res)
               if (res.code === 200 && Array.isArray(res.data) && res.data.length > 0){
                 res.data.forEach(item => {
                   if (typeof item === 'object' && item && item.type == '1'){
@@ -3101,8 +3161,6 @@
               }
             };
             $api.situation.newGetEarthLeftDistribute({}, function (res){
-              console.log('获取左侧数据 - 资源分布')
-              console.log(res)
               if (res.code === 200 && Array.isArray(res.data) && res.data.length > 0){
                 let result = res.data;
                 dataKeys.forEach(key => {
@@ -3172,8 +3230,6 @@
           // 获取地球左侧数据 - 资源分布(厂商5个数)
           getResourceVendor(isUpdate){
             $api.situation.newGetEarthLeftVendor({}, function (res){
-              console.log('获取左侧数据 - 厂商')
-              console.log(res)
               if (res.code === 200 && res.data && typeof res.data === 'object'){
                 // 云专线厂商
                 $app.resourceDistribution.item1 = typeof res.data.cloudVendorTotal === 'number' ? res.data.cloudVendorTotal + '' : '0';
@@ -3215,8 +3271,6 @@
             $api.situation.newGetEarthLeftResource(
               {},
               function(res){
-                console.log('获取左侧数据 - 国家分布 - 左下拓补图');
-                console.log(res);
                 if (res.code === 200 && Array.isArray(res.data) && res.data.length > 0){
                   res.data.forEach(item => {
                     if (item.resourceType === 'SAT'){
@@ -3271,8 +3325,6 @@
             let safeRiskCenterDatas = {};
             let warningList = [];
             $api.situation.newGetEarthRight({}, function (res){
-              console.log('获取地球右侧数据')
-              console.log(res)
               if (res.status_code === 200 && res.data){
                 let safeSituation = res.data['总体安全态势'];
                 let safeReinforce = res.data['安全加固状态'];
