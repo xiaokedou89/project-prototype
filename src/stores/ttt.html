@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2,minimum-scale=1,user-scalable=yes">
+    <title>公用测试</title>
+    <link rel="icon" href="./favicon.ico">
+    <script src="./module/GSAP3.11.0/gsap.min.js"></script>
+    <script src="./module/GSAP3.11.0/MotionPathPlugin.min.js"></script>
+    <style>
+      html, body {
+				margin: 0;
+				padding: 0;
+				width: 100%;
+				height: 100%;
+			}
+			.container {
+				aspect-ratio: 948 / 311;
+				width: 80%;
+				position: relative;
+				margin: 0 auto;
+				border: 1px solid green
+			}
+			.container > .bg {
+				width: 100%;
+				height: 100%;
+				background-color: skyblue;
+			}
+			.svg-outer {
+				width: 85.25%;
+				height: 79.95%;
+				position: absolute;
+				top: 2.985%;
+				left: 5.969%;
+			}
+			.path-svg {
+				width: 100%;
+				height: 100%;
+				position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none; /* 防止遮挡点击 */
+			}
+			.path-svg path {
+        fill: none;
+        stroke: #ddd;
+        stroke-width: 2;
+      }
+			.ball {
+				width: 100px;
+				height: 100px;
+				border-radius: 50%;
+				background-color: pink;
+				position: absolute;
+			}
+			.ball1 {
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%)
+			}
+    </style>
+  </head>
+  <body>
+		<div class="container">
+			<img class="bg" src="./assets/images/bottomBg.svg" />
+			<div class="svg-outer">
+				<svg class="path-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+					<path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
+				</svg>
+				<div class="ball ball1">1</div>
+				<!-- <div class="ball ball2">2</div>
+				<div class="ball ball3">3</div>
+				<div class="ball ball4">4</div>
+				<div class="ball ball5">5</div>
+				<div class="ball ball6">6</div>
+				<div class="ball ball7">7</div>
+				<div class="ball ball8">8</div>
+				<div class="ball ball9">9</div> -->
+			</div>
+		</div>
+		<button id="btn">测试一下</button>
+		
+    <script>
+      // 现在上方添加GSAP的插件js，然后在这里进行注册
+      document.addEventListener("DOMContentLoaded", (event) => {
+				gsap.registerPlugin(MotionPathPlugin);
+				console.log('注册完成')
+      });
+
+			
+			let balls = [
+				{ index: 1 },
+				{ index: 2 },
+				{ index: 3 },
+				{ index: 4 },
+				{ index: 5 },
+				{ index: 6 },
+				{ index: 7 },
+				{ index: 8 },
+				{ index: 9 }
+			]
+			/*
+
+			// 路径外层svg容器
+			const svgContainer = document.querySelector('.path-svg');
+			console.dir(svgContainer)
+			const svgRect = svgContainer.getBoundingClientRect();
+			// 路径dom
+			const pathDom = document.getElementById('ellipsePath');
+			// getPointAtLength
+			// path.getTotalLength
+			// getScreenPosition
+
+			// 椭圆路径的总长
+			const pathTotalLength = pathDom.getTotalLength();
+			console.log('椭圆路径的总长度')
+			console.log(pathTotalLength)
+			const matrix = pathDom.getScreenCTM();
+			const positionPoints = [];
+			const screenPositions = [];
+			for (let i = 0; i < 9;i++){
+				const dist = (pathTotalLength / 9) * i;
+				const point = pathDom.getPointAtLength(dist);
+				positionPoints.push(point);
+				screenPositions.push(point.matrixTransform(matrix))
+			}
+			console.log(positionPoints)
+			gsap.to('.ball1', {
+				duration: 10,
+				repeat: -1,
+				ease: 'none',
+				// motionPath: {
+				// 	path: '#ellipsePath',
+				// 	align: '#ellipsePath',
+				// 	alignOrigin: [0.5, 0.5],
+				// }
+				motionPath: {
+					path: positionPoints.map(svgP => {
+						let percentX = svgP.x / 800;
+						let percentY = svgP.y / 400;
+						return {
+							x: percentX * svgRect.width,
+							y: percentY * svgRect.height
+						}
+					})
+				}
+			})
+
+			*/
+			
+			
+			
+
+
+			// balls.forEach((ball, ballIndex) => {
+			// 	ball.tl = gsap.timeline();
+			// 	ball.tl.to(`.ball${ball.index}`, {
+			// 		duration: 3,
+			// 		ease: 'none',
+			// 		montionPath: {
+			// 			path: '#ellipsePath',
+			// 			align: '#ellipsePath',
+			// 			alignOrigin: [0.5, 0.5],
+			// 			start: `${ballIndex / 9}`,
+			// 			end: `${ball.index / 9}`
+			// 		}
+			// 	});
+			// });	
+     </script>
+		
+		<!-- index为1的小球转一周，并点击时获取当前时间线映射的进度 -->
+		<script>
+			// 使用时间线驱动完成整个的椭圆路径运动
+			// const tl = gsap.timeline();
+			// tl.to('.ball', {
+			// 	duration: 3,
+			// 	ease: 'none',
+			// 	motionPath: {
+			// 		path: '#ellipsePath',
+			// 		align: '#ellipsePath',
+			// 		alignOrigin: [0.5, 0.5],
+			// 		start: 0,
+			// 		end: '0.25'
+			// 	}
+			// });
+			// tl.to('.ball', {
+			// 	duration: 3,
+			// 	ease: 'none',
+			// 	motionPath: {
+			// 		path: '#ellipsePath',
+			// 		align: '#ellipsePath',
+			// 		alignOrigin: [0.5, 0.5],
+			// 		start: '0.25',
+			// 		end: '0.5'
+			// 	}
+			// });
+			// tl.to('.ball', {
+			// 	duration: 3,
+			// 	ease: 'none',
+			// 	motionPath: {
+			// 		path: '#ellipsePath',
+			// 		align: '#ellipsePath',
+			// 		alignOrigin: [0.5, 0.5],
+			// 		start: '0.5',
+			// 		end: '0.75'
+			// 	}
+			// });
+			// tl.to('.ball', {
+			// 	duration: 3,
+			// 	ease: 'none',
+			// 	motionPath: {
+			// 		path: '#ellipsePath',
+			// 		align: '#ellipsePath',
+			// 		alignOrigin: [0.5, 0.5],
+			// 		start: '0.75',
+			// 		end: 1
+			// 	}
+			// });
+			// tl.repeat(-1);
+			
+			// const btn = document.getElementById('btn');
+
+			// btn.onclick = function (){
+			// 	tl.pause();
+			// 	console.log(tl.progress())
+			// };
+		</script>
+		<!-- index为2的小球开始运动一圈 -->
+		<!-- <script>
+			const tl = gsap.timeline();
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${1 / 9}`,
+					end: `${2 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${2 / 9}`,
+					end: `${3 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${3 / 9}`,
+					end: `${4 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${4 / 9}`,
+					end: `${5 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${5 / 9}`,
+					end: `${6 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${6 / 9}`,
+					end: `${7 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${7 / 9}`,
+					end: `${8 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: `${8 / 9}`,
+					end: `${9 / 9}`
+				}
+			});
+			tl.to('.ball', {
+				duration: 1,
+				ease: 'none',
+					motionPath: {
+					path: '#ellipsePath',
+					align: '#ellipsePath',
+					alignOrigin: [0.5, 0.5],
+					start: 0,
+					end: `${1 / 9}`
+				}
+			});
+		</script> -->
+  </body>
+</html>
