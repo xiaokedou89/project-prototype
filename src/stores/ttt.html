@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2,minimum-scale=1,user-scalable=yes">
     <title>公用测试</title>
     <link rel="icon" href="./favicon.ico">
-    <script src="./module/GSAP3.11.0/gsap.min.js"></script>
-    <script src="./module/GSAP3.11.0/MotionPathPlugin.min.js"></script>
+    <script src="./gsap.min.js"></script>
+    <script src="./MotionPathPlugin.min.js"></script>
     <style>
       html, body {
 				margin: 0;
@@ -68,14 +68,14 @@
 					<path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
 				</svg>
 				<div class="ball ball1">1</div>
-				<!-- <div class="ball ball2">2</div>
+				<div class="ball ball2">2</div>
 				<div class="ball ball3">3</div>
 				<div class="ball ball4">4</div>
 				<div class="ball ball5">5</div>
 				<div class="ball ball6">6</div>
 				<div class="ball ball7">7</div>
 				<div class="ball ball8">8</div>
-				<div class="ball ball9">9</div> -->
+				<div class="ball ball9">9</div>
 			</div>
 		</div>
 		<button id="btn">测试一下</button>
@@ -152,20 +152,39 @@
 			
 
 
-			// balls.forEach((ball, ballIndex) => {
-			// 	ball.tl = gsap.timeline();
-			// 	ball.tl.to(`.ball${ball.index}`, {
-			// 		duration: 3,
-			// 		ease: 'none',
-			// 		montionPath: {
-			// 			path: '#ellipsePath',
-			// 			align: '#ellipsePath',
-			// 			alignOrigin: [0.5, 0.5],
-			// 			start: `${ballIndex / 9}`,
-			// 			end: `${ball.index / 9}`
-			// 		}
-			// 	});
-			// });	
+			balls.forEach((ball, ballIndex) => {
+					ball.tl = gsap.timeline();
+					console.log(`小球: ${ballIndex}运动的`)
+					for (let currentIndex = ball.index; currentIndex < 10; currentIndex++) {
+						console.log(`${currentIndex}index`)
+						ball.tl.to(`.ball${ball.index}`, {
+							duration: 1,
+							ease: 'none',
+							motionPath: {
+								path: '#ellipsePath',
+								align: '#ellipsePath',
+								alignOrigin: [0.5, 0.5],
+								start: `${(currentIndex - 1) / 9}`,
+								end: `${currentIndex / 9}`,
+							}
+						})
+					}
+					for (let restart = 0; restart < ball.index; restart++) {
+						console.log(`restart${restart} index`);
+						ball.tl.to(`.ball${ball.index}`, {
+							duration: 1,
+							ease: 'none',
+							motionPath: {
+								path: '#ellipsePath',
+								align: '#ellipsePath',
+								alignOrigin: [0.5, 0.5],
+								start: `${restart / 9}`,
+								end: `${(restart + 1) / 9}`,
+							}
+						})
+					}
+					
+				})	
      </script>
 		
 		<!-- index为1的小球转一周，并点击时获取当前时间线映射的进度 -->
