@@ -56,7 +56,7 @@
           <div class="position-top-title">
             <!-- <img class="position-top-title-icon" src="./img/homepage/main/main-top-title.svg" /> -->
               <img src="./img/homepage/main/右.svg" style="height: 0.104166rem;margin-right: 25px;" />
-              <div @click="lll" style="font-size: 0.184166rem;font-family:'BIGTITLE Font';padding-top: 10px;" v-if="!isEditing" @dblclick="startEditing" >{{ editContent || 'Z系统' }}</div>
+              <div style="font-size: 0.184166rem;font-family:'BIGTITLE Font';padding-top: 10px;" v-if="!isEditing" @dblclick="startEditing" >{{ editContent || 'Z系统' }}</div>
               <el-input ref="input" v-else style="width: 300px;" v-model="editContent" @blur="saveEdit" @keyup.enter.native="saveEdit"></el-input>
               <img src="./img/homepage/main/左.svg" style="height: 0.104166rem;margin-left: 25px;" />
           </div>
@@ -182,8 +182,23 @@
           <div v-else="isEarthMap" @click="animateUpToEarth">回退到地球</div>
         </div>
         <!-- 地球下方(3) -->
-        <div class="position-center-bottom" @click="test">
+        <div class="position-center-bottom">
           <img src="./assets/earth/bottomBg.svg" />
+          <div class="circle-outer">
+            <svg class="path-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+              <path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
+            </svg>
+            <!-- <div class="ball ball1">1</div>
+            <div class="ball ball2">2</div>
+            <div class="ball ball3">3</div>
+            <div class="ball ball4">4</div>
+            <div class="ball ball5">5</div>
+            <div class="ball ball6">6</div>
+            <div class="ball ball7">7</div>
+            <div class="ball ball8">8</div>
+            <div class="ball ball9">9</div> -->
+            <div class="ball" :class="[`ball${index+1}`]" v-for="(item, index) in ballPoints" :key="index" :style="{opacity: item.opacity}" @click="clickStopBall(item)">{{ index + 1 }}</div>
+          </div>
           <!-- 支撑态势标题 -->
           <!-- <div class="position-title">
             <img class="position-title-content" src="./img/homepage/support/title.svg" />
@@ -657,11 +672,17 @@
     <script src="./assets/js/html2canvas.js"></script>
     <script src="./assets/js/d3.min.js"></script>
     <script src="./assets/js/tinycolor2.js"></script>
+    <script src="./assets/js/MotionPathPlugin.min.js"></script>
     <script src="./assets/js/gsap.min.js"></script>
     <script src="./js/earth.js"></script>
     <script src="./js/view.js"></script>
     <script src="./js/earth-map.js"></script>
     <script>
+      // document.addEventListener("DOMContentLoaded", (event) => {
+      //   gsap.registerPlugin(MotionPathPlugin);
+      //   console.log('注册插件MotionPath完成')
+      // });
+      gsap.registerPlugin(MotionPathPlugin);
       $api.Account.GetUserinfo(
         function (d) {
           $app.user = d;
@@ -671,6 +692,15 @@
           window.location.href = 'login.html';
         }
       );
+      // 调用下钻地球后渲染地图的飞线数据
+      let flightData = [
+        { start: [91.1, 29.6], end: [116.4, 39.9] },
+        { start: [100.2, 25.5], end: [116.4, 39.9] },
+        { start: [126.5, 43.8], end: [116.4, 39.9] },
+        { start: [87.6, 43.7], end: [116.4, 39.9] },
+        { start: [111.6, 40.8], end: [116.4, 39.9] },
+        { start: [121.4, 31.2], end: [116.4, 39.9] },
+      ];
       let chartColors = ['rgba(5, 253, 252, 1)', 'rgba(58, 137, 255, 1)', 'rgba(246, 255, 0, 1)', 'rgba(151, 235, 205, 1)', 'rgba(9, 187, 255, 1)', 'rgba(255, 204, 128, 1)', 'rgba(250, 145, 150, 1)', 'rgba(128, 188, 255, 1)'];
       let linearChartColors = ['rgba(5, 253, 252, .5)', 'rgba(58, 137, 255, .5)', 'rgba(246, 255, 0, .5)', 'rgba(151, 235, 205, .5)', 'rgba(9, 187, 255, .5)', 'rgba(255, 204, 128, .5)', 'rgba(250, 145, 150, .5)', 'rgba(128, 188, 255, .5)'];
       let transparentColors = ['rgba(5, 253, 252, 0)', 'rgba(58, 137, 255, 0)', 'rgba(246, 255, 0, 0)', 'rgba(151, 235, 205, 0)', 'rgba(9, 187, 255, 0)', 'rgba(255, 204, 128, 0)', 'rgba(250, 145, 150, 0)', 'rgba(128, 188, 255, 0)'];
@@ -1252,7 +1282,8 @@
                 { label: '实时网络负载', value: '1.52' },
                 { label: '实时任务数量', value: '236' },
                 { label: '实时任务支撑率', value: '532' }
-              ]
+              ],
+              mapDatas: []
             },
             // 资源视图
             viewSource: {
@@ -1297,8 +1328,61 @@
                 { label: '分域分区', value: '56' },
                 { label: '任务数量', value: '678' },
                 { label: '任务支撑率', value: '98' }
-              ]
+              ],
+              mapDatas: []
             },
+            balls: [
+              { index: 1, tl: null },
+              { index: 2, tl: null },
+              { index: 3, tl: null },
+              { index: 4, tl: null },
+              { index: 5, tl: null },
+              { index: 6, tl: null },
+              { index: 7, tl: null },
+              { index: 8, tl: null },
+              { index: 9, tl: null }
+            ],
+            // 小球点位对应的样式
+            ballPoints: [
+              // 在椭圆左侧
+              { positionIndex: 0, opacity: 1, scale: 1 },
+              { positionIndex: 1, opacity: 1, scale: 1 },
+              { positionIndex: 2, opacity: 1, scale: 1 },
+              { positionIndex: 3, opacity: 1, scale: 1 },
+              { positionIndex: 4, opacity: 1, scale: 1 },
+              { positionIndex: 5, opacity: 1, scale: 1 },
+              { positionIndex: 6, opacity: 1, scale: 1 },
+              { positionIndex: 7, opacity: 1, scale: 1 },
+              { positionIndex: 8, opacity: 1, scale: 1 }
+              // { positionIndex: 0, opacity: 0.2, scale: 1 },
+              // { positionIndex: 1, opacity: 0, scale: 0.8 },
+              // { positionIndex: 2, opacity: 0, scale: 0.6 },
+              // { positionIndex: 3, opacity: 0, scale: 0.7 },
+              // { positionIndex: 4, opacity: 0, scale: 0.85 },
+              // { positionIndex: 5, opacity: 0.7, scale: 1.05 },
+              // { positionIndex: 6, opacity: 0.9, scale: 1.1 },
+              // { positionIndex: 7, opacity: 1, scale: 1.2 },
+              // { positionIndex: 8, opacity: 0.9, scale: 1.05 }
+            ],
+            ballShowPoints: [
+              { positionIndex: 9, position: 0.5 + (9 / 18) },
+              { positionIndex: 8, position: 0.5 + (8 / 18) },
+              { positionIndex: 7, position: 0.5 + (7 / 18) },
+              { positionIndex: 6, position: 0.5 + (6 / 18) },
+              { positionIndex: 5, position: 0.5 + (5 / 18) },
+              { positionIndex: 4, position: 0.5 + (4 / 18) },
+              { positionIndex: 3, position: 0.5 + (3 / 18) },
+              { positionIndex: 2, position: 0.5 + (2 / 18) },
+              { positionIndex: 1, position: 0.5 + (1 / 18) },
+              
+              
+              
+              
+              
+              
+              
+              
+            ],
             // <====================
             isEditing:false,
             editContent: '',
@@ -1588,7 +1672,6 @@
               }
             },
             updateTimer: null,
-            taskListTopTimer: null,
             // homeTime: '2025-05-28 16:57:19',
             homeTime: Date.now(),
             // 获取的地球上的跳转数据
@@ -1755,22 +1838,21 @@
           },
           test(e) {
             // this.$refs.earth.clearAllDatas();
-            // 地理坐标点 108.55, 34.32
-            // console.log(this.$refs.earth)
-
 
             // 当切换isEarthMap时调用
             // let positionTopBottom = document.querySelector('.position-center-top-bottom')
             // positionTopBottom.style.opacity = 0;
             // this.isEarthMap = !this.isEarthMap;
             // gsap.fromTo('.position-center-top-bottom', { opacity: 0 }, { opacity: 1, duration: 0.8});
-            this.animateDownInEarthMap();
-          },
+
+            // 地球下钻
+            // this.animateDownInEarthMap();
+            // 任务视图飞跃点
+            // this.animateFlyToPoint({ N: 116.4074, E: 39.9042 });
+            // 
+          },  
           ttt(){
             this.animateUpToEarth()
-          },
-          lll(){
-            this.animateCloud();
           },
           render() {
             /*
@@ -1820,15 +1902,6 @@
             }
           },
           // 工具函数 - 转换图表的流量数据单位
-          // formatBytesData(value) {
-          //   const units = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'B'];
-          //   let index = 0;
-          //   while (value >= 1024 && index < units.length - 1) {
-          //     value /= 1024;
-          //     index++;
-          //   }
-          //   return { value: value.toFixed(0), unit: units[index] };
-          // },
           formatBytesData(value, fixed = 0) {
             const units = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'B'];
             let index = 0;
@@ -1896,19 +1969,6 @@
             }
           },
           // 工具函数 - 处理bps传输速率
-          // deelTransferRatio(ratio){
-          //   let res = ratio && !Number.isNaN(+ratio) ? ratio : 0;
-          //   if (res < 1024){
-          //     res = res.toFixed(2);
-          //   } else if (res >= 1024 && res < 1024 * 1024){
-          //     res = `${(res / 1024).toFixed(2)}K`;
-          //   } else if (res >= 1024 * 1024 && res < 1024 * 1024 * 1024){
-          //     res = `${(res / (1024 * 1024)).toFixed(2)}M`;
-          //   } else if (res >= 1024 * 1024 * 1024) {
-          //     res = `${(res / (1024 * 1024)).toFixed(2)}G`;
-          //   }
-          //   return res;
-          // },
           deelTransferRatio(ratio) {
             let res = ratio && !Number.isNaN(+ratio) ? ratio : 0;
             if (res < 1000) {
@@ -2055,7 +2115,7 @@
             });
           },
           // 地球下钻到中国地图
-          animateDownInEarthMap() {
+          animateDownInEarthMap(flightData) {
             if (!this.$refs.earth.camera || !this.$refs.earth.controls || !this.$refs.earth.earth) return;
             // 获取地球和地图DOM
             let earthDom = document.getElementById('my-earth');
@@ -2063,55 +2123,70 @@
             // 切换展示模式开关 - 禁用地球相关的模式操作
             this.isEarthMap = true;
             // 暂停地球旋转
-            this.positionTop.earthRotation && this.changeRotation();
+            this.positionTop.earthRotation = false;
+            this.$refs.earth.stopRotation();
             // 转换地球和地图的层级
             earthDom.style.zIndex = -1;
             earthMapDom.style.zIndex = 0;
             // 传入中国中心位置的经纬度2D点位获取两个3D点位
             let { target, position } = $app.$refs.earth.outReturnAnimationVector({ N: 108.55, E: 40.18994 }, 50);
+            // 获取相机移动当前的最远距离点位
+            let maxDisPoint = $app.$refs.earth.outReturnMaxDisPoint();
             // 设置地球可以拉近，地球控制器原始minDistance为220
             $app.$refs.earth.controls.minDistance = 50;
-            let flightData = [
-              { start: [91.1, 29.6], end: [116.4, 39.9] },
-              { start: [100.2, 25.5], end: [116.4, 39.9] },
-              { start: [126.5, 43.8], end: [116.4, 39.9] },
-              { start: [87.6, 43.7], end: [116.4, 39.9] },
-              { start: [111.6, 40.8], end: [116.4, 39.9] },
-              { start: [121.4, 31.2], end: [116.4, 39.9] },
-            ];
             // todo - 这里要获取地图的飞线数据 - 加载渲染飞线
-            $app.$refs.earthMap.addFlightData(flightData);
-            // 把地图底部的大圆盘隐掉
+            // $app.$refs.earthMap.addFlightData(flightData);
+            // Step1 - 把地图底部的大圆盘隐掉
             gsap.fromTo('.position-center-bottom', { bottom: '0.0833rem', opacity: 1 }, { bottom: '-1.27604rem', opacity: 0, duration: 2, ease: 'expo.out' });
-            gsap.to(earthDom, {
-              opacity: 0,
-              duration: 3,
-              ease: 'power1.out'
-            });
-            // (0, 30, -200)
-            gsap.to($app.$refs.earth.camera.position, {
-              x: position.x,
-              y: position.y,
-              z: position.z,
-              duration: 2,
-              ease: 'power1.out',
-              onStart() {
-                $app.$refs.earth.controls.autoRotate = false;
-              },
+            // Step2 - 相机保持视角拉远到最远距离
+            // 初始相机位置(0, 30, -200)
+            gsap.to(this.$refs.earth.camera.position, {
+              x: maxDisPoint.x,
+              y: maxDisPoint.y,
+              z: maxDisPoint.z,
+              duration: 1.5,
+              ease: "power2.out",
               onUpdate() {
-                $app.$refs.earth.controls.target.copy(target);
-                $app.$refs.earth.controls.update();
+                $app.$refs.earth.camera.updateMatrixWorld();
               },
-              onComplete(){
-                $app.animateCloud();
+              onComplete() {
+                // Step3 - 开始渐隐地球
+                gsap.to(earthDom, {
+                  opacity: 0,
+                  duration: 3,
+                  ease: 'slow.out'
+                });
+                // Step4 - 拉近相机
+                gsap.to($app.$refs.earth.camera.position, {
+                  x: position.x,
+                  y: position.y,
+                  z: position.z,
+                  duration: 2,
+                  ease: 'power1.out',
+                  onStart() {
+                    $app.$refs.earth.controls.autoRotate = false;
+                  },
+                  // onUpdate() {
+                  // 注释掉了相机飞过去时实时更改控制器目标为目标点的逻辑
+                  //   $app.$refs.earth.controls.target.copy(target);
+                  //   $app.$refs.earth.controls.update();
+                  // },
+                  onComplete() {
+                    // Step5 - 云层动画
+                    $app.animateCloud();
+                    // 显示地图
+                    gsap.to(earthMapDom, {
+                      opacity: 1,
+                      delay: 1,
+                      duration: 1,
+                      onComplete() {
+                        $app.$refs.earthMap.addFlightData(flightData);
+                      }
+                    })
+                  }
+                });
               }
-            });
-            gsap.to(earthMapDom, {
-              opacity: 1,
-              delay: 2.5,
-              duration: 3,
-              ease: 'power1.out'
-            });
+            })
           },
           // 从地图上窜到地球
           animateUpToEarth(){
@@ -2132,7 +2207,6 @@
                 let cloudContainer = document.querySelector('.cloud');
                 cloudContainer.style.zIndex = 1;
                 $app.cloudTL.reverse();
-                console.log('上窜到地球完成了')
               }
             });
             gsap.to(earthDom, {
@@ -2168,49 +2242,12 @@
           },
           // 尝试添加云层动画
           async animateCloud() {
-            console.log('调用了')
             let cloudContainer = document.querySelector('.cloud');
             cloudContainer.style.zIndex = 1;
             if (this.cloudTL) {
               this.cloudTL.play();
             } else {
               this.cloudTL = gsap.timeline();
-              // step1 - 快速出现整体云层
-              // this.cloudTL.to('.cloud', {
-              //   opacity: 1,
-              //   duration: 1,
-              //   ease: 'power4.out'
-              // });
-              // this.cloudTL.fromTo('.cloud', {
-              //   opacity: 0,
-              // }, {
-              //   opacity: 1,
-              //   duration: 0.8,
-              // }, 0);
-              // this.cloudTL.to('.level-1', {
-              //   scale: 2,
-              //   z: 50,
-              //   opacity: 0,
-              //   duration: 1,
-              // }, 0);
-              // this.cloudTL.to('.level-2', {
-              //   scale: 2,
-              //   z: 0,
-              //   // z: 50,
-              //   opacity: 0,
-              //   duration: 1,
-              //   delay: 0.2
-              // }, 0.2);
-              // this.cloudTL.to('.level-3', {
-              //   scale: 2,
-              //   z: -50,
-              //   opacity: 0,
-              //   duration: 1,
-              //   onComplete() {
-              //     cloudContainer.style.zIndex = -2;
-              //   }
-              // }, 0.4);
-              // console.log('test!!!!!')
               this.cloudTL.to('.cloud', {
                 opacity: 1,
                 duration: 0.8
@@ -2237,37 +2274,6 @@
                   cloudContainer.style.zIndex = -2;
                 }
               }, 0.4)
-              // gsap.fromTo('.cloud', {
-              //   opacity: 0,
-              // }, {
-              //   opacity: 1,
-              //   duration: 0.8,
-              // })
-
-              // gsap.to('.level-1', {
-              //   scale: 2,
-              //   z: 50,
-              //   opacity: 0,
-              //   duration: 1,
-              // })
-              // gsap.to('.level-2', {
-              //   scale: 2,
-              //   z: 0,
-              //   // z: 50,
-              //   opacity: 0,
-              //   duration: 1,
-              //   delay: 0.2
-              // })
-              // gsap.to('.level-3', {
-              //   scale: 2,
-              //   z: -50,
-              //   opacity: 0,
-              //   duration: 1,
-              //   delay: 0.4,
-              //   onComplete(){
-              //     cloudContainer.style.zIndex = -2;
-              //   }
-              // })
             }
           },
           animateCloudReverse(){
@@ -2276,6 +2282,156 @@
             this.cloudTL.reverse();
             cloudContainer.style.zIndex = -2;
           },
+          // 根据传入的经纬度坐标点，驱动地球转动到该位置上方
+          // position: { N, E }
+          animateFlyToPoint(point, distance = 220){
+            if (!this.$refs.earth.camera || !this.$refs.earth.controls || !this.$refs.earth.earth) return;
+            // 暂停地球旋转
+            this.positionTop.earthRotation = false;
+            this.$refs.earth.stopRotation();
+            // 传入位置的经纬度2D点位获取两个3D点位
+            const { N = 0, E = 0 } = point;
+            // 设置地球可以拉近，地球控制器原始minDistance为220
+            // $app.$refs.earth.controls.minDistance = 50;
+            $app.$refs.earth.controls.minDistance = 220;
+            let { target, position } = $app.$refs.earth.outReturnAnimationVector({ N, E }, distance);
+            // 获取相机移动当前的最远距离点位
+            let maxDisPoint = $app.$refs.earth.outReturnMaxDisPoint();
+            // 要拉近相机需要把地球下方的圆盘隐掉
+            // gsap.fromTo('.position-center-bottom', { bottom: '0.0833rem', opacity: 1 }, { bottom: '-1.27604rem', opacity: 0, duration: 2, ease: 'expo.out' });
+            // 先拉远相机到最远距离
+            gsap.to(this.$refs.earth.camera.position, {
+              x: maxDisPoint.x,
+              y: maxDisPoint.y,
+              z: maxDisPoint.z,
+              duration: 1.5,
+              ease: "power2.out",
+              onUpdate() {
+                $app.$refs.earth.camera.updateMatrixWorld();
+              },
+              onComplete() {
+                console.log('拉远到最远距离了')
+                gsap.to($app.$refs.earth.camera.position, {
+                  x: position.x,
+                  y: position.y,
+                  z: position.z,
+                  duration: 2,
+                  ease: 'power1.out',
+                  onStart() {
+                    $app.$refs.earth.controls.autoRotate = false;
+                  },
+                  onUpdate() {
+                    $app.$refs.earth.camera.updateMatrixWorld();
+                    // 注释掉了相机飞过去时实时更改控制器目标为目标点的逻辑
+                    // $app.$refs.earth.controls.target.copy(target);
+                    // $app.$refs.earth.controls.update();
+                  },
+                  onComplete(){
+
+                  }
+                });
+              }
+            });
+          },
+          // 尝试驱动地球下方小球椭圆轨迹旋转
+          animateBalls(){
+            this.balls.forEach((ball, ballIndex) => {
+              ball.tl = gsap.timeline();
+              console.log(`小球: ${ballIndex}运动的`)
+              for (let currentIndex = ball.index;currentIndex < 10;currentIndex++){
+                console.log(`${currentIndex}index`)
+                const opacityIndex = currentIndex === 9 ? 0 : currentIndex;
+                ball.tl.to(`.ball${ball.index}`, {
+                  duration: 1.5,
+                  ease: 'none',
+                  opacity: $app.ballPoints[opacityIndex].opacity,
+
+                  motionPath: {
+                    path: '#ellipsePath',
+                    align: '#ellipsePath',
+                    alignOrigin: [0.5, 0.5],
+                    start: `${(currentIndex - 1) / 9}`,
+                    end: `${currentIndex / 9}`,
+                  }
+                })
+              }
+              if (ball.index > 1){
+                for (let restart = 0; restart < (ball.index - 1); restart++) {
+                  console.log(`restart${restart} index`);
+                  ball.tl.to(`.ball${ball.index}`, {
+                    opacity: $app.ballPoints[restart].opacity,
+
+                    duration: 1.5,
+                    ease: 'none',
+                    motionPath: {
+                      path: '#ellipsePath',
+                      align: '#ellipsePath',
+                      alignOrigin: [0.5, 0.5],
+                      start: `${restart / 9}`,
+                      end: `${(restart + 1) / 9}`,
+                    }
+                  })
+                }
+              }
+              ball.tl.repeat(-1)
+            })
+          },
+          // 
+          clickStopBall(item){
+            this.balls.forEach((ball, ballIndex) => {
+              ball.tl.pause();
+              console.log(`第${ballIndex + 1}个小球`)
+              console.log((ball.tl.progress() + ballIndex * 1 / 9) % 1)
+              ball.saveProgress = (ball.tl.progress() + ballIndex * 1 / 9) % 1;
+              gsap.to(`.ball${ball.index}`, {
+                duration: 10,
+                ease: 'none',
+                motionPath: {
+                  path: '#ellipsePath',
+                  align: '#ellipsePath',
+                  alignOrigin: [0.5, 0.5],
+                  start: ball.saveProgress,
+                  end: $app.ballShowPoints[ballIndex].position,
+                }
+              })
+            });
+          },
+          // animateBalls(){
+          //   const tl = gsap.timeline();
+          //   for (let currentIndex = 2; currentIndex < 10; currentIndex++){
+          //     const opacityIndex = currentIndex === 9 ? 0 : currentIndex;
+          //     tl.to('.ball1', {
+          //       duration: 1,
+          //       ease: 'none',
+          //       opacity: $app.ballPoints[opacityIndex].opacity,
+          //       motionPath: {
+          //         path: '#ellipsePath',
+          //         align: '#ellipsePath',
+          //         alignOrigin: [0.5, 0.5],
+          //         start: `${(currentIndex - 1) / 9}`,
+          //         end: `${currentIndex / 9}`,
+          //       }
+          //     })
+          //   }
+          //   // ball.index - 1;
+          //   for (let restart = 1; restart < 2;restart++){
+          //     console.log(`第二次的start: ${restart - 1 / 9}`)
+          //     console.log(`第二次的end: ${restart - 1 / 9}`)
+          //     tl.to('.ball1', {
+          //       opacity: $app.ballPoints[restart].opacity,
+          //       duration: 1,
+          //       ease: 'none',
+          //       motionPath: {
+          //         path: '#ellipsePath',
+          //         align: '#ellipsePath',
+          //         alignOrigin: [0.5, 0.5],
+          //         start: `${(restart - 1) / 9}`,
+          //         end: `${(restart) / 9}`,
+          //       }
+          //     })
+          //   }
+          //   tl.repeat(-1)
+          // },
           // 驱动数字滚动动画 - 需要传入对应区域的外层选择器 - 在数值获取到并转为String后调用
           animateNumberItemInner(dom) {
             this.$nextTick(() => {
@@ -2323,7 +2479,6 @@
             }
           },
           // 左下角资源统计动画 - 卫星进入 2000
-          // animateResourceLeftBottom
           animateResourceLeftBottom(){
             let tl = gsap.timeline();
             let leftItem = document.querySelector('.left-item');
@@ -2356,49 +2511,6 @@
             } });
             tl.to('.bottom-item', { filter: 'blur(0.03125rem)', opacity: 0, duration: 1.5 });
             tl.repeat(-1)
-          },
-          // 左下角资源统计动画 - 卫星离开 2000
-          animateResourceLeftClose(){
-            let leftItem = document.querySelector('.left-item');
-            setTimeout(() => {
-              leftItem.classList.remove('show');
-              gsap.to('.left-item', { skewX: 50, height: '4%', opacity: 0, duration: 1, delay: 1 })
-            }, 15000);
-          },
-          // // 左下角资源统计动画 - 普通资源进入 2000
-          // animateResourceRightShow(){
-          //   let rightItem = document.querySelector('.right-item');
-          //   gsap.to('.right-item', { rotateY: '0deg', opacity: 1, duration: 1, onComplete(){
-          //     rightItem.classList.add('show');
-          //   }});
-          // },
-          // // 左下角资源统计动画 - 普通资源离开 2000
-          // animateResourceRightClose(){
-          //   let rightItem = document.querySelector('.right-item');
-          //   setTimeout(() => {
-          //     rightItem.classList.remove('show');
-          //     gsap.to('.right-item', { rotateY: '90deg', opacity: 0, duration: 1, delay: 1 })
-          //   })
-          // },
-          // 左下角资源统计动画 - 地下资源进入 1500
-          animateResourceBottomShow(){
-            gsap.to('.bottom-item', { filter: 'blur(0)', opacity: 1, duration: 1.5 })
-          },
-          // 左下角资源统计动画 - 地下资源离开 1500
-          animateResourceBottomClose(){
-            gsap.to('.bottom-item', { filter: 'blur(0.03125rem)', opacity: 0, duration: 1.5 });
-          },
-          animateResourceCallBack(){
-            $app.animateResourceLeftShow();
-              setTimeout(() => {
-                $app.animateResourceLeftClose();
-              }, 7000);
-              setTimeout(() => {
-                $app.animateResourceBottomShow();
-              }, 28000);
-              setTimeout(() => {
-                $app.animateResourceBottomClose();
-              }, 35500);
           },
           // ============> 事件函数
           showDialoger(){
@@ -2462,9 +2574,9 @@
           },
           // 初始化数据
           init() {
+            this.animateBalls();
             // earthleftdata
             // this.getEarchDatas();
-            // this.getEarthDatasTest();
             this.getEarthDatasReal();
             // (地球下方)获取支撑态势图表数据
             // this.getSupport();
@@ -2686,7 +2798,6 @@
                   $app.animateNumberItemInner('.position-center-top'); 
                   if (tempCurrentKey !== 'now' && tempCurrentKey !== 'network'){
                     $app.$refs.earth.outRenderNetworkView($app.viewNetwork.mapDatas);
-                    console.log('加载完成')
                     $app.viewChanging = false;
                   }
                 }})
@@ -2716,8 +2827,6 @@
             $api.situation.getEarth(
               {},
               function (res) {
-                console.log('老的地球数据')
-                console.log(res)
                 if (res.code === 200 && res.data && Array.isArray(res.data.earth) && res.data.earth.length > 0) {
                   $app.jumps = res.data.earth;
                   $app.$refs.earth.init();
@@ -2738,185 +2847,8 @@
               }
             );
           },
-          // 获取地球数据 - 测试版
-          getEarthDatasTest(){
-            let num = 5;
-            let endCode = num.toString(2).padStart(5, '0');
-            let lineCode = endCode.slice(0, 3)
-            let statusCode = endCode.slice(3)
-            let lines = lineCode.split('')
-            lines.forEach((code, index) => {
-              console.log(index)
-            })
-            $api.situation.getEarthTest(
-              {},
-              function (res){
-                console.log('新的地球数据')
-                console.log(res);
-                if (res.code === 200 && res.data && Array.isArray(res.data.edges) && Array.isArray(res.data.nodes) && res.data.edges.length === res.data.nodes.length){
-                  let timeStart = Date.now();
-                  console.log(`开始 - ${timeStart}`)
-                  let { nodes, edges } = res.data;
-                  let result = [];
-                  edges.forEach((endArr, nodeIndex) => {
-                    let node = {
-                      startArray: nodes[nodeIndex],
-                      endArray: []
-                    };
-                    endArr.forEach((end, endIndex) => {
-                      let endCode = end.toString(2).padStart(5, '0');
-                      let lineStr = endCode.slice(3);
-                      let lineCode = endCode.slice(0, 3);
-                      let lines = lineCode.split('');
-                      let statusCode = endCode.slice(3);
-                      // console.log('图表码')
-                      // console.log(endCode)
-                      if (end !== 0 && statusCode !== '00'){
-                        lines.forEach((line, lineType) => {
-                          if (line !== '0'){
-                            let status = 'tc'
-                            switch(statusCode){
-                              case '01':
-                                status = 'tc';
-                                break;
-                              case '11':
-                                status = 'yj';
-                                break;
-                              case '10':
-                                status = 'zd';
-                                break;
-                            }
-                            let endNode = {
-                              name: nodes[endIndex].name,
-                              N: nodes[endIndex].N,
-                              E: nodes[endIndex].E,
-                              label: labels[lineType],
-                              status
-                            }
-                            node.endArray.push(endNode);
-                          }
-                        });
-                      }
-                    });
-                    result.push(node);
-                  });
-                  let timeEnd = Date.now();
-                  console.log(`结束 - ${timeEnd}`)
-                  console.log(`处理地球数据用时: ${timeEnd - timeStart}ms`)
-                  console.log(result)
-                  $app.jumps = result;
-                }
-                let datas = [
-                  { 
-                    startArray: {
-                      E: 106.551559,
-                      N: 29.563017,
-                      label: "sjhc",
-                      name: "重庆",
-                      status: "tc"
-                    },
-                    endArray: [{
-                        E: 119.330222,
-                        N: 26.047123,
-                        label: "zlkz",
-                        name: "福州",
-                        status: "tc"
-                      },
-                      {
-                        E: 114.341919,
-                        N: 30.546458,
-                        label: "zlkz",
-                        name: "武汉",
-                        status: "tc"
-                      },
-                      {
-                        E: -123.029159,
-                        N: 44.942858,
-                        label: "xxts",
-                        name: "俄勒冈州",
-                        status: "tc"
-                      }
-                    ]
-                  },
-                  { 
-                    startArray: {
-                        E: 119.330222,
-                        N: 26.047123,
-                        label: "zlkz",
-                        name: "福州",
-                        status: "tc"
-                      },
-                    endArray: [{
-                      E: 106.551559,
-                      N: 29.563017,
-                      label: "sjhc",
-                      name: "重庆",
-                      status: "tc"
-                    },
-                      {
-                        E: 114.341919,
-                        N: 30.546458,
-                        label: "zlkz",
-                        name: "武汉",
-                        status: "tc"
-                      },
-                      {
-                        E: -123.029159,
-                        N: 44.942858,
-                        label: "xxts",
-                        name: "俄勒冈州",
-                        status: "tc"
-                      }
-                    ]
-                  },
-                  { 
-                    startArray: {
-                        E: 114.341919,
-                        N: 30.546458,
-                        label: "zlkz",
-                        name: "武汉",
-                        status: "tc"
-                      },
-                    endArray: [{
-                      E: 106.551559,
-                      N: 29.563017,
-                      label: "sjhc",
-                      name: "重庆",
-                      status: "tc"
-                    },{
-                        E: 119.330222,
-                        N: 26.047123,
-                        label: "zlkz",
-                        name: "福州",
-                        status: "tc"
-                      },
-                      {
-                        E: -123.029159,
-                        N: 44.942858,
-                        label: "xxts",
-                        name: "俄勒冈州",
-                        status: "tc"
-                      }
-                    ]
-                  }
-                ];
-                $app.jumps = datas;
-                $app.$refs.earth.init();
-              },
-              function (err){
-                console.log(err);
-                $app.$refs.earth.init();
-              },
-              function(){
-                $app.enterAnimate();
-              }
-            )
-          },
           // 获取地球数据 - 真实版
           getEarthDatasReal(){
-            // let testn = 5;
-            // console.log('测试一下显示效果')
-            // console.log(testn.toString(2))
             let labels = ['zlkz', 'sjhc', 'xxts'];
             $api.situation.getEarthReal(
               {},
