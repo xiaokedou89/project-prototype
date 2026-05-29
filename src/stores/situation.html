@@ -185,6 +185,12 @@
         <div class="position-center-bottom">
           <img src="./assets/earth/bottomBg.svg" />
           <div class="circle-outer">
+            <div class="map-enter enter0" @click="animateDownInEarthMap">801</div>
+            <div class="map-enter enter1" @click="animateDownInEarthMap">803</div>
+            <div class="map-enter enter2" @click="animateDownInEarthMap">812</div>
+            <div class="map-enter enter3" @click="animateDownInEarthMap">805</div>
+            <div class="map-enter enter4" @click="animateDownInEarthMap">804</div>
+            <div class="map-enter enter5" @click="animateDownInEarthMap">802</div>
             <svg class="path-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
               <path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
             </svg>
@@ -200,7 +206,7 @@
             <div class="ball" 
               v-for="(item, index) in balls"
               :class="[`ball${index+1}`, {active: currentBall && currentBall.type === item.type}]"
-              :style="{backgroundImage: computedBallBg(item)}"
+              :style="{backgroundImage: computedBallBg(item), opacity: ballPoints[index].opacity}"
               :key="index"  
               @click="clickBall(item)"
             >
@@ -216,438 +222,363 @@
         </div>
         <!-- 左下(3) -->
         <div class="position-left">
-          <div class="position-left-border-top"></div>
-          <div class="position-left-border-center"></div>
-          <div class="position-left-border-bottom"></div>
-          <div class="position-left-container">
-            <!-- 上方的资源部分 -->
-            <div class="position-common-section left-top-section">
-              <!-- 资源池标题 -->
-              <div class="position-title" @click="ttt">
-                <img class="position-title-content" src="./img/homepage/resource/title-pool-change.svg" />
-              </div>
-              <!-- 资源池 -->
-              <div class="resource-pool-section left-top-section-common">
-                <!-- 资源池第一个item -->
-                <div class="pool-item">
-                  <div class="pool-item-top" :class="{select: resourcePool.key === 'total'}" @click="changeResourcePool('total')">
-                    <div class="left total"></div>
-                    <div class="right">
-                      <div class="pool-item-title" style="justify-content: center;">资源储备</div>
-                      <div class="pool-item-count">
-                        <h3 class="transfer-count-value number-font">
-                          <div class="num-item-16" v-for="(num, index) in formatNumsData(resourcePool.total.count).value" :key="index" :class="{dot: num === '.'}">
+          <!-- 左侧非任务视图 -->
+          <div class="position-animate-container" v-show="!currentView || (currentView && currentView.key !== viewTask.key)">
+            <div class="outer-container wh100">
+              <div class="inner-container ">
+                <div class="corner corner-top-left"></div>
+                <div class="corner corner-top-right"></div>
+                <div class="corner corner-bottom-left"></div>
+                <div class="corner corner-bottom-right"></div>
+                <div class="left-section">
+                  <div class="position-title">
+                    <div class="position-title-content text">安全监测</div>
+                  </div>
+                  <!-- 安全监测 -->
+                  <div class="safe-monitor">
+                    <div class="content">
+                      <div class="left">
+                        <div class="label">健康</div>
+                        <div class="value">
+                          <div class="num-item-10" v-for="(num, ind) in formatNumsData(safeMonitor.scout, 1, 1).value" :key="ind"
+                            :class="{dot: num === '.'}">
                             <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
                               <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
                             </div>
                           </div>
-                          <span class="unit">{{ formatNumsData(resourcePool.total.count).unit }}</span>
-                          <span class="unit">个</span>
-                        </h3>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- 匿名采购资源数量 -->
-                  <div class="pool-item-bottom">
-                    <div class="pool-item-bottom-label">
-                      <img src="./img/homepage/resource/arrow.svg" />
-                      <span>匿名采购资源</span>
-                    </div>
-                    <div class="pool-item-bottom-count number-font">
-                      <div class="num-item-14" v-for="(num, index) in formatNumsData(resourcePool[resourcePool.key].anonymous).value" :key="index" :class="{dot: num === '.'}">
-                        <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                          <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                          <span>分</span>
                         </div>
                       </div>
-                      <span class="unit">{{ formatNumsData(resourcePool[resourcePool.key].anonymous).unit }}</span>
-                      <span class="unit">个</span>
+                      <ul class="right">
+                        <li class="right-item">
+                          节点加固指数 
+                          <div class="item-nums blue">
+                            <div class="num-item-10" v-for="(num, ind) in formatNumsData(safeMonitor.indexs.node, 1, 1).value" :key="ind"
+                              :class="{dot: num === '.'}">
+                              <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                                <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                        <li class="right-item">
+                          网络防御指数 
+                          <div class="item-nums green">
+                            <div class="num-item-10" v-for="(num, ind) in formatNumsData(safeMonitor.indexs.defense, 1, 1).value" :key="ind"
+                              :class="{dot: num === '.'}">
+                              <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                                <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                        <li class="right-item">
+                          联动处置指数 
+                          <div class="item-nums yellow">
+                            <div class="num-item-10" v-for="(num, ind) in formatNumsData(safeMonitor.indexs.linkage, 1, 1).value" :key="ind"
+                              :class="{dot: num === '.'}">
+                              <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                                <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                              </div>
+                            </div>
+                          </div>
+                        </li>
+                      </ul>
                     </div>
                   </div>
-                </div>
-                <!-- 资源池第二个item -->
-                <div class="pool-item">
-                  <div class="pool-item-top" :class="{select: resourcePool.key === 'use'}" @click="changeResourcePool('use')">
-                    <div class="left current"></div>
-                    <div class="right">
-                      <div class="pool-item-title">资源用量<span class="percentage">{{ getResourcePoolPercentage }}</span></div>
-                      <div class="pool-item-count">
-                        <h3 class="transfer-count-value number-font">
-                          <div class="num-item-16" v-for="(num, index) in formatNumsData(resourcePool.use.count).value" :key="index" :class="{dot: num === '.'}">
+                  <!-- 安全告警降噪 -->
+                  <div class="position-title">
+                    <div class="position-title-content text">安全告警降噪</div>
+                  </div>
+                  <div class="safe-warning">
+                    <div class="content"></div>
+                  </div>
+                  <!-- 安全战技战术 -->
+                  <div class="position-title">
+                    <div class="position-title-content text">安全战技战术</div>
+                  </div>
+                  <div class="safe-strategy">
+                    <div class="safe-strategy-row" v-for="(row, rowIndex) in safeStrategy" :key="rowIndex">
+                      <div class="safe-strategy-col" :class="{none: !col.show}" v-for="(col, colIndex) in row.cols" :key="colIndex">
+                        <div class="label" v-if="col.show">{{ col.label }}</div>
+                        <!-- <div class="value" v-if="col.show">{{ col.value }}</div> -->
+                         <div class="value" v-if="col.show">
+                          <div class="num-item-10" v-for="(num, ind) in formatNumsData(col.value, 1, 1).value" :key="ind" :class="{dot: num === '.'}">
                             <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
                               <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
                             </div>
                           </div>
-                          <span class="unit">{{ formatNumsData(resourcePool.use.count).unit }}</span>
-                          <span class="unit">个</span>
-                        </h3>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- 公开获取资源数量 -->
-                  <div class="pool-item-bottom">
-                    <div class="pool-item-bottom-label">
-                      <img src="./img/homepage/resource/arrow.svg" />
-                      <span>公共获取资源</span>
-                    </div>
-                    <div class="pool-item-bottom-count number-font">
-                      <div class="num-item-14" v-for="(num, index) in formatNumsData(resourcePool[resourcePool.key].open).value" :key="index" :class="{dot: num === '.'}">
-                        <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                          <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                          <span>{{ formatNumsData(col.value, 1, 1).unit }}</span>
                         </div>
                       </div>
-                      <span class="unit">{{ formatNumsData(resourcePool[resourcePool.key].open).unit }}</span>
-                      <span class="unit">个</span>
                     </div>
                   </div>
-                </div>
-              </div>
-              <!-- 资源分布标题 -->
-              <div class="position-title">
-                <img class="position-title-content" src="./img/homepage/resource/title-distribution.svg" />
-              </div>
-              <!-- 资源分布-上方饼图 trigger-custrom -->
-              <div class="resource-distribution-top left-top-section-common">
-                <div class="left" id="distribution-pie-chart" style="width: 50%;height: 100%"></div>
-                <div class="right">
-                  <div class="distribution-pie-item" :class="{close: item.legendFlag === false}" v-for="(item, index) in charts.distributionPie.data" :key="index" @click="triggleDistributionPie(item)">
-                    <div class="left">
-                      <div class="icon-outer">
-                        <i class="icon" :style="{backgroundColor: pieChart3dColors[index]}"></i>
+                  <!-- 安全加固 -->
+                  <div class="position-title">
+                    <div class="position-title-content text">安全风险加固</div>
+                  </div>
+                  <div class="safe-reinforce-container">
+                    <div class="safe-reinforce-top">
+                      <div class="safe-reinforce-item">
+                        <div class="icon">
+                          <img src="./img/homepage/reinforce/item-icon0.svg" />
+                        </div>
+                        <div class="content">
+                          <div class="label">漏洞修复率 <span class="safe-rate">{{ safeReinforce.bug.rate }}%</span></div>
+                          <h3 class="number-font">
+                            <div class="num-item-16" v-for="(num, index) in formatNumsData(safeReinforce.bug.count).value" :key="index"
+                              :class="{dot: num === '.'}">
+                              <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                                <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                              </div>
+                            </div>
+                            <span class="unit">{{formatNumsData(safeReinforce.bug.count).unit}}个</span>
+                          </h3>
+                        </div>
                       </div>
-                      <div class="distribution-legend-item-name">{{ pieNameFormate(item.name) }}</div>
+                      <div class="safe-reinforce-item">
+                        <div class="icon">
+                          <img src="./img/homepage/reinforce/item-icon1.svg" />
+                        </div>
+                        <div class="content">
+                          <div class="label">配置加固率 <span class="safe-rate">{{ safeReinforce.config.rate }}%</span></div>
+                          <h3 class="number-font">
+                            <div class="num-item-16" v-for="(num, index) in formatNumsData(safeReinforce.config.count).value" :key="index"
+                              :class="{dot: num === '.'}">
+                              <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                                <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                              </div>
+                            </div>
+                            <span class="unit">{{formatNumsData(safeReinforce.config.count).unit}}个</span>
+                          </h3>
+                        </div>
+                      </div>
                     </div>
-                     <div class="right">{{ item.rate }}%</div>
-                  </div>
-                </div>
-              </div>
-              <!-- 资源分布-中间折线 -->
-              <div class="resource-distribution-center left-top-section-common" id="distribution-line-chart">
 
+                    <!-- <div class="safe-reinforce-bottom right-section-common"> -->
+                    <div class="safe-reinforce-bottom">
+                      <div class="left" id="reinforce-pie-chart"></div>
+                      <div class="center"></div>
+                      <div class="right">
+                        <div class="reinforce-legend-item" :class="{close: item.legendFlag === false}"
+                          v-for="(item, index) in charts.safeReinforce.data" :key="index" @click="triggleSafeLegend(item)">
+                          <div class="left">
+                            <div class="icon-outer">
+                              <i class="icon" :style="{backgroundColor: pieChartColors[index]}"></i>
+                            </div>
+                            <div class="reinforce-legend-item-name">{{ item.labelName }}</div>
+                          </div>
+                          <div class="right">{{ item.rightRate === 1 ? item.rightRate * 100 : (item.rightRate * 100).toFixed(2) }}%</div>
+                        </div>
+                      </div></div>
+
+                  </div>
+                  <!-- 安全防御战报 -->
+                  <div class="position-title">
+                    <div class="position-title-content text">安全防御战报</div>
+                  </div>
+                  <div class="safe-defense">
+                    <div class="safe-defense-list" v-if="safeDefense.length > 0">
+                      <div class="safe-defense-item" :class="{hight: item.type === 2}" v-for="(item, index) in safeDefense" :key="index">
+                        <div class="left">
+                          <div class="left-item">
+                            <!-- <span class="level">{{  }}</span> -->
+                            <span class="attack">{{ item.attackIp || '未知地址' }}</span> 攻击 
+                            <span class="local">{{ item.localIp }}</span>
+                          </div>
+                          <div class="left-item">{{ item.content }}</div>
+                        </div>
+                        <div class="right">
+                          <div class="right-item">{{ computedTimeHeader(item.time) }}</div>
+                          <div class="right-item">{{ computedTimeBody(item.time) }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="safe-defense-empty" v-else>
+                      <img src="./img/homepage/watch/empty.svg" />
+                      <div class="empty-label">暂无数据</div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <!-- 资源分布-下方数字 -->
-              <div class="resource-distribution-bottom left-top-section-common">
-                <!-- 上方三个 -->
-                <div class="top">
-                  <!-- 云专线 -->
-                  <div class="distribution-count-item">
-                    <div class="icon icon1"></div>
-                    <div class="content">
-                      <div class="count number-font">
-                        <div class="num-item-14" v-for="(num, ind) in formatNumsData(resourceDistribution.item1).value" :key="ind" :class="{dot: num === '.'}">
-                          <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                            <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                          </div>
-                        </div>
-                        <span class="num-item-inner-item">{{ formatNumsData(resourceDistribution.item1).unit }}</span>
-                      </div>
-                      <div class="label">云专线厂商</div>
-                    </div>
+            </div>
+          </div>
+          <!-- 左侧任务视图 - 最外层使用position-animate-container -->
+          <div class="position-animate-container" v-show="currentView.key === viewTask.key">
+            <!-- 隔离域1 -->
+            <div class="outer-container selectable wh50">
+              <div class="inner-container task-inner">
+                <div class="corner corner-top-left"></div>
+                <div class="corner corner-top-right"></div>
+                <div class="corner corner-bottom-left"></div>
+                <div class="corner corner-bottom-right"></div>
+                <div class="task-section">
+                  <div class="position-title">
+                    <div class="position-title-content text">XXTS隔离域001</div>
                   </div>
-                  <!-- 云服务 -->
-                  <div class="distribution-count-item">
-                    <div class="icon icon2"></div>
-                    <div class="content">
-                      <div class="count number-font">
-                        <div class="num-item-14" v-for="(num, ind) in formatNumsData(resourceDistribution.item2).value" :key="ind" :class="{dot: num === '.'}">
-                          <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                            <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                          </div>
-                        </div>
-                        <span class="num-item-inner-item">{{ formatNumsData(resourceDistribution.item2).unit }}</span>
+                  <div class="task-top">
+                    <div class="top">
+                      <div class="task-top-icon">
+                        <img src="./img/homepage/resituation/task-top-icon1.svg" />
                       </div>
-                      <div class="label">云服务厂商</div>
-                    </div>
-                  </div>
-                  <!-- 代理供应商 -->
-                  <div class="distribution-count-item">
-                    <div class="icon icon3"></div>
-                    <div class="content">
-                      <div class="count number-font">
-                        <div class="num-item-14" v-for="(num, ind) in formatNumsData(resourceDistribution.item3).value" :key="ind" :class="{dot: num === '.'}">
-                          <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                            <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                      <!-- 任务数量 -->
+                      <div class="task-total">
+                        <div class="value">
+                          <div class="num-item-20" v-for="(num, ind) in formatNumsData(tasks.task1.taskTotal, 1, 1).value" :key="ind"
+                            :class="{dot: num === '.'}">
+                            <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                              <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                            </div>
                           </div>
+                          <span class="num-item-inner-item">{{ formatNumsData(tasks.task1.taskTotal).unit }}</span>
+                          <span class="unit">个</span>
                         </div>
-                        <span class="num-item-inner-item">{{ formatNumsData(resourceDistribution.item3).unit }}</span>
+                        <div class="label">任务用量</div>
                       </div>
-                      <div class="label">代理供应商</div>
+                      <div class="task-speed-chart"></div>
                     </div>
+                    <div class="bottom"></div>
                   </div>
+                  <div class="task-bottom"></div>
                 </div>
-                <!-- 下方 -->
-                <div class="bottom">
-                  <!-- 公开代理采集渠道 -->
-                  <div class="distribution-count-item">
-                    <div class="icon icon4"></div>
-                    <div class="content">
-                      <div class="count number-font">
-                        <div class="num-item-14" v-for="(num, ind) in formatNumsData(resourceDistribution.item4).value" :key="ind" :class="{dot: num === '.'}">
-                          <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                            <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                          </div>
-                        </div>
-                        <span class="num-item-inner-item">{{ formatNumsData(resourceDistribution.item4).unit }}</span>
-                      </div>
-                      <div class="label">公开代理采集渠道</div>
-                    </div>
-                  </div>
-                  <!-- IOT -->
-                  <div class="distribution-count-item">
-                    <div class="icon icon5"></div>
-                    <div class="content">
-                      <div class="count number-font">
-                        <div class="num-item-14" v-for="(num, ind) in formatNumsData(resourceDistribution.item5).value" :key="ind" :class="{dot: num === '.'}">
-                          <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                            <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                          </div>
-                        </div>
-                        <span class="num-item-inner-item">{{ formatNumsData(resourceDistribution.item5).unit }}</span>
-                      </div>
-                      <div class="label">IOT设备补给渠道</div>
-                    </div>
-                  </div>
-                </div>
+              </div>
+            </div>
+            <!-- 隔离域2 -->
+            <div class="outer-container selectable wh50">
+              <div class="inner-container task-inner">
+                <div class="corner corner-top-left"></div>
+                <div class="corner corner-top-right"></div>
+                <div class="corner corner-bottom-left"></div>
+                <div class="corner corner-bottom-right"></div>
+                <div class="task-section"></div>
               </div>
             </div>
           </div>
         </div>
         <!-- 右下(3) -->
         <div class="position-right">
-          <div class="position-right-border-top"></div>
-          <div class="position-right-border-center"></div>
-          <div class="position-right-border-bottom"></div>
-          <div class="position-right-container">
-            <!-- 上方安全态势 -->
-            <div class="right-top-section position-common-section">
-              <!-- 安全态势标题 -->
-              <div class="position-title">
-                <img class="position-title-content" src="./img/homepage/safesituation/title.svg" />
-                <div class="safe-button" @click="showDialoger"></div>
-              </div>
-              <!-- 安全态势内容部分 -->
-              <div class="safe-situation-section right-section-common">
-                <!-- 安全评估指数 -->
-                <div class="safe-situation-count">
-                  <div class="content">
-                    <div class="number-font">
-                      <div class="num-item-16" v-for="(num, index) in safeSituation.indexCount" :key="index" :class="{dot: num === '.'}">
-                        <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                          <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+          <!-- 右侧非任务视图 -->
+          <div class="position-animate-container" v-show="!currentView || (currentView && currentView.key !== viewTask.key)">
+            <div class="outer-container wh100">
+              <div class="inner-container">
+                <div class="corner corner-top-left"></div>
+                <div class="corner corner-top-right"></div>
+                <div class="corner corner-bottom-left"></div>
+                <div class="corner corner-bottom-right"></div>
+                <div class="right-section">
+                  <div class="position-title">
+                    <div class="position-title-content text">系统状态</div>
+                  </div>
+                  <!-- 系统状态选择部分 -->
+                  <div class="system-select-container">
+                    <el-radio v-model="currentSystem" class="system-radio" v-for="(item, index) in systems" :key="index" :label="item.key" :value="item.key">
+                      <div class="system-item">
+                        <div class="top">{{ item.title }}</div>
+                        <div class="bottom">
+                          <div class="system-item-content">
+                            <div class="icon" :class="[`icon${index + 1}`]"></div>
+                            <div class="content">
+                              <div class="content-item">
+                                <div class="label">正常</div>
+                                <div class="value normal">
+                                  <div class="num-item-12" v-for="(num, ind) in formatNumsData(item.counts.normal, 1, 1).value" :key="ind"
+                                    :class="{dot: num === '.'}">
+                                    <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                                      <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="content-item">
+                                <div class="label">异常</div>
+                                <div class="value wrong">
+                                  <div class="num-item-12" v-for="(num, ind) in formatNumsData(item.counts.wrong, 1, 1).value" :key="ind"
+                                    :class="{dot: num === '.'}">
+                                    <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                                      <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="system-item-warning" :class="{warning: item.warning}">
+                            <i class="warning-icon"></i>
+                            <span>{{ item.warning || '无异常' }}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <span class="label">
-                      安全评估指数
-                      <el-tooltip content="本指数由近期节点健壮率、风险处置率、自动研判率、漏洞修复率和配置加固率共同加权计算得出" placement="top">
-                        <span class="tooltip">!</span>
-                      </el-tooltip>
-                    </span>
+                    </el-radio>
                   </div>
-                </div>
-                <!-- 风险处置率 -->
-                <div class="safe-situation-item">
-                  <div class="label">风险处置率</div>
-                  <div class="safe-count number-font">
-                    <div class="num-item-14" v-for="(num, index) in formatNumsUnit(safeSituation.saferisk.count).value" :key="index" :class="{dot: num === '.'}">
-                      <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                        <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                      </div>
-                    </div>
-                    <span class="unit">{{ formatNumsUnit(safeSituation.saferisk.count).unit }}</span>
-                    <span class="unit">个</span>
-                  </div>
-                  <span class="safe-rate">{{ safeSituation.saferisk.rate }}%</span>
-                </div>
-                <!-- 告警降噪率 -->
-                <div class="safe-situation-item">
-                  <div class="label">告警降噪率</div>
-                  <div class="safe-count number-font">
-                    <div class="num-item-14" v-for="(num, index) in formatNumsUnit(safeSituation.warning.count).value" :key="index" :class="{dot: num === '.'}">
-                      <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                        <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                      </div>
-                    </div>
-                    <span class="unit">{{ formatNumsUnit(safeSituation.warning.count).unit }}</span>
-                    <span class="unit">个</span>
-                  </div>
-                  <span class="safe-rate">{{ safeSituation.warning.rate }}%</span>
-                </div>
-                <!-- 节点健壮率 -->
-                <div class="safe-situation-item">
-                  <div class="label">节点健壮率</div>
-                  <div class="safe-count number-font">
-                    <div class="num-item-14" v-for="(num, index) in formatNumsUnit(safeSituation.node.count).value" :key="index" :class="{dot: num === '.'}">
-                      <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                        <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                      </div>
-                    </div>
-                    <span class="unit">{{ formatNumsUnit(safeSituation.node.count).unit }}</span>
-                    <span class="unit">个</span>
-                  </div>
-                  <span class="safe-rate">{{ safeSituation.node.rate }}%</span>
-                </div>
-              </div>
-            </div>
-            <!-- 中间加固状态 -->
-            <div class="right-center-section position-common-section">
-              <!-- 安全加固标题 -->
-              <div class="position-title">
-                <img class="position-title-content" src="./img/homepage/reinforce/title.svg" />
-              </div>
-              <!-- 上部的两个部分 -->
-              <div class="safe-reinforce-top">
-                <!-- transfer-section-count-item -->
-                <div class="safe-reinforce-item">
-                  <div class="icon">
-                    <img src="./img/homepage/reinforce/item-icon0.svg" />
-                  </div>
-                  <div class="content">
-                    <div class="label">漏洞修复率 <span class="safe-rate">{{ safeReinforce.bug.rate }}%</span></div>
-                    <h3 class="number-font">
-                      <div class="num-item-16" v-for="(num, index) in formatNumsData(safeReinforce.bug.count).value" :key="index" :class="{dot: num === '.'}">
-                        <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                          <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                        </div>
-                      </div>
-                      <span class="unit">{{formatNumsData(safeReinforce.bug.count).unit}}个</span>
-                    </h3>
-                  </div>
-                </div>
-                <div class="safe-reinforce-item">
-                  <div class="icon">
-                    <img src="./img/homepage/reinforce/item-icon1.svg" />
-                  </div>
-                  <div class="content">
-                    <div class="label">配置加固率 <span class="safe-rate">{{ safeReinforce.config.rate }}%</span></div>
-                    <h3 class="number-font">
-                      <div class="num-item-16" v-for="(num, index) in formatNumsData(safeReinforce.config.count).value" :key="index" :class="{dot: num === '.'}">
-                        <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
-                          <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
-                        </div>
-                      </div>
-                      <span class="unit">{{formatNumsData(safeReinforce.config.count).unit}}个</span>
-                    </h3>
-                  </div>
-                </div>
-              </div>
-              <!-- 下方的饼图部分 -->
-              <div class="safe-reinforce-bottom right-section-common">
-                <div class="left" id="reinforce-pie-chart"></div>
-                <div class="center"></div>
-                <div class="right">
-                  <!-- trigger-custrom -->
-                  <div class="reinforce-legend-item" :class="{close: item.legendFlag === false}" v-for="(item, index) in charts.safeReinforce.data" :key="index" @click="triggleSafeLegend(item)">
-                    <div class="left">
-                      <div class="icon-outer">
-                        <i class="icon" :style="{backgroundColor: pieChartColors[index]}"></i>
-                      </div>
-                      <div class="reinforce-legend-item-name">{{ item.labelName }}</div>
-                    </div>
-                    <div class="right">{{ item.rightRate === 1 ? item.rightRate * 100 : (item.rightRate * 100).toFixed(2) }}%</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 下方风险统计 -->
-            <div class="right-bottom-section position-common-section">
-              <!-- 安全风险统计标题 -->
-              <div class="position-title">
-                <img class="position-title-content" src="./img/homepage/saferisk/title.svg" />
-              </div>
-              <!-- 安全风险 - 上方 -->
-              <div class="risk-top-section">
-                <div class="left" id="risk-top-chart"></div>
-                <div class="center"></div>
-                <!-- 右侧的国家统计 -->
-                <div class="right">
-                  <div class="header">攻击源国家TOP10</div>
-                  <div class="body">
-                    <div class="country-item" v-for="(item, index) in countryTopList">
+                  <!-- 巡检标题 -->
+                  <div class="right-title">
+                    <div class="inner">
                       <div class="left">
-                        <div class="item-index">{{ index + 1 }}</div>
-                        <img v-if="item.name" class="item-image" :src="getCountryObj(item.name).imageUrl" />
-                        <div class="item-name">{{ getCountryObj(item.name).chineseName }}</div>
+                        <i class="inspection-icon"></i>
+                        <span class="inspection-label">最后一次巡检时间：</span>
+                        <span class="inspection-time">{{ new Date(inspection.time).toLocaleString() }}</span>
                       </div>
                       <div class="right">
-                        <div class="item-count">{{ item.count }}</div> 
-                        <!-- <div class="item-count">{{ formatNumsData(item.count).value + formatNumsData(item.count).unit }}</div> -->
-                        <!-- <div class="item-change" :class="{up: item.change > 0, down: item.change < 0}">
-                          <img v-if="item.change > 0" src="./img/homepage/saferisk/up-arrow.svg" />
-                          <img v-if="item.change < 0" src="./img/homepage/saferisk/down-arrow.svg" />
-                          {{ item.change === 0 ? '' : Math.abs(item.change) }}
-                        </div> -->
-                        <div class="item-change" :class="{up: item.change > 0, down: item.change < 0}">
-                          {{''}}
-                        </div>
+                        <i class="inspection-res-icon"></i>
+                        <span>{{ inspection.result }}</span>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-              <!-- 安全风险 - 中间图表 -->
-              <div class="risk-center-section" id="risk-center-chart"></div>
-              <!-- 安全风险 - 下方威胁预警 -->
-              <div class="risk-bottom-section">
-                <div class="risk-bottom-section-header">
-                  <div class="left">
-                    <img class="header-icon" src="./img/homepage/saferisk/warning-icon.svg" />
-                    <span class="header-title">威胁预警</span>
+                  <div class="s2">
+                    <!-- 硬件设施的统计表格 -->
+                    <iframe
+                      :src="computedTest"
+                      style="width: 100%; height: 100%; border: none!important;"></iframe>
                   </div>
-                  <div class="right">
-                    <div class="type-item" v-for="(item, index) in safeThreatTypes" :key="index">
-                      <img :src="getSafeThreatItemStatus(item.value)" />
-                      <span>{{ item.label }}</span>
-                    </div>
+                  <div class="position-title">
+                    <div class="position-title-content text">服务状态</div>
                   </div>
-                </div>
-                <div class="risk-bottom-section-body" v-if="safeThreatList.length > 0">
-                  <div class="watch-item" v-for="(item, index) in safeThreatList" :key="index">
-                    <div class="watch-item-status">
-                      <img :src="getSafeThreatItemStatus(item.status)" />
-                    </div>
-                    <div class="watch-item-content">
-                      <div class="left">
-                        <div class="icon">
-                          <img src="./img/homepage/watch/icon-1.svg" />
+                  <div class="s3"></div>
+                  <div class="position-title">
+                    <div class="position-title-content text">故障告警</div>
+                  </div>
+                  <!-- 故障告警 -->
+                  <div class="fault-warning">
+                    <div class="fault-warning-list" v-if="faults.length > 0">
+                      <div class="fault-warning-item" v-for="(item, index) in faults" :key="index">
+                        <div class="header">
+                          <i class="icon"></i>
                         </div>
-                        <!-- <div class="watch-item-summy">{{item.des}}</div> -->
-                        <el-tooltip :disabled="!item.des" placement="top" effect="dark" :content="item.des" open-delay="600">
-                          <div class="watch-item-summy">{{item.name}}</div>
-                        </el-tooltip>
+                        <div class="content">{{ item.content }}</div>
                       </div>
-                      <div class="right">{{ item.time }}</div>
+                    </div>
+                    <div class="fault-warning-empty" v-else>
+                      <img src="./img/homepage/watch/empty.svg" />
+                      <div class="empty-label">暂无数据</div>
                     </div>
                   </div>
-                </div>
-                <div class="risk-bottom-section-body-empty" v-else>
-                  <img src="./img/homepage/watch/empty.svg" />
-                  <div class="empty-label">暂无数据</div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-        <!-- 安全信息一览弹框 -->
-        <div class="mask" v-show="dialogFlag">
-            <div class="dialoger-container" v-show="dialogFlag">
-              <div class="close" @click="closeDialoger"></div>
-              <div class="inner">
-                <div class="header"></div>
-                <div class="content">
-                  <div class="item" v-for="(content, index) in dialogerContent" :key="index">
-                    <div class="item-content" :class="{disabled: item.disabled}" v-for="(item, ind) in content.texts" :key="ind">
-                      <div class="left">
-                        <img class="icon" src="./img/homepage/dialoger/arrow.svg" />
-                        <span class="text">{{ item.text }}</span>
-                      </div>
-                      <img v-if="!item.disabled" class="right" src="./img/homepage/dialoger/safe.svg" />
-                      <img v-else class="right" src="./img/homepage/dialoger/disabled.svg" />
-                    </div>
-                  </div>
-                </div>
+          <!-- 右侧任务视图 - 最外层使用position-animate-container-->
+          <div class="position-animate-container" v-show="currentView.key === viewTask.key">
+            <!-- 隔离域1 -->
+            <div class="outer-container selectable wh50">
+              <div class="inner-container task-inner">
+                <div class="corner corner-top-left"></div>
+                <div class="corner corner-top-right"></div>
+                <div class="corner corner-bottom-left"></div>
+                <div class="corner corner-bottom-right"></div>
+                <div class="task-section"></div>
               </div>
             </div>
+            <!-- 隔离域2 -->
+            <div class="outer-container selectable wh50">
+              <div class="inner-container task-inner">
+                <div class="corner corner-top-left"></div>
+                <div class="corner corner-top-right"></div>
+                <div class="corner corner-bottom-left"></div>
+                <div class="corner corner-bottom-right"></div>
+                <div class="task-section"></div>
+              </div>
+            </div>
+          </div>
         </div> 
       </uas-loading>
     </div>
@@ -662,6 +593,7 @@
     <script src="js/zapi.js"></script>
     <script src="js/captcha.js"></script>
     <script src="js/chartsGL.js"></script>
+    <script src="./assets/js/lodash@4.17.21.js"></script>
     <!-- 引入地球相关依赖 -->
     <script src="./assets/js/three/build/three.js"></script>
     <script src="./assets/js/three/build/OrbitControls.js"></script>
@@ -718,15 +650,6 @@
       let resourceLineChartTransparentColors = ['rgba(5,253,252, 0)', 'rgba(246, 255, 0, 0)'];
       // 安全加固饼图颜色
       let pieChartColors = ['rgb(128,188,255)', 'rgb(162,225,249)', 'rgb(151,235,205)', 'rgb(186,225,179)', 'rgb(255,204,128)', 'rgb(250,145,150)']
-      // 3d饼图的颜色
-      let pieChart3dColors = [
-        'rgb(58,137,255)',
-        'rgb(86,74,241)',
-        'rgb(60,212,149)',
-        'rgb(72,229,229)',
-        'rgb(190,229,251)',
-        'rgb(255,204,128)', 
-      ]
       // 转换echart图标的字体函数
       function setChartSize(res) {
         const clientWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -943,252 +866,6 @@
           // inactiveBorderWidth: 'auto',
         }
       ];
-      // 安全风险顶部图表配置项
-      let safeRiskTopOption = JSON.parse(JSON.stringify(transferOption));
-      safeRiskTopOption.grid.bottom = setChartSize(0);
-      safeRiskTopOption.xAxis.boundaryGap = setChartSize(20);
-      safeRiskTopOption.xAxis.axisLabel.fontSize = setChartSize(12);
-      safeRiskTopOption.yAxis = [
-        {
-          type: 'value',
-          name: '攻击次数(次)',
-          nameLocation: 'end',
-          nameTextStyle: {
-            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
-            align: 'left'
-          },
-          splitLine: {
-            lineStyle: {
-              type: 'solid'
-            }
-          },
-          // y轴轴线刻度字
-          axisLabel: {
-            // 设置格式
-            // formatter: '{value}bps',
-            color: '#868e97',
-            fontSize: setChartSize(12)
-          },
-          axisLine: {
-            show: true
-          },
-          // 背景刻度线
-          splitLine: {
-            lineStyle: {
-              type: 'dashed',
-              color: '#868e97'
-            },
-            show: false
-          }
-        },
-        {
-          type: 'value',
-          name: '风险处置率(%)',
-          nameLocation: 'end',
-          nameTextStyle: {
-            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
-            align: 'right'
-          },
-          splitLine: {
-            lineStyle: {
-              type: 'solid'
-            }
-          },
-          // y轴轴线刻度字
-          axisLabel: {
-            // 设置格式
-            // formatter: '{value}bps',
-            color: '#868e97',
-            // fontSize: setChartSize(14),
-            fontSize: setChartSize(12),
-            // margin: setChartSize(12)
-          },
-          axisLine: {
-            show: true
-          },
-          // 背景刻度线
-          splitLine: {
-            lineStyle: {
-              type: 'dashed',
-              color: '#868e97'
-            }
-          }
-        }
-      ];
-      safeRiskTopOption.legend = [
-        {
-          show: false,
-          orient: 'horizontal',
-          left: 'center',
-          top: 0,
-          align: 'auto',
-          backgroundColor: 'rgba(0,0,0,0)',
-          borderColor: '#ccc',
-          borderRadius: 0,
-          borderWidth: 0,
-          padding: setChartSize(5),
-          itemGap: setChartSize(10),
-          itemWidth: setChartSize(25),
-          itemHeight: setChartSize(14),
-          textStyle: {
-            color: '#868e97',
-            fontSize: setChartSize(14)
-          }
-        }
-      ];
-      // 安全风险中间的图表
-      let safeRiskCenter = JSON.parse(JSON.stringify(safeRiskTopOption));
-      safeRiskCenter.yAxis = [
-        {
-          type: 'value',
-          name: '发现风险数量(个)',
-          nameLocation: 'end',
-          nameTextStyle: {
-            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
-            align: 'left'
-          },
-          splitLine: {
-            lineStyle: {
-              type: 'solid'
-            }
-          },
-          // y轴轴线刻度字
-          axisLabel: {
-            // 设置格式
-            // formatter: '{value}bps',
-            color: '#868e97',
-            fontSize: setChartSize(12)
-          },
-          axisLine: {
-            show: true
-          },
-          // 背景刻度线
-          splitLine: {
-            lineStyle: {
-              type: 'dashed',
-              color: '#868e97'
-            },
-            show: false
-          }
-        },
-        {
-          type: 'value',
-          name: '智能研判覆盖率(%)',
-          nameLocation: 'end',
-          nameTextStyle: {
-            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
-            align: 'right'
-          },
-          splitLine: {
-            lineStyle: {
-              type: 'solid'
-            }
-          },
-          // y轴轴线刻度字
-          axisLabel: {
-            // 设置格式
-            // formatter: '{value}bps',
-            color: '#868e97',
-            // fontSize: setChartSize(14),
-            fontSize: setChartSize(12),
-            // margin: setChartSize(12)
-          },
-          axisLine: {
-            show: true
-          },
-          // 背景刻度线
-          splitLine: {
-            lineStyle: {
-              type: 'dashed',
-              color: '#868e97'
-            }
-          }
-        }
-      ];
-      safeRiskCenter.xAxis.boundaryGap = setChartSize(40);
-      // 资源概览图表配置项
-      let resourceOption = {
-        color: chartColors,
-        title: {
-          show: true,
-          text: '',
-          subtext: '资源用量分布',
-          left: '49%',
-          // top: '42%',
-          top: '39%',
-          // left: '39%',
-          // top: '40%',
-          textAlign: 'center',
-          textStyle: {
-            color: '#0dffff',
-            fontSize: setChartSize(24),
-            fontFamily: 'NUMBER Font'
-          },
-          subtextStyle: {
-            color: '#ddeeff',
-            fontSize: setChartSize(14)
-          }
-        },
-        grid: {
-          containLabel: true
-        },
-        tooltip: {
-          trigger: 'item',
-          backgroundColor: 'rgba(24, 34, 107, .7)',
-          borderColor: 'rgba(50, 57, 103, 0.9)',
-          borderWidth: 1,
-          textStyle: {
-            color: '#ddeeff',
-            fontSize: setChartSize(14)
-          },
-          confine: true
-          // formatter(params){
-          //   return `${params.marker}${params.name}&emsp;${params.value}&emsp;${params.logPercent}`;
-          // }
-        },
-        legend: {
-          show: false,
-          data: [],
-          icon: 'roundRect',
-          orient: 'vertical',
-          right: 30,
-          itemWidth: 20,
-          itemHeight: 12,
-          textStyle: {
-            fontSize: setChartSize(14)
-          }
-        },
-        series: [
-          {
-            type: 'pie',
-            // radius: ['50%', '75%'],
-            radius: ['70%', '85%'],
-            // center: ['40%', '50%'],ss
-            width: '100%',
-            height: '100%',
-            avoidLabelOverlap: true,
-            // itemStyle: {
-            //   borderRadius: 3,
-            //   borderColor: '#fff',
-            //   borderWidth: 3
-            // },
-            label: {
-              show: false
-            },
-            emphasis: {
-              disabled: false,
-              scale: false,
-              label: {
-                show: false
-              }
-            },
-            labelLine: {
-              show: false
-            },
-            data: []
-          }
-        ]
-      };
       // 安全加固的默认饼图配置
       let defaultPieOption = {
         backgroundColor: 'transparent',
@@ -1366,16 +1043,17 @@
               { positionIndex: 6, opacity: 1, scale: 1 },
               { positionIndex: 7, opacity: 1, scale: 1 },
               { positionIndex: 8, opacity: 1, scale: 1 }
-              // { positionIndex: 0, opacity: 0.2, scale: 1 },
-              // { positionIndex: 1, opacity: 0, scale: 0.8 },
-              // { positionIndex: 2, opacity: 0, scale: 0.6 },
-              // { positionIndex: 3, opacity: 0, scale: 0.7 },
-              // { positionIndex: 4, opacity: 0, scale: 0.85 },
-              // { positionIndex: 5, opacity: 0.7, scale: 1.05 },
-              // { positionIndex: 6, opacity: 0.9, scale: 1.1 },
-              // { positionIndex: 7, opacity: 1, scale: 1.2 },
-              // { positionIndex: 8, opacity: 0.9, scale: 1.05 }
+              // { positionIndex: 0, opacity: 1, scale: 1 },
+              // { positionIndex: 1, opacity: 1 / 9, scale: 1 },
+              // { positionIndex: 2, opacity: 0, scale: 1 },
+              // { positionIndex: 3, opacity: 0, scale: 1 },
+              // { positionIndex: 4, opacity: 5 / 9, scale: 1 },
+              // { positionIndex: 5, opacity: 1, scale: 1 },
+              // { positionIndex: 6, opacity: 1, scale: 1 },
+              // { positionIndex: 7, opacity: 1, scale: 1 },
+              // { positionIndex: 8, opacity: 1, scale: 1 }
             ],
+            // 小球聚拢状态下的位置，index => 从椭圆右顶点0.5的位置开始算: index * (半圈的进度为0.5 / (10段距离))
             ballShowPoints: [
               { positionIndex: 1, position: 0.5 + 1 * 0.5 / 10 },
               { positionIndex: 2, position: 0.5 + 2 * 0.5 / 10 },
@@ -1387,131 +1065,45 @@
               { positionIndex: 8, position: 0.5 + 8 * 0.5 / 10 },
               { positionIndex: 9, position: 0.5 + 9 * 0.5 / 10 },
             ],
-            // <====================
-            isEditing:false,
-            editContent: '',
-            dialogFlag: false,
-            dialogerContent: [
-              { 
-                title: '安全准入', 
-                texts: [
-                  { text: 'IP 信誉评估', disabled: false },
-                  { text: '域名风险评估', disabled: false },
-                  { text: '多源情报综合研判', disabled: false },
-                  { text: '蜜罐伪装评估', disabled: true },
-                  { text: '木马失陷检测', disabled: true },
-                  { text: '资源安全评分', disabled: false },
-                ],
-                disabled: false 
-              },
-              { 
-                title: '智能加固', 
-                texts: [
-                  { text: '漏洞情报订阅', disabled: false },
-                  { text: '漏洞持续性监测', disabled: false },
-                  { text: '漏洞特征采集', disabled: false },
-                  { text: '漏洞影响面评估', disabled: false },
-                  { text: '漏洞修复策略生成', disabled: false },
-                  { text: '策略人机辅助校验', disabled: false },
-                  { text: '漏洞智能修复', disabled: false },
-                  { text: '系统配置基线自适应校准', disabled: false },
-                  { text: '系统配置漂移实时监测', disabled: false },
-                  { text: '合规性配置策略编排', disabled: false },
-                  { text: '系统配置自动化加固', disabled: false }
-                ],
-                disabled: false 
-              },
-              { 
-                title: '主动免疫', 
-                texts: [
-                  { text: '零信任终端行为混淆', disabled: true },
-                  { text: '攻击面动态测绘与收敛', disabled: false },
-                  { text: '蜜罐欺骗防御环境构建', disabled: true },
-                  { text: '多因子动态身份鉴权', disabled: false },
-                  { text: '细粒度操作权限动态分配', disabled: true },
-                  { text: 'EDR+NDR联合态势感知', disabled: false },
-                  { text: '实时风险阻断与威胁狩猎', disabled: false },
-                  { text: '用网异常行为基线建模', disabled: false }
-                ],
-                disabled: false 
-              },
-              { 
-                title: '智能决策', 
-                texts: [
-                  { text: '多源威胁情报聚合', disabled: false },
-                  { text: '多维告警关联分析', disabled: true },
-                  { text: '告警自主智能降噪', disabled: false },
-                  { text: '攻击风险即时研判', disabled: true },
-                  { text: '攻击趋势智能预测', disabled: true },
-                  { text: '隐蔽威胁面发现', disabled: false }
-                ],
-                disabled: false 
-              },
-              { 
-                title: '动态响应', 
-                texts: [
-                  { text: '响应预案自动化编排', disabled: true },
-                  { text: '攻击源防溯源取证', disabled: true },
-                  { text: '多源情报联动响应', disabled: false },
-                  { text: '人机协同决策处置', disabled: false },
-                  { text: '处置验证与证据链固化', disabled: true }
-                ],
-                disabled: true 
-              },
-              { 
-                title: '溯源与分析', 
-                texts: [
-                  { text: '攻击技战术全链路还原', disabled: true },
-                  { text: '数字取证与事件时间线重建', disabled: true },
-                  { text: '跨事件关联构建', disabled: true },
-                  { text: '攻击战术模式识别', disabled: true },
-                  { text: '攻击战术博弈抵抗', disabled: true },
-                  { text: '对抗环境主动验证', disabled: false }
-                ],
-                disabled: true 
+            // 左侧 ======> 安全监测
+            safeMonitor: {
+              // 得分
+              scout: '100',
+              // 指数
+              indexs: {
+                node: '8.7',
+                defense: '8.6',
+                linkage: '9.1'
               }
+            },
+            // 左侧 ======> 安全战技战术
+            safeStrategy: [
+              { row: 1, cols: [
+                { show: false },
+                { show: true, label: '初始访问', value: '851612' },
+                { show: true, label: '执行', value: '8169' },
+                { show: false },
+              ] },
+              { row: 2, cols: [
+                { show: true, label: '持久化', value: '15' },
+                { show: true, label: '权限提升', value: '3' },
+                { show: true, label: '防御绕过', value: '0' },
+                { show: true, label: '凭证获取', value: '0' },
+              ] },
+              { row: 3, cols: [
+                { show: true, label: '发现', value: '0' },
+                { show: true, label: '横向移动', value: '15' },
+                { show: true, label: '收集', value: '7' },
+                { show: true, label: '信息窃取', value: '0' },
+              ] },
+              { row: 4, cols: [
+                { show: true, label: '命令控制', value: '15' },
+                { show: true, label: '影响', value: '2' },
+                { show: true, label: '资源部署', value: '15' },
+                { show: true, label: '侦察', value: '1' },
+              ] },
             ],
-            // 资源池数据 earthleftdata
-            resourcePool: {
-              key: 'total',
-              // 储备
-              total: {
-                count: '0',
-                anonymous: '0',
-                open: '0'
-              },
-              // 用量
-              use: {
-                count: '0',
-                anonymous: '0',
-                open: '0'
-              }
-            },
-            // 资源分布数据 earthleftdata
-            resourceDistribution: {
-              item1: '0',
-              item2: '0',
-              item3: '0',
-              item4: '0',
-              item5: '0'
-            },
-            // 总体安全态势上方数据
-            safeSituation: {
-              indexCount: '0.00',
-              saferisk: {
-                count: '0',
-                rate: 0
-              },
-              warning: {
-                count: '0',
-                rate: 0
-              },
-              node: {
-                count: '0',
-                rate: 0
-              }
-            },
-            // 安全加固上方数据
+            // 左侧 ======> 安全加固上方数据
             safeReinforce: {
               bug: {
                 count: '0',
@@ -1519,31 +1111,116 @@
               },
               config: {
                 count: '0',
-                rate: 0 
+                rate: 0
               }
             },
-            // 安全风险攻击源国家TOP10
-            countryTopList: [
-              { name: '', count: 0, change: 0 },
-              { name: '', count: 0, change: -12 },
-              { name: '', count: 0, change: 22 },
-              { name: '', count: 0, change: 0 },
-              { name: '', count: 0, change: 0 },
-              { name: '', count: 0, change: 0 },
-              { name: '', count: 0, change: 0 },
-              { name: '', count: 0, change: 0 },
-              { name: '', count: 0, change: 0 },
-              { name: '', count: 0, change: 0 }
+            // 左侧 ======> 安全防御
+            safeDefense: [
+              { attackIp: '10.136.1.122', localIp: '10.130.13.107', type: 0, content: '检测到HTTP_WebShell上传_疑似JSP_WebShell', time: 1779843662895 },
+              { attackIp: '10.136.1.122', localIp: '10.130.13.107', type: 2, content: '检测到HTTP_WebShell上传_疑似JSP_WebShell', time: 1779843662895 },
+              { attackIp: '10.136.1.122', localIp: '10.130.13.107', type: 1, content: '检测到HTTP_WebShell上传_疑似JSP_WebShell', time: 1779843662895 },
+              { attackIp: '10.136.1.122', localIp: '10.130.13.107', type: 2, content: '检测到HTTP_WebShell上传_疑似JSP_WebShell', time: 1779843662895 },
             ],
-            // 威胁预警列表
-            safeThreatList: [],
-            // 安全风险 - 威胁预警等级
-            safeThreatTypes: [
-              { value: 'Critical', label: '严重' },
-              { value: 'High', label: '高危' },
-              { value: 'Medium', label: '中危' },
-              { value: 'Low', label: '低危' }
+            // 右侧 ======> 系统状态选择数组
+            currentSystem: 1,
+            systems: [
+              {
+                title: '硬件设施',
+                key: 1,
+                counts: {
+                  normal: '200',
+                  wrong: '15'
+                },
+                warning: '硬件设施异常'
+              },
+              {
+                title: '软件环境',
+                key: 2,
+                counts: {
+                  normal: '23',
+                  wrong: '0'
+                },
+                warning: null
+              },
+              {
+                title: '系统组件',
+                key: 3,
+                counts: {
+                  normal: '34',
+                  wrong: '5'
+                },
+                warning: '系统组件异常'
+              },
             ],
+            // 巡检的标题
+            inspection: {
+              time: Date.now(),
+              result: '正常'
+            },
+            // 故障告警列表
+            faults: [
+              { content: 'MySQL服务器  数据库服务器性能异常' },
+              { content: 'MySQL服务器  数据库服务器性能异常' },
+              { content: 'MySQL服务器  数据库服务器性能异常' },
+              { content: 'MySQL服务器  数据库服务器性能异常' },
+              { content: 'MySQL服务器  数据库服务器性能异常' },
+            ], 
+            // 选择的隔离域
+            selectTask: null,
+            // 任务面板数据
+            tasks: {
+              task1: {
+                title: 'XXTS隔离域001(M)',
+                igroup_id: 4,
+                // 选择时的地图飞线数据
+                mapDatas: [],
+                // 任务用量
+                taskTotal: '0',
+                // 最长持续
+                max_duration: '--',
+                // 平均持续
+                avg_duration: '--'
+              },
+              task2: {
+                title: 'XXTS隔离域001(R)',
+                igroup_id: 6,
+                // 选择时的地图飞线数据
+                mapDatas: [],
+                // 任务用量
+                taskTotal: '0',
+                // 最长持续
+                max_duration: '--',
+                // 平均持续
+                avg_duration: '--'
+              },
+              task3: {
+                title: 'XXTS隔离域001(T)',
+                igroup_id: 5,
+                // 选择时的地图飞线数据
+                mapDatas: [],
+                // 任务用量
+                taskTotal: '0',
+                // 最长持续
+                max_duration: '--',
+                // 平均持续
+                avg_duration: '--'
+              },
+              task4: {
+                title: 'XXTS隔离域001(M)',
+                igroup_id: 7,
+                // 选择时的地图飞线数据
+                mapDatas: [],
+                // 任务用量
+                taskTotal: '0',
+                // 最长持续
+                max_duration: '--',
+                // 平均持续
+                avg_duration: '--'
+              },
+            },
+            // <====================
+            isEditing:false,
+            editContent: '',
             dateBg: 'default',
             topTimeRange: '',
             pickerOptions: {
@@ -1694,11 +1371,6 @@
               distributionLine: {
                 chart: null
               },
-              // 资源分布饼图
-              distributionPie: {
-                chart: null,
-                data: []
-              },
               // 安全加固饼图
               safeReinforce: {
                 data: [],
@@ -1706,10 +1378,6 @@
               },
               // 安全风险顶部图表
               safeRiskTop: {
-                chart: null
-              },
-              // 安全风险中间图表
-              safeRiskCenter: {
                 chart: null
               },
               // 传输态势
@@ -1739,10 +1407,39 @@
           $app = this;
           // 初始时设置当前视图为初始视图
           this.currentView = this.viewNow;
+          $api.situation.getSourceView({},function (res){
+            console.log('资源视图数据')
+            console.log(res)
+          })
+          $api.situation.getNetworkView({}, function (res) {
+            console.log('网络视图数据')
+            console.log(res)
+          })
+          $api.situation.getTaskView({}, function (res) {
+            console.log('任务视图数据')
+            console.log(res)
+          })
+
+          // $api.Account.GetUserinfo(async function (user) {
+          //   console.log('尝试先获取用户信息')
+          //   console.log(user)
+          //   let igroupDatas = [];
+          //   const datas = (await $app.getIgroup(user.id)) || { igroup_data: [] };
+          //   console.log('获取隔离域组')
+          //   console.log(datas)
+          // }, function (err) {
+          //   if (err.data == '没有权限' || err.status == 403) window.location.href = 'login.html';
+          //   else if (!window.$app) {
+          //     let h1 = document.createElement('h1');
+          //     h1.innerHTML = '<div style="text-align: center;line-height: 200px;">' + err + '</div>';
+          //     document.body.appendChild(h1);
+          //   }
+          // })
+          this.getIgroupTransport(4);
+          this.queryIgroupStatisticInfo(4)
         },
         mounted() {
-          console.log('看一下小球排列的位置')
-          console.log(this.ballShowPoints.map(item => item.position))
+          this.initIgroupDatas(4)
           this.init();
           // $app.updateTimer = setInterval(this.update, 10000);
           window.addEventListener('resize', $app.resize);
@@ -1776,20 +1473,6 @@
           $app.updateTimer && clearInterval($app.updateTimer);
         },
         computed: {
-          // 根据威胁等级获取对应图标路径
-          getSafeThreatItemStatus(){
-            return function (status){
-              let imgSrc = './img/homepage/saferisk/strict.svg';
-              if (status === 'High'){
-                imgSrc = './img/homepage/saferisk/hight.svg';
-              } else if (status === 'Medium'){
-                imgSrc = './img/homepage/saferisk/middle.svg';
-              } else if (status === 'Low'){
-                imgSrc = './img/homepage/saferisk/low.svg';
-              }
-              return imgSrc;
-            }
-          },
           deelHomeTimeFormat() {
             return new Date(this.homeTime).toLocaleString();
           },
@@ -1811,29 +1494,118 @@
             }
             return sizeLabel;
           },
-          // 自动计算资源池的用量百分比
-          getResourcePoolPercentage(){
-            if (!this.resourcePool.total.count || !this.resourcePool.use.count || this.resourcePool.total.count === '0' || this.resourcePool.use.count === '0') {
-              return '0%';
-            } else {
-              let result = '0%';
-              let use = Number.isNaN(+this.resourcePool.use.count) ? 0 : +this.resourcePool.use.count;
-              let total = +this.resourcePool.total.count;
-              if (Number.isNaN(total)){
-                return result;
-              }
-              result = `${Math.round((use / total) * 100)}%`;
-              return result;
-            }
-          },
           // 获取资源小球的背景图
           computedBallBg(){
             return function (item){
               return $app.currentBall && $app.currentBall.type === item.type ? `url('./img/homepage/resituation/source-ball-${item.type}-ac.svg')` : `url('./img/homepage/resituation/source-ball-${item.type}.svg')`;
             }
+          },
+          // 获取时间头部年-月-日
+          computedTimeHeader(){
+            return function (time){
+              let timeHeader = '';
+              if (time){
+                let timer = new Date(time);
+                let year = timer.getFullYear();
+                let month = timer.getMonth() + 1;
+                let day = timer.getDate();
+                timeHeader = `${year}-${month}-${day}`;
+              }
+              return timeHeader;
+            }
+          },
+          // 获取时间部分时:分:秒
+          computedTimeBody(){
+            return function (time){
+              let timeBody = '';
+              if (time) {
+                let timer = new Date(time);
+                let hour = `${timer.getHours()}`.padStart(2, '0');
+                let min = `${timer.getMinutes()}`.padStart(2, '0');
+                let sec = `${timer.getSeconds()}`.padStart(2, '0');
+                timeBody = `${hour}:${min}:${sec}`;
+              }
+              return timeBody;
+            }
+          },
+          iframeSrc(){
+            return window.BaseURL.proxyServices;  
+          },
+          computedTest(){
+            return `${this.iframeSrc}/d-solo/HOME-EARTH/e5a4a7-e5b18f-e58fb3-e4bea7-e79c8b-e69dbf?orgId=1&from=1779956545434&to=1779960145434&timezone=browser&var-db=z_v04_2604&var-project=api_log&var-server_ip=$__all&var-server_ip_old=$__all&var-domain=$__all&var-status=1%3D1&var-uri=%2Fapi%2Fc%2Forder%2Fresult&var-cip=172.20.5.254&var-cal_interval=60&var-datasource=bffru6y51rg8wa&refresh=5m&tab=queries&panelId=206&__feature.dashboardSceneSolo`;
           }
         },
         methods: {
+          initIgroupDatas(igroup_id){
+            Object.entries(this.tasks).forEach(([taskKey, task]) => {
+              let taskGroupId = task.igroup_id;
+              $api.transferSituation.igroupTransport(
+                { params: { igroup_id:  taskGroupId } },
+                function (res){
+                  if (res.code === 200 && res.data) {
+                    $app.tasks[taskKey].max_duration = res.data.max_duration ? $app.overviewFormatTime(res.data.max_duration) : '--';
+                    $app.tasks[taskKey].avg_duration = res.data.avg_duration ? $app.overviewFormatTime(res.data.avg_duration) : '--';
+                    $app.tasks[taskKey].taskTotal = res.data.count ? `${res.data.count}` : '0';
+                    console.log(taskKey)
+                    console.log($app.tasks[taskKey])
+                  }
+                },
+                function (err){
+                  console.log(err)
+                }
+              );
+            })
+            
+          },
+          // 隔离域数据拉取1
+          // $api.transferSituation.igroupTransport
+          // 隔离组数据2
+          // $api.isolation.getIgroupStatisticInfo
+          // 传输速率 type: 上行 input; 下行 output
+          // $api.transferSituation.getTransportRate
+          getIgroupTransport(igroup_id) {
+            return new Promise((resolve, reject) => {
+              $api.transferSituation.igroupTransport(
+                { params: { igroup_id } },
+                res => {
+                  // console.log('隔离与数据1')
+                  // console.log(res)
+                  const { code, data } = res;
+                  if (code === 200 && data) {
+                    return resolve(data);
+                  }
+                  return resolve({ count: 0, avg_duration: 0, max_duration: 0 });
+                },
+                err => {
+                  reject(err);
+                }
+              );
+            });
+          },
+          // 隔离域数据拉取
+          queryIgroupStatisticInfo(igroup_id) {
+            return new Promise((resolve, reject) => {
+              $api.isolation.getIgroupStatisticInfo(
+                { params: { igroup_id } },
+                (res) => {
+                  // console.log('隔离与数据2')
+                  // console.log(res)
+                  const { code, data, msg } = res;
+                  if (code === 200 && data) {
+                    resolve(data);
+                  } else {
+                    resolve({})
+                  }
+                },
+                (err) => {
+                  console.error(err);
+                  reject(err);
+                },
+                () => { }
+              );
+            })
+          },
+
           startEditing(){
             this.isEditing = true;
             this.$nextTick(()=>{
@@ -1893,6 +1665,29 @@
             ]);
           },
           // ============> 工具函数
+          // 隔离域计算最长持续、平均持续秒自动转换
+          overviewFormatTime(seconds) {
+            if (seconds < 60) {
+              const _seconds = _.round(seconds, 1);
+              return `${_seconds}秒`;
+            }
+
+            if (seconds < 3600) {
+              const _m = seconds / 60;
+              const minutes = _.round(_m, 1);
+              return `${minutes}分钟`;
+            }
+
+            if (seconds < 86400) {
+              const _h = seconds / 3600;
+              const hours = _.round(_h, 1);
+              return `${hours}小时`;
+            }
+
+            const _d = seconds / 86400;
+            const days = _.round(_d, 1);
+            return `${days}天`;
+          },
           // 地球左下角资源统计 - 中间选择资源时是否展示该资源对象的条目判断
           resourceSelectIsShow(key){
             let notShow = ['resourceType', 'key'];
@@ -2015,35 +1810,6 @@
               this.charts[dataChartKey].chart.setOption(option);
             }
           },
-          // 工具函数 - 根据国家代码获取对应国家国标路径
-          getCountryObj(value) {
-            let result = {
-              chineseName: value,
-              imageUrl: null
-            }
-            const findItem = ChannelDict.alpha_opt.find(item => value === item.chineseName);
-            if (findItem){
-              result.chineseName = value;
-              result.imageUrl = `./assets/country/${findItem['alpha-2'].toLowerCase()}.svg`;
-            }
-            return result;
-          },
-          // 工具函数 - 映射资源类型的枚举值
-          pieNameFormate(name){
-            const dict = {
-              vps: '云主机',
-              res_proxy: '住宅代理',
-              RES: '住宅代理',
-              tor:'匿名网络',
-              tor_proxy: '匿名网络',
-              TOR:'匿名网络',
-              iot: '物联网代理', 
-              jc_proxy: '机场代理', 
-              JC: '机场代理', 
-              BJ: '边境无线', 
-            };
-            return dict[name] || name;
-          },
           // ============> 动画函数
           // 进入页面的初始化动画
           enterAnimate() {
@@ -2061,8 +1827,9 @@
                 delay: 1.5,
                 onComplete() {
                   gsap.fromTo('.position-center-top-bottom', { opacity: 0 }, { opacity: 1, duration: 0.5})
-                  $app.animateNumberItemInner('.position-left-container')
-                  $app.animateNumberItemInner('.position-right-container')
+                  // $app.animateNumberItemInner('.left-section');
+                  $app.animateNumberItemInner('.position-left');
+                  $app.animateNumberItemInner('.right-section');
                   // 驱动地球上方数字滚动动画
                   $app.animateNumberItemInner('.position-center-top');
                   $app.positionTop.showTracks = true;
@@ -2109,8 +1876,8 @@
                 duration: 2,
                 ease: 'expo.out',
                 onComplete() {
-                  $app.animateNumberItemInner('.position-left-container')
-                  $app.animateNumberItemInner('.position-right-container')
+                  $app.animateNumberItemInner('.left-section');
+                  $app.animateNumberItemInner('.right-section');
                   // 驱动地球上方数字滚动动画
                   $app.animateNumberItemInner('.position-center-top');
                   $app.positionTop.showTracks = true;
@@ -2325,7 +2092,6 @@
                 $app.$refs.earth.camera.updateMatrixWorld();
               },
               onComplete() {
-                console.log('拉远到最远距离了')
                 gsap.to($app.$refs.earth.camera.position, {
                   x: position.x,
                   y: position.y,
@@ -2753,34 +2519,6 @@
             tl.repeat(-1)
           },
           // ============> 事件函数
-          showDialoger(){
-            this.dialogFlag = true;
-            gsap.to('.mask', { opacity: 1,  duration: 0.5, onComplete(){
-              gsap.to('.dialoger-container', {
-                duration: 0.8,
-                rotateX: '0deg',
-                // scale: 1
-              });
-            }})
-          },
-          closeDialoger(){
-            gsap.to('.dialoger-container', {
-              duration: 0.8,
-              rotateX: '90deg', 
-              // scale: 0.7,
-              onComplete(){
-                gsap.to('.mask', { duration: 0.8, opacity: 0, onComplete(){
-                  $app.dialogFlag = false;
-                }})
-              }
-            });
-           
-          },
-          // 切换资源池的key
-          changeResourcePool(key){
-            this.resourcePool.key = key;
-            $app.animateNumberItemInner('.resource-pool-section')
-          },
           datePickerFocus() {
             this.dateBg = 'select';
           },
@@ -2822,12 +2560,6 @@
             // this.getSupport();
             // 获取顶部三个数
             this.getTopThree();
-            // 获取地球左侧数据 - 资源池
-            this.getResourcePool();
-            // 获取地球左侧数据 - 资源分布
-            this.getResourceDistribution();
-            // 获取地球左侧数据 - 厂商
-            this.getResourceVendor();
             // 获取地球右侧数据
             this.getEarthRight();
           },
@@ -2837,24 +2569,11 @@
             // this.getSupport(true);
             // 获取顶部三个数
             this.getTopThree(true);
-            // 获取地球左侧数据 - 资源池
-            this.getResourcePool(true);
-            this.getResourceDistribution(true);
-            // 获取地球左侧数据 - 厂商
-            this.getResourceVendor();
             this.getEarthRight(true);
           },
           // 安全加固点击自定义图例事件
           triggleSafeLegend(item){
             this.charts.safeReinforce.chart.dispatchAction({
-              type: 'legendToggleSelect',
-              name: item.name
-            });
-            item.legendFlag = !item.legendFlag;
-          },
-          // 资源分布饼图自定义图例事件
-          triggleDistributionPie(item) {
-            this.charts.distributionPie.chart.dispatchAction({
               type: 'legendToggleSelect',
               name: item.name
             });
@@ -3007,8 +2726,9 @@
                   if (tempCurrentKey === $app.viewSource.key) {
                     $app.$refs.earth.outRenderNetworkView($app.viewNetwork.mapDatas);
                   } else {
-                    $app.$refs.earth.outRenderSourcePoint($app.viewSource.mapDatas);
-                    $app.$refs.earth.outRenderSourceLabel($app.viewSource.mapDatas);
+                    let mapDatas = $app.isBallsPosition ? $app.viewSource.mapDatas.filter(item => item.type === $app.currentBall.type ) : $app.viewSource.mapDatas;
+                    $app.$refs.earth.outRenderSourcePoint(mapDatas);
+                    $app.$refs.earth.outRenderSourceLabel(mapDatas);
                   }
                   $app.viewChanging = false;
                 }})
@@ -3047,7 +2767,10 @@
           // resituation - 点击任务视图按钮 
           showTaskView() {
             if (this.isEarthMap) return;
+            // 保存一下点击时的当前视图key 
+            let tempCurrentKey = this.currentView.key;
             this.$refs.earth.clearAllDatas();
+            this.viewChanging = true;
             // 只要点击了就会发生上面的四个小框变化，所以先驱动动画
             gsap.fromTo('.center-top-item', { rotateY: '0deg' }, {
               rotateY: '90deg', duration: 0.4, ease: 'power1.out', onComplete() {
@@ -3056,7 +2779,15 @@
                 } else {
                   $app.currentView = $app.viewTask;
                 }
-                gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg', duration: 2, ease: 'expo.out', onComplete() { $app.animateNumberItemInner('.position-center-top'); } })
+                gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg', duration: 2, ease: 'expo.out', onComplete() { 
+                  $app.animateNumberItemInner('.position-center-top'); 
+                  if (tempCurrentKey === $app.viewTask.key){
+                    $app.$refs.earth.outRenderNetworkView($app.viewNetwork.mapDatas);
+                    $app.viewChanging = false;
+                  } else {
+                    $app.viewChanging = false;
+                  }
+                } })
               }
             });
           },
@@ -3347,28 +3078,6 @@
             $app.setCharts('support', 'support-chart', option);
           },
           // earthleftdata
-          // 获取地球左侧数据 - 资源池数据
-          getResourcePool(isUpdate){
-            $api.situation.newGetEarthLeftPool({}, function (res){
-              if (res.code === 200 && Array.isArray(res.data) && res.data.length > 0){
-                res.data.forEach(item => {
-                  if (typeof item === 'object' && item && item.type == '1'){
-                    $app.resourcePool.total.count = typeof item.total === 'number' ? item.total + '' : '0'; 
-                    $app.resourcePool.total.anonymous = typeof item.anonymousTotal === 'number' ? item.anonymousTotal + '' : '0'; 
-                    $app.resourcePool.total.open = typeof item.publicTotal === 'number' ? item.publicTotal + '' : '0'; 
-                  }  else if (typeof item === 'object' && item && item.type == '2') {
-                    $app.resourcePool.use.count = typeof item.total === 'number' ? item.total + '' : '0'; 
-                    $app.resourcePool.use.anonymous = typeof item.anonymousTotal === 'number' ? item.anonymousTotal + '' : '0'; 
-                    $app.resourcePool.use.open = typeof item.publicTotal === 'number' ? item.publicTotal + '' : '0'; 
-                  }
-                });
-              }
-              isUpdate && $app.animateNumberItemInner('.resource-pool-section');
-            }, function (err){
-              console.log(err)
-            })
-          },
-          // earthleftdata
           // 获取地球左侧资源分布数据 - 饼图和折线图
           getResourceDistribution(isUpdate){
             let dataKeys = ['vps', 'tor', 'jc_proxy', 'res_proxy', 'iot'];
@@ -3454,7 +3163,6 @@
                 uses,
                 totals
               }, isUpdate);
-              $app.deelDistributionPie(pie3dDatas);
             }, function (err){
               console.log(err)
               $app.getDistributionLine({
@@ -3462,27 +3170,6 @@
                 uses,
                 totals
               }, isUpdate);
-            })
-          },
-          // earthleftdata
-          // 获取地球左侧数据 - 资源分布(厂商5个数)
-          getResourceVendor(isUpdate){
-            $api.situation.newGetEarthLeftVendor({}, function (res){
-              if (res.code === 200 && res.data && typeof res.data === 'object'){
-                // 云专线厂商
-                $app.resourceDistribution.item1 = typeof res.data.cloudVendorTotal === 'number' ? res.data.cloudVendorTotal + '' : '0';
-                // 云服务厂商
-                $app.resourceDistribution.item2 = typeof res.data.cloudOperatorTotal === 'number' ? res.data.cloudOperatorTotal + '' : '0';
-                // 代理供应商
-                $app.resourceDistribution.item3 = typeof res.data.proxyVendorTotal === 'number' ? res.data.proxyVendorTotal + '' : '0';
-                // 公开代理采集
-                $app.resourceDistribution.item4 = typeof res.data.publicVendorTotal === 'number' ? res.data.publicVendorTotal + '' : '0';
-                // IOT
-                $app.resourceDistribution.item5 = typeof res.data.iotDeviceTotal === 'number' ? res.data.iotDeviceTotal + '' : '0';
-              }
-              isUpdate && $app.animateNumberItemInner('.resource-distribution-bottom');
-            }, function (err){
-              console.log(err)
             })
           },
           // 获取地球右侧总体数据
@@ -3505,11 +3192,9 @@
             }
             let safeRiskTopDatas = {};
             let countrys = {};
-            let safeRiskCenterDatas = {};
             let warningList = [];
             $api.situation.newGetEarthRight({}, function (res){
               if (res.status_code === 200 && res.data){
-                let safeSituation = res.data['总体安全态势'];
                 let safeReinforce = res.data['安全加固状态'];
                 let safeRisk = res.data['安全风险统计'];
                 let warning = res.data['威胁预警信息'];
@@ -3541,55 +3226,22 @@
                     let percent = safeRisk['安全风险分类别统计'][key]['研判覆盖率'];
                     return typeof percent === 'number' ? (percent * 100).toFixed(2) * 1 : 0;
                   });
-                  safeRiskCenterDatas.times = times;
-                  safeRiskCenterDatas.totals = totals;
-                  safeRiskCenterDatas.percents = percents;
                 }
                 if (warning && Array.isArray(warning.latest_alert) && warning.latest_alert.length > 0){
                   warningList = warning.latest_alert;
                 }
-                // 处理总体安全态势数据
-                $app.initSafeSituation(safeSituation);
                 // 处理安全加固状态上方数据
                 $app.initSafeReinforceTop(safeReinforce);
                 // 处理安全加固状态下方图表及数据
                 $app.getSafeReinforcePie(safeReinforceCounts, safeReinforceRates, isUpdate);
-                // 处理安全风险顶部图表
-                $app.getSafeRiskTop(safeRiskTopDatas, isUpdate);
-                // 处理攻击源国家排行数据
-                $app.deelCountryTop(countrys);
-                // 处理安全风险中间图表
-                $app.getSafeRiskCenter(safeRiskCenterDatas, isUpdate);
-                // 处理威胁预警列表
-                $app.deelWarningList(warningList);
               }
             }, function(err){
               console.log(err);
               // 处理安全加固状态下方图表及数据
               $app.getSafeReinforcePie(safeReinforceCounts, safeReinforceRates, isUpdate);
-              // 处理安全风险顶部饼图
-              $app.getSafeRiskTop(safeRiskTopDatas, isUpdate);
-              // 处理攻击源国家排行数据
-              $app.deelCountryTop(countrys);
-              // 处理安全风险中间图表
-              $app.getSafeRiskCenter(safeRiskCenterDatas, isUpdate);
-              // 处理威胁预警列表
-              $app.deelWarningList(warningList);
             }, function(){
               isUpdate && $app.animateNumberItemInner('.position-right-container');
             });
-          },
-          // 处理总体安全态势数据
-          initSafeSituation(data){
-            if(data && typeof data === 'object'){
-              $app.safeSituation.indexCount = typeof data['安全评估指数'] === 'number' ? data['安全评估指数'].toFixed(2) : '0';
-              $app.safeSituation.saferisk.count = typeof data['风险防御次数'] === 'number' ? data['风险防御次数'] + '' : '0';
-              $app.safeSituation.saferisk.rate = typeof data['风险防御率'] === 'number' ? (data['风险防御率'] * 100).toFixed(1) * 1   : 0;
-              $app.safeSituation.warning.count = typeof data['告警误告次数'] === 'number' ? data['告警误告次数'] + '' : '0';
-              $app.safeSituation.warning.rate = typeof data['告警误告率'] === 'number' ? (data['告警误告率'] * 100).toFixed(1) * 1   : 0;
-              $app.safeSituation.node.count = typeof data['健壮节点数'] === 'number' ? data['健壮节点数'] + '' : '0';
-              $app.safeSituation.node.rate = typeof data['节点健壮率'] === 'number' ? (data['节点健壮率'] * 100).toFixed(1) * 1   : 0;
-            }
           },
           // 处理安全加固上方数据
           initSafeReinforceTop(data){
@@ -3644,491 +3296,6 @@
               }
             });
             $app.setCharts('safeReinforce', 'reinforce-pie-chart', option);
-          },
-          // 获取安全风险顶部图表
-          getSafeRiskTop(datas, isUpdate){
-            let option = JSON.parse(JSON.stringify(safeRiskTopOption));
-            option.color = ['#3A89FF'];
-            !isUpdate && $app.charts.safeRiskTop.chart && $app.charts.safeRiskTop.chart.clear();
-            !isUpdate && $app.deelSafeRiskTopError(option);
-            let times = datas && Array.isArray(datas.times) && datas.times.length > 0 ? datas.times : ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月'];
-            option.xAxis.data = times;
-            let total = datas && Array.isArray(datas.totals) && datas.totals.length > 0 ? datas.totals : [];
-            let percent = datas && Array.isArray(datas.percents) && datas.percents.length > 0 ? datas.percents : [];
-            option.series.push({
-              name: '攻击次数',
-              yAxisIndex: 0,
-              data: total,
-              type: 'bar',
-              itemStyle: {
-                color: '#05fcfc'
-              }
-            });
-            option.series.push({
-              name: '风险处置率',
-              yAxisIndex: 1,
-              data: percent,
-              type: 'line',
-              // symbol: 'none',
-              symbolSize: 6,
-              // smooth: true,
-              lineStyle: {
-                width: 1,
-                // color:  'rgba(38, 249, 195, 1)'
-                color: 'rgb(58, 137, 255)'
-              },
-              areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  // { offset: 0, color: linearChartColors[3]},
-                  // { offset: 1, color: transparentColors[3]}
-                  { offset: 0, color: 'rgba(58, 137, 255, .7)' },
-                  { offset: 1, color: 'rgba(58, 137, 255, 0)' }
-                ])
-              }
-            });
-            option.yAxis[0].axisLabel.formatter = function (value){
-              return `${$app.formatNumsData(value).value}${$app.formatNumsData(value).unit}`
-            }
-            option.yAxis[0].nameTextStyle.padding = [0, 0, 0, setChartSize(-30)];
-            option.yAxis[1].nameTextStyle.padding = [0, setChartSize(-30), 0, 0];
-            // secondchart
-            option.tooltip.formatter = (params) => {
-              // let results = params.map(pItem => `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${pItem.value} bps</span></div>`);
-              let results = params.map((pItem) => {
-                let unit = pItem.seriesType === 'line' ? '%' : '个';
-                let value = pItem.seriesType === 'line' ? pItem.value.toFixed(2) : $app.formatNumsData(pItem.value).value + $app.formatNumsData(pItem.value).unit;
-                return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value} ${unit}</span></div>`;
-              });
-              results.unshift(params[0].axisValue);
-              return results.join('');
-            };
-            $app.setCharts('safeRiskTop', 'risk-top-chart', option);
-          },
-          // 处理安全风险顶部图表数据错误或为空
-          deelSafeRiskTopError(option) {
-            let now = Date.now();
-            let times = [];
-            times.length = 8;
-            times.fill(now);
-            times = times.map((item, index) => {
-              return new Date(item - 600000 * index).toLocaleString();
-            });
-            times.reverse();
-            option.xAxis.data = times;
-            option.series = [];
-            option.legend.data = [];
-            // option.yAxis[0].splitLine.show = true;
-            // option.yAxis[0].splitLine.showMinLine = true;
-            // option.yAxis[0].splitLine.showMaxLine = true;
-            // option.yAxis[0].max = 10;
-            // option.yAxis[0].min = 5;
-            option.yAxis[1].splitLine.show = true;
-            option.yAxis[1].splitLine.showMinLine = true;
-            option.yAxis[1].splitLine.showMaxLine = true;
-            option.yAxis[1].max = 100;
-            option.yAxis[1].min = 0;
-            option.yAxis[0].splitLine.show = false;
-            $app.setCharts('safeRiskTop', 'risk-top-chart', option);
-          },
-          // 处理攻击源国家排行
-          deelCountryTop(datas){
-            let countryObj = { name: null, count: 0, change: 0 };
-            let newList = [];
-            let dataKeys = Object.keys(datas);
-            Object.keys(datas).forEach(chineseName => {
-              let findItem = $app.countryTopList.find(item => item.name && item.name === chineseName);
-              if (findItem) {
-                newList.push({ name: findItem.name, count: datas[chineseName], change: datas[chineseName] - findItem.count});
-              } else {
-                newList.push({
-                  name: chineseName,
-                  count: datas[chineseName],
-                  change: 0
-                });
-              }
-            });
-            if (newList.length !== 10 && newList.length < 10){
-              let count = 10 - newList.length;
-              for (let i = 0; i < count;i++){
-                newList.push(Object.assign({}, countryObj ));
-              }
-            }
-            newList.sort((a, b) => (b.count - a.count));
-            $app.countryTopList = newList;
-          },
-          // 获取安全风险中间的图表
-          getSafeRiskCenter(datas, isUpdate){
-            let option = JSON.parse(JSON.stringify(safeRiskCenter));
-            option.color = ['#ffcc00'];
-            !isUpdate && $app.charts.safeRiskCenter.chart && $app.charts.safeRiskCenter.chart.clear();
-            !isUpdate && $app.deelSafeRiskCenterError(option);
-            let times = datas && Array.isArray(datas.times) && datas.times.length > 0 ? datas.times : ['第一类', '第二类', '第三类', '第四类', '第五类', '第六类', '第七类'];
-            option.xAxis.data = times;
-            let total = datas && Array.isArray(datas.totals) && datas.totals.length > 0 ? datas.totals : [];
-            let percent = datas && Array.isArray(datas.percents) && datas.percents.length > 0 ? datas.percents : [];
-
-            option.series.push({
-              name: '发现风险数量',
-              yAxisIndex: 0,
-              data: total,
-              type: 'bar',
-              itemStyle: {
-                color: '#05fcfc'
-              },
-              barCategoryGap: setChartSize(30)
-            });
-            option.series.push({
-              name: '智能研判覆盖率',
-              yAxisIndex: 1,
-              data: percent,
-              type: 'line',
-              // symbol: 'none',
-              symbolSize: 6,
-              // smooth: true,
-              lineStyle: {
-                width: 1,
-                // color:  'rgba(38, 249, 195, 1)'
-                color: 'rgb(255, 204, 0)'
-              },
-              areaStyle: {
-                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                  // { offset: 0, color: linearChartColors[3]},
-                  // { offset: 1, color: transparentColors[3]}
-                  { offset: 0, color: 'rgba(255, 204, 0, 0.7)' },
-                  { offset: 1, color: 'rgba(255, 204, 0, 0)' }
-                ])
-              }
-            });
-            option.yAxis[0].nameTextStyle.padding = [0, 0, 0, setChartSize(-30)];
-            option.yAxis[1].nameTextStyle.padding = [0, setChartSize(-30), 0, 0];
-            option.yAxis[0].axisLabel.formatter = function (value){
-              return `${$app.formatNumsData(value).value}${$app.formatNumsData(value).unit}`
-            }
-            option.tooltip.formatter = (params) => {
-              // let results = params.map(pItem => `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${pItem.value} bps</span></div>`);
-              let results = params.map((pItem) => {
-                let unit = pItem.seriesType === 'line' ? '%' : '个';
-                let value = pItem.seriesType === 'line' ? pItem.value.toFixed(2) : $app.formatNumsData(pItem.value).value + $app.formatNumsData(pItem.value).unit;
-                return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value} ${unit}</span></div>`;
-              });
-              results.unshift(params[0].axisValue);
-              return results.join('');
-            };
-            $app.setCharts('safeRiskCenter', 'risk-center-chart', option);
-          },
-          // 处理安全风险顶部图表数据错误或为空
-          deelSafeRiskCenterError(option) {
-            let now = Date.now();
-            let times = [];
-            times.length = 8;
-            times.fill(now);
-            times = times.map((item, index) => {
-              return new Date(item - 600000 * index).toLocaleString();
-            });
-            times.reverse();
-            option.xAxis.data = times;
-            option.series = [];
-            option.legend.data = [];
-            // option.yAxis[0].splitLine.show = true;
-            // option.yAxis[0].splitLine.showMinLine = true;
-            // option.yAxis[0].splitLine.showMaxLine = true;
-            // option.yAxis[0].max = 10;
-            // option.yAxis[0].min = 5;
-            option.yAxis[1].splitLine.show = true;
-            option.yAxis[1].splitLine.showMinLine = true;
-            option.yAxis[1].splitLine.showMaxLine = true;
-            option.yAxis[1].max = 100;
-            option.yAxis[1].min = 0;
-            option.yAxis[0].splitLine.show = false;
-            $app.setCharts('safeRiskCenter', 'risk-center-chart', option);
-          },
-          // 处理威胁预警列表数据
-          deelWarningList(list){
-            if (list.length > 0){
-              $app.safeThreatList = list.map(item => {
-                // let time = item.timestamp ? new Date(item.timestamp)
-                return Object.keys(item).reduce((res, key) => {
-                  if (key === 'decoder_type'){
-                    res.name = item[key];
-                  } else if (key === 'decoder_level'){
-                    res.status = item[key]
-                  } else if (key === 'timestamp'){
-                    res.time = item[key];
-                  } else if (key === 'decoder_description'){
-                    res.des = item[key];
-                  } else {
-                    res[key] = item[key];
-                  }
-                  return res;
-                },{});
-              });
-            } else {
-              $app.safeThreatList = list;
-            }
-          },
-          // 渲染资源分布3d饼图
-          deelDistributionPie(optionsData){
-            $app.charts.distributionPie.chart && $app.charts.distributionPie.chart.clear();
-            function getParametricEquation(startRatio, endRatio, isSelected, isHovered, k, height) {
-              // 计算
-              const midRatio = (startRatio + endRatio) / 2
-              const startRadian = startRatio * Math.PI * 2
-              const endRadian = endRatio * Math.PI * 2
-              const midRadian = midRatio * Math.PI * 2
-              // 如果只有一个扇形，则不实现选中效果。
-              if (startRatio === 0 && endRatio === 1) {
-                isSelected = false
-              }
-              // 通过扇形内径/外径的值，换算出辅助参数 k（默认值 1/3）
-              k = typeof k !== 'undefined' ? k : 1 / 3
-              // 计算选中效果分别在 x 轴、y 轴方向上的位移（未选中，则位移均为 0）
-              const offsetX = isSelected ? Math.cos(midRadian) * 0.1 : 0
-              const offsetY = isSelected ? Math.sin(midRadian) * 0.1 : 0
-              // 计算高亮效果的放大比例（未高亮，则比例为 1）
-              const hoverRate = isHovered ? 1.05 : 1
-                // 返回曲面参数方程
-              return {
-                u: {
-                  min: -Math.PI,
-                  max: Math.PI * 3,
-                  step: Math.PI / 32
-                },
-                v: {
-                  min: 0,
-                  max: Math.PI * 2,
-                  step: Math.PI / 20
-                },
-                x: function(u, v) {
-                  if (u < startRadian) {
-                    return (
-                      offsetX +
-                      Math.cos(startRadian) * (1 + Math.cos(v) * k) * hoverRate
-                    )
-                  }
-                  if (u > endRadian) {
-                    return (
-                      offsetX +
-                      Math.cos(endRadian) * (1 + Math.cos(v) * k) * hoverRate
-                    )
-                  }
-                  return offsetX + Math.cos(u) * (1 + Math.cos(v) * k) * hoverRate
-                },
-                y: function(u, v) {
-                  if (u < startRadian) {
-                    return (
-                      offsetY +
-                      Math.sin(startRadian) * (1 + Math.cos(v) * k) * hoverRate
-                    )
-                  }
-                  if (u > endRadian) {
-                    return (
-                      offsetY +
-                      Math.sin(endRadian) * (1 + Math.cos(v) * k) * hoverRate
-                    )
-                  }
-                  return offsetY + Math.sin(u) * (1 + Math.cos(v) * k) * hoverRate
-                },
-                z: function(u, v) {
-                  if (u < -Math.PI * 0.5) {
-                    return Math.sin(u)
-                  }
-                  if (u > Math.PI * 2.5) {
-                    return Math.sin(u)
-                  }
-                  return Math.sin(v) > 0 ? 1 * height : -1
-                }
-              }
-            }
-            function getPie3D(pieData, internalDiameterRatio) {
-              $app.charts.distributionPie.data = []
-              const series = []
-              let sumValue = 0
-              let startValue = 0
-              let endValue = 0
-              const legendData = []
-              const k = typeof internalDiameterRatio !== 'undefined'? (1 - internalDiameterRatio) / (1 + internalDiameterRatio) : 1 / 3
-              // 为每一个饼图数据，生成一个 series-surface 配置
-              for (let i = 0; i < pieData.length; i++) {
-                sumValue += pieData[i].value
-                const seriesItem = {
-                  name:
-                    typeof pieData[i].name === 'undefined'
-                      ? `series${i}`
-                      : pieData[i].name,
-                  type: 'surface',
-                  parametric: true,
-                  wireframe: {
-                    show: false
-                  },
-                  pieData: pieData[i],
-                  pieStatus: {
-                    selected: false,
-                    hovered: false,
-                    k: k
-                  }
-                }
-                if (typeof pieData[i].itemStyle !== 'undefined') {
-                  const itemStyle = {}
-                  typeof pieData[i].itemStyle.color !== 'undefined'
-                    ? (itemStyle.color = pieData[i].itemStyle.color)
-                    : null
-                  typeof pieData[i].itemStyle.opacity !== 'undefined'
-                    ? (itemStyle.opacity = pieData[i].itemStyle.opacity)
-                    : null
-                    seriesItem.itemStyle = itemStyle
-                }
-                series.push(seriesItem);
-              }
-              // 使用上一次遍历时，计算出的数据和 sumValue，调用 getParametricEquation 函数，
-              // 向每个 series-surface 传入不同的参数方程 series-surface.parametricEquation，也就是实现每一个扇形。
-              for (let i = 0; i < series.length; i++) {
-                endValue = startValue + series[i].pieData.value
-                series[i].pieData.startRatio = startValue / sumValue
-                series[i].pieData.endRatio = endValue / sumValue
-                series[i].parametricEquation = getParametricEquation(
-                  series[i].pieData.startRatio,
-                  series[i].pieData.endRatio,
-                  false,
-                  false,
-                  k,
-                  2000
-                )
-                startValue = endValue
-                legendData.push(series[i].name)
-                $app.charts.distributionPie.data.push({
-                  name: pieData[i].name,
-                  value: pieData[i].value,
-                  rate: ((pieData[i].value / sumValue) * 100).toFixed(0),
-                  legendFlag: true
-                });
-              }
-              return series
-            }
-            const series = getPie3D(optionsData.map(item => {
-              if (item.value < 5) {
-                item.value = 5
-              }
-              return item
-            }), 0, 240, 28, 26, 0.5)
-            series.push({
-              name: 'pie2d',
-              type: 'pie',
-              label: {
-                show: false,
-                opacity: 1,
-                position: 'outside',
-                fontSize: setChartSize(12),
-                lineHeight: setChartSize(20),
-                textStyle: {
-                  fontSize: setChartSize(12),
-                  color: '#fff'
-                }
-              },
-              labelLine: {
-                length: 30,
-                length2: 30
-              },
-              minAngle: 10,
-              startAngle: -50, // 起始角度，支持范围[0, 360]。
-              clockwise: false, // 饼图的扇区是否是顺时针排布。上述这两项配置主要是为了对齐3d的样式
-              radius: ['0', '25%'],
-              center: ['50%', '50%'],
-              data: optionsData.map(item => {
-                item.itemStyle.opacity = 0
-                return item
-              })
-            })
-            // 准备待返回的配置项，把准备好的 legendData、series 传入。
-            const option = {
-              legend: {
-                show: false
-              },
-              animation: true,
-              tooltip: {
-                formatter: (params) => {
-                  if (
-                    params.seriesName !== 'mouseoutSeries' &&
-                    params.seriesName !== 'pie2d'
-                  ) {
-                    return `${
-      
-                      $app.pieNameFormate(params.seriesName)
-                    }<br/><span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${
-                      params.color
-                    };"></span>${
-                      // option.series[params.seriesIndex].pieData.value + '%'
-                      option.series[params.seriesIndex].pieData.value
-                    }个`
-                  }
-                },
-                backgroundColor: 'rgba(24, 34, 107, .7)',
-                borderColor: 'rgba(50, 57, 103, 0.9)',
-                borderWidth: 1,
-                textStyle: {
-                  color: '#ddeeff',
-                  fontSize: setChartSize(14)
-                }
-              },
-              title: {
-                x: 'center',
-                top: '20',
-                textStyle: {
-                  color: '#fff',
-                  fontSize: 22
-                }
-              },
-              // backgroundColor: '#0E3567',
-              labelLine: {
-                show: true,
-                lineStyle: {
-                  color: '#7BC0CB'
-                },
-                normal: {
-                  show: true,
-                  length: 10,
-                  length2: 10
-                }
-              },
-              label: {
-                show: true,
-                position: 'outside',
-                formatter: '{b} \n{d}%',
-                textStyle: {
-                  color: '#fff',
-                  fontSize: '12px'
-                }
-              },
-              xAxis3D: {
-                min: -1,
-                max: 1
-              },
-              yAxis3D: {
-                min: -1,
-                max: 1
-              },
-              zAxis3D: {
-                min: -1,
-                max: 1
-              },
-              grid3D: {
-                show: false,
-                // boxHeight: 0.01,
-                boxHeight: 0.02,
-                // top: '30%',
-                bottom: '50%',
-                // environment: "rgba(255,255,255,0)",
-                viewControl: {
-                  // distance: 300,
-                  distance: 200,
-                  // alpha: 40,
-                  alpha: 30,
-                  beta: 60,
-                  autoRotate: true // 自动旋转
-                }
-              },
-              series: series
-            }
-            $app.setCharts('distributionPie', 'distribution-pie-chart', option);
           },
           // second - 获取资源分布中间折线图数据
           getDistributionLine(datas, isUpdate){
