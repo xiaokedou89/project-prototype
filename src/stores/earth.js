@@ -141,10 +141,9 @@ class Resources {
   }
   // 获取模型贴图
   getTextures() {
-    const fileSuffix = ['circle', 'gradient', 'redCircle', 'label', 'aperture', 'glow', 'light_column', 'aircraft', 'light_column_source'];
+    const fileSuffix = ['circle', 'gradient', 'redCircle', 'label', 'aperture', 'glow', 'light_column', 'aircraft', 'light_column_source', 'guangquan01', 'guangquan02', 'huiguang'];
     const filePath = this.filePath;
     const textures = fileSuffix.map((item) => {
-      // console.log(`检查贴图路径: ${filePath}${item}.png`)
       return {
         name: item,
         url: `${filePath}${item}.png`
@@ -159,13 +158,11 @@ class Resources {
   setLoadingManager() {
     this.manager = new THREE.LoadingManager();
     this.manager.onStart = () => {
-      // console.log('开始加载资源文件');
     };
     this.manager.onLoad = () => {
       this.callback();
     };
     this.manager.onProgress = (url) => {
-      // console.log(`正在加载： ${url}`);
     };
     this.manager.onError = (url) => {
       console.log(`加载失败：${url}`);
@@ -175,7 +172,6 @@ class Resources {
     this.textureLoader = new THREE.TextureLoader(this.manager);
     let { textures } = this.getTextures();
     textures.forEach((item) => {
-      // console.log(item)
       this.textureLoader.load(item.url, (t) => {
         this.textures[item.name] = t;
       });
@@ -234,6 +230,32 @@ function lon2xyz(R, longitude, latitude) {
   const z = R * Math.cos(lat) * Math.sin(lon);
   // 返回球面坐标
   return new THREE.Vector3(x, y, z);
+}
+// 抵消地球自转造成的角度影响 - 返回抵消地球自转后的经纬度对应三维点位
+function rotateLon2xyz(R, longitude, latitude, currentRotationY = 0) {
+  let lon = (longitude * Math.PI) / 180; // 转弧度值
+  const lat = (latitude * Math.PI) / 180; // 转弧度值
+
+  lon = -lon;
+  const x = R * Math.cos(lat) * Math.cos(lon);
+  const y = R * Math.sin(lat);
+  const z = R * Math.cos(lat) * Math.sin(lon);
+  const vector = new THREE.Vector3(x, y, z);
+  if (currentRotationY !== 0) {
+    // 绕 Y 轴旋转矩阵
+    // 反向角度
+    // const cosRY = Math.cos(-currentRotationY); 
+    // const sinRY = Math.sin(-currentRotationY);
+    const cosRY = Math.cos(currentRotationY);
+    const sinRY = Math.sin(currentRotationY);
+    // 应用旋转矩阵到向量
+    const xNew = vector.x * cosRY + vector.z * sinRY;
+    const zNew = -vector.x * sinRY + vector.z * cosRY;
+
+    vector.x = xNew;
+    vector.z = zNew;
+  }
+  return vector;
 }
 // 创建动态的线
 function createAnimateLine(option) {
@@ -609,8 +631,6 @@ function arcXOY(radius, startPoint, endPoint, options, lineType, lineStatus) {
  * lon2,lat2：轨迹线结束点经纬度坐标
  */
 function flyArc(radius, lon1, lat1, lon2, lat2, options, lineType, lineStatus) {
-  // console.log('飞线配置项')
-  // console.log(options)
   const sphereCoord1 = lon2xyz(radius, lon1, lat1); //经纬度坐标转球面坐标
   // startSphereCoord：轨迹线起点球面坐标
   const startSphereCoord = new THREE.Vector3(sphereCoord1.x, sphereCoord1.y, sphereCoord1.z);
@@ -625,26 +645,105 @@ function flyArc(radius, lon1, lat1, lon2, lat2, options, lineType, lineStatus) {
   arcline.quaternion.multiply(startEndQua.quaternion);
   return arcline;
 }
-
+// 获取经纬度对应
 // 经度longitude
 // 纬度latitude
-function getPointAlongRay(longitude, latitude, distance = 50, earthRadius = 50) {
-  // 1. 首先利用你代码中已有的 lon2xyz 方法，获取目标点的 3D 坐标
-  // 注意：lon2xyz 返回的坐标模长通常是 earthRadius
-  const targetPoint = lon2xyz(earthRadius, longitude, latitude);
+function getPointAlongRay(longitude, latitude, distance = 50, earthRadius = 50, turnY = 0) {
+  // 获取目标点的 3D 坐标 注意：lon2xyz 返回的坐标模长通常是 earthRadius
+  // const targetPoint = lon2xyz(earthRadius, longitude, latitude);
+  const targetPoint = rotateLon2xyz(earthRadius, longitude, latitude, turnY);
 
-  // 2. 计算从原点指向目标点的单位向量 (方向)
-  // targetPoint 向量本身就是从原点指向目标的，归一化即可
+  // 计算从原点指向目标点的单位向量  targetPoint 向量本身就是从原点指向目标的，归一化即可
   const direction = targetPoint.clone().normalize();
 
-  // 3. 计算新点的坐标
-  // 逻辑：目标点坐标 - (方向向量 * 距离)
-  // 这样得到的点就在射线上，且距离目标点正好是 `distance`
+  // 计算新点的坐标 点就在射线上距离目标点distance
   const resultPoint = targetPoint.sub(direction.multiplyScalar(distance));
 
   return resultPoint;
 }
 
+// 声明渐变着色器
+class GradientShader {
+  constructor(material, config) {
+    this.shader = null
+    this.config = Object.assign(
+      {
+        uColor1: 0x2a6f72,
+        uColor2: 0x0d2025,
+        size: 15.0,
+        dir: "x", // 'x ,y,z
+      },
+      config
+    )
+    this.init(material)
+  }
+  init(material) {
+    let { uColor1, uColor2, dir, size } = this.config
+    let dirMap = { x: 1.0, y: 2.0, z: 3.0 }
+    material.onBeforeCompile = (shader) => {
+      this.shader = shader
+
+      shader.uniforms = {
+        ...shader.uniforms,
+        uColor1: { value: new THREE.Color(uColor1) }, // 419daa
+        uColor2: { value: new THREE.Color(uColor2) },
+        uDir: { value: dirMap[dir] },
+        uSize: { value: size }, // 物体的宽度，或者高度
+      }
+      shader.vertexShader = shader.vertexShader.replace(
+        "void main() {",
+        `
+                attribute float alpha;
+                varying vec3 vPosition;
+                varying float vAlpha;
+                void main() {
+                  vAlpha = alpha;
+                  vPosition = position;
+              `
+      )
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "void main() {",
+        `
+                varying vec3 vPosition;
+                varying float vAlpha;
+                uniform vec3 uColor1;
+                uniform vec3 uColor2;
+                uniform float uDir;
+                uniform float uSize;
+              
+                void main() {
+              `
+      )
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <opaque_fragment>",
+        /* glsl */ `
+              #ifdef OPAQUE
+              diffuseColor.a = 1.0;
+              #endif
+              
+              // https://github.com/mrdoob/three.js/pull/22425
+              #ifdef USE_TRANSMISSION
+              diffuseColor.a *= transmissionAlpha + 0.1;
+              #endif
+              // vec3 gradient = mix(uColor1, uColor2, vPosition.x / 15.0); 
+              vec3 gradient = vec3(0.0,0.0,0.0);
+              if(uDir==1.0){
+                gradient = mix(uColor1, uColor2, vPosition.x/ uSize); 
+              }else if(uDir==2.0){
+                gradient = mix(uColor1, uColor2, vPosition.z/ uSize); 
+              }else if(uDir==3.0){
+                gradient = mix(uColor1, uColor2, vPosition.y/ uSize); 
+              }
+              outgoingLight = outgoingLight * gradient;
+              
+              
+              gl_FragColor = vec4( outgoingLight, diffuseColor.a  );
+              `
+      )
+    }
+    // console.log(material)
+  }
+}
 // 声明地球类
 class Earth {
   constructor(options) {
@@ -747,9 +846,6 @@ class Earth {
     });
 
     earth_material.needsUpdate = true;
-    // console.log('模型片段')
-    // console.log(earthFragment)
-    // console.log(earth_material)
     this.earth = new THREE.Mesh(earth_geometry, earth_material);
     this.earth.name = 'earth';
     this.earthGroup.add(this.earth);
@@ -763,8 +859,6 @@ class Earth {
     new THREE.GLTFLoader().load(
       '/assets/model/station.glb',
       (gltf) => {
-        // console.log('卫星加载回调')
-        // console.log(this)
         const station = gltf.scene;
         // 缩放 / 朝向一次调准
         // station.scale.setScalar(0.3);
@@ -1012,6 +1106,148 @@ class Earth {
       this.markupPoint.userData['isMarkupPoint'] = true;
       this.earthGroup.add(this.markupPoint);
     })
+  }
+  // 新的优化后的资源光柱创建
+  createSource(datas){
+    this.markupPoint.clear();
+    // 立方体光柱的长宽系数
+    const factor = 0.7;
+    const radius = this.options.earth.radius;
+    datas.forEach((item, index) => {
+      let heightRatio = 0.6;
+      // 根据资源的等级设置光柱高度
+      // switch (item.rank) {
+      //   case 'small':
+      //     heightRatio = 0.3;
+      //     break;
+      //   case 'middle':
+      //     heightRatio = 0.6;
+      //     break;
+      //   case 'large':
+      //     heightRatio = 1;
+      //     break;
+      // }
+      switch (item.rank) {
+        case 'small':
+          heightRatio = 0.3;
+          break;
+        case 'middle':
+          heightRatio = 0.9;
+          break;
+        case 'large':
+          heightRatio = 1.5;
+          break;
+      }
+      let geoHeight = heightRatio * 10;
+      let material = new THREE.MeshBasicMaterial({
+        color: item.color,
+        transparent: true,
+        opacity: 0.8,
+        depthWrite: false,
+        fog: false,
+      });
+      new GradientShader(material, {
+        // uColor1: index > 3 ? 0xfbdf88 : 0x50bbfe,
+        // uColor2: index > 3 ? 0xfffef4 : 0x77fbf5,
+        // uColor1: 0xEF4444,
+        uColor1: item.color,
+        uColor2: 0x77fbf5,
+        size: geoHeight,
+        dir: "y",
+      });
+      // 创建立方体
+      const geo = new THREE.BoxGeometry(0.8 * factor, geoHeight, 0.8 * factor);
+      geo.translate(0, geoHeight / 2, 0);
+      const mesh = new THREE.Mesh(geo, material);
+      const SphereCoord = lon2xyz(radius, item.E, item.N);
+      // 立方体的法线向量方向
+      const normal = SphereCoord.clone().normalize();
+      mesh.position.copy(SphereCoord);
+      // 旋转立方体法线，让立方体立起来
+      const quaternion = new THREE.Quaternion().setFromUnitVectors(
+        new THREE.Vector3(0, 1, 0),
+        normal
+      );
+      mesh.quaternion.copy(quaternion);
+      let hg = this.createHUIGUANG(geoHeight, 0xfffef4);
+
+      // 底部内光圈的材质
+      let innerQuanMaterial = new THREE.MeshBasicMaterial({
+        // color: this.options.punctuation.circleColor,
+        // map: this.options.textures.label,
+        color: 0xffffff,
+        map: this.options.textures.guangquan01,
+        alphaMap: this.options.textures.guangquan01,
+        opacity: 1,
+        transparent: true, //使用背景透明的png贴图，注意开启透明计算
+        depthWrite: false, //禁止写入深度缓冲区数据
+        blending: THREE.AdditiveBlending,
+      });
+      // 底部外光圈的材质
+      let outerQuanMaterial = new THREE.MeshBasicMaterial({
+        // color: this.options.punctuation.circleColor,
+        // map: this.options.textures.label,
+        color: 0xffffff,
+        map: this.options.textures.guangquan02,
+        alphaMap: this.options.textures.guangquan02,
+        opacity: 1,
+        transparent: true, //使用背景透明的png贴图，注意开启透明计算
+        depthWrite: false, //禁止写入深度缓冲区数据
+        blending: THREE.AdditiveBlending,
+      });
+      const quanGeo1 = new THREE.PlaneBufferGeometry(1, 1); //默认在XOY平面上
+      const innerQuanMesh = new THREE.Mesh(quanGeo1, innerQuanMaterial);
+      const quanGeo2 = new THREE.PlaneBufferGeometry(1, 1); //默认在XOY平面上
+      const outerQuanMesh = new THREE.Mesh(quanGeo2, outerQuanMaterial);
+      // 经纬度转球面坐标
+      const coord = lon2xyz(radius, item.E, item.N);
+      const size = radius * 0.05; // 矩形平面Mesh的尺寸
+      innerQuanMesh.scale.set(size, size, size); // 设置mesh大小
+      outerQuanMesh.scale.set(size, size, size); // 设置mesh大小
+      // 设置mesh位置
+      innerQuanMesh.position.set(coord.x, coord.y, coord.z);
+      outerQuanMesh.position.set(coord.x, coord.y, coord.z);
+      const coordVec3 = new THREE.Vector3(coord.x, coord.y, coord.z).normalize();
+      const meshNormal = new THREE.Vector3(0, 0, 1);
+      innerQuanMesh.quaternion.setFromUnitVectors(meshNormal, coordVec3);
+      innerQuanMesh.userData['isQuan'] = true;
+      outerQuanMesh.quaternion.setFromUnitVectors(meshNormal, coordVec3);
+      this.markupPoint.add(innerQuanMesh);
+      this.markupPoint.add(outerQuanMesh);
+      mesh.add(...hg);
+      this.markupPoint.add(mesh)
+
+    });
+    this.markupPoint.userData['isMarkupPoint'] = true;
+    this.earthGroup.add(this.markupPoint);
+  }
+  // 创建辉光平面体
+  createHUIGUANG(h, color) {
+    // let geometry = new THREE.PlaneGeometry(0.35, h)
+    let geometry = new THREE.PlaneGeometry(3, h)
+    geometry.translate(0, h / 2, 0)
+    // geometry.translate(0, 0, 0)
+    const texture = this.options.textures.huiguang;
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.wrapS = THREE.RepeatWrapping
+    texture.wrapT = THREE.RepeatWrapping
+    let material = new THREE.MeshBasicMaterial({
+      color: color,
+      map: texture,
+      transparent: true,
+      opacity: 0.4,
+      depthWrite: false,
+      side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending,
+    })
+    let mesh = new THREE.Mesh(geometry, material)
+    mesh.renderOrder = 10
+    // mesh.rotateX(Math.PI / 2)
+    let mesh2 = mesh.clone()
+    let mesh3 = mesh.clone()
+    mesh2.rotateY((Math.PI / 180) * 60)
+    mesh3.rotateY((Math.PI / 180) * 120)
+    return [mesh, mesh2, mesh3]
   }
   // 为资源视图创建数据标签
   createSourceSpriteLabel(datas){
@@ -1287,6 +1523,15 @@ class Earth {
     if (this.satelliteModel) {
       this.satelliteModel.lookAt(0, 0, 0);
     }
+    // 添加资源光柱底部的圆圈旋转
+    let markupPoint = this.earthGroup.children.find(item => item.userData['isMarkupPoint']);
+    if (markupPoint) {
+      markupPoint.children.forEach(mesh => {
+        if (mesh.userData['isQuan']) {
+          mesh.rotation.z += 0.05;
+        }
+      })
+    }
   }
 }
 
@@ -1380,23 +1625,23 @@ const MyEarth = {
       type: Object,
       default() {
         return {
-          // 边境 - 蓝!
+          // 边境 - @蓝
           bj: 0x0000FF,
-          // 卫星 - 紫!
+          // 卫星 - @紫!
           wx: 0x800080,
-          // 云主机 - 绿
-          yzj: 0x20B2AA,
-          // 机场 - 金
-          jc: 0xFFD700,
-          // 住宅 - 橙!
-          zz: 0xFF8C00,
-          // 物联网 - 印度红!
-          wlw: 0xCD5C5C,
-          // 云专线 - 粉
-          yzx: 0xFFB6C1,
-          // 接入主机 - 亮蓝
+          // 云主机 - @绿
+          yzj: 0x008000,
+          // 机场 - @黄
+          jc: 0xFFFF00,
+          // 住宅 - @橙
+          zz: 0xFFA500,
+          // 物联网 - @红
+          wlw: 0xFF0000,
+          // 云专线 - @黑
+          yzx: 0x000000,
+          // 接入主机 - @亮蓝
           jr: 0x00FFFF,
-          // 匿名 - 白!
+          // 匿名 - @白
           nm: 0xffffff
         }
       }
@@ -1651,21 +1896,43 @@ const MyEarth = {
       raycaster.setFromCamera(new THREE.Vector2(x, y), this.camera);
 
       const intersects = raycaster.intersectObjects(this.scene.children);
-      // console.log(intersects)
       if (intersects.length > 0 && intersects[0].object.userData['selectable']) {
-        console.log('射线器拾取到地点标签');
-        console.log(intersects[0].object.userData['positionName']);
-        console.log(px);
-        console.log(py);
+        // console.log('射线器拾取到地点标签');
+        // console.log(intersects[0].object.userData['positionName']);
+        // console.log(px);
+        // console.log(py);
       }
     },
     // ============> 暴露到外部的方法
     // 外部方法 - 根据传入的经纬度和到该经纬度的距离返回地球上的目标点和相机移动位置点
     outReturnAnimationVector({N, E}, distance){
       const R = this.earth.options.earth.radius;
-      const target = lon2xyz(R, N, E);
-      const position = getPointAlongRay(N, E, -distance, R);
+      // const target = lon2xyz(R, N, E);
+      const turnY = this.earth.earthGroup.rotation.y;
+      const target = rotateLon2xyz(R, N, E, turnY);
+      const position = getPointAlongRay(N, E, -distance, R, turnY);
       return { target, position };
+    },
+    // 外部方法 - 计算从目前视角拉远到控制器的最远距离点位
+    outReturnMaxDisPoint() {
+      // 将相机的世界坐标位置转换为相对于目标点的向量
+      const currentPos = new THREE.Vector3();
+      currentPos.setFromMatrixPosition(this.camera.matrixWorld);
+      // 控制器的目标中心
+      const target = this.controls.target.clone();
+      // 当前视线方向
+      const dir = currentPos.clone().sub(target).normalize();
+      // 当前距离
+      const currentDistance = currentPos.distanceTo(target);
+      // 目标最大距离
+      const maxDistance = this.controls.maxDistance;
+      // 防止当前距离已经超过 maxDistance
+      if (currentDistance >= maxDistance) {
+        return;
+      }
+      // 新位置 = 目标点 + (视线方向 * 最大距离)
+      const newPos = dir.clone().multiplyScalar(maxDistance).add(target);
+      return newPos;
     },
     // 外部方法 - 渲染资源点位
     outRenderSourcePoint(datas){
@@ -1674,10 +1941,12 @@ const MyEarth = {
         return {
           ...item,
           heightRate: that.sourceLightPillarRank[item.rank].h,
-          radiusRate: that.sourceLightPillarRank[item.rank].r
+          radiusRate: that.sourceLightPillarRank[item.rank].r,
+          color: that.sourceLightPillarColors[item.type]
         }
       });
-      this.earth.createSourcePoint(datas);
+      // this.earth.createSourcePoint(datas);
+      this.earth.createSource(datas);
     },
     // 外部方法 - 渲染资源标牌
     outRenderSourceLabel(datas){
