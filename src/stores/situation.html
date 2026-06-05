@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+    <meta charset="utf-8"  data-html2canvas-ignore />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" data-html2canvas-ignore />
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" data-html2canvas-ignore />
     <link rel="preload" href="/assets/fonts/douyuFont-2.woff2" as="font" type="font/woff2" crossorigin>
     <title>Z系统</title>
     <script src="./js/theme.js"></script>
@@ -13,7 +13,7 @@
     <!-- 引入地球组件相关样式 -->
     <link href="./css/my-earth.css" rel="stylesheet" />
     <link href="/assets/iconfont3/iconfont.css" rel="stylesheet" />
-    <style type="text/css">
+    <style type="text/css" data-html2canvas-ignore>
       uas-loading {
         display: none;
       }
@@ -24,9 +24,9 @@
       <uas-loading>
         <!-- 全屏背景平铺(1) -->
         <div class="earth-container">
-          <div class="loading" v-if="viewChanging"></div>
+          <div class="loading" v-if="viewChanging" data-html2canvas-ignore></div>
           <!-- animateCloud -->
-          <div class="cloud">
+          <div class="cloud" data-html2canvas-ignore>
             <!-- 层级越高越在最底下 -->
             <!-- <div class="cloud-level level-5">
               <img class="cloud-image l5-center" src="./img/homepage/resituation/cloud6.png" />
@@ -48,10 +48,10 @@
             </div>
           </div>
           <my-earth ref="earth" :datas="jumps" :line-colors="lineColors" :fly-line-colors="flyLineColors"></my-earth>
-          <earth-map ref="earthMap"></earth-map>
+          <earth-map ref="earthMap" data-html2canvas-ignore></earth-map>
         </div>
         <!-- 顶部占位(3) -->
-        <div class="position-top">
+        <div class="position-top" data-html2canvas-ignore>
           <!-- 背景及中间的标题 -->
           <div class="position-top-title">
             <!-- <img class="position-top-title-icon" src="./img/homepage/main/main-top-title.svg" /> -->
@@ -91,7 +91,7 @@
           </div>
         </div>
         <!-- 地球上方(3) -->
-        <div class="position-center-top" @mousewheel="positionTopWheel">
+        <div class="position-center-top" data-html2canvas-ignore @mousewheel="positionTopWheel">
           <!-- 地球的图例及控制板 -->
           <div class="position-center-top-controls">
             <!-- 飞线类型控制 -->
@@ -160,7 +160,7 @@
                   </div>
                 </div>
                 <span class="num-item-inner-item">{{ formatNumsData(item.value).unit }}</span>
-                <!-- <span class="num-item-inner-item" v-if="index === (centerTop.length - 1) || index === 1">%</span> -->
+                <span class="num-item-inner-item" v-if="item.isFloat">%</span>
               </h3>
               <div class="right-label">{{ item.label }}</div>
             </div>
@@ -172,7 +172,7 @@
           </div>
         </div>
         <!-- 地球上方-视图切换面板 -->
-        <div class="position-center-top-bottom">
+        <div class="position-center-top-bottom" data-html2canvas-ignore>
           <div class="views-container" v-if="!isEarthMap">
             <div class="views-button source" :class="{active: currentView.key === viewSource.key}" @click="showSourceView"></div>
             <div class="views-button network" :class="{active: currentView.key === viewNetwork.key}" @click="showNetworkView">
@@ -182,7 +182,7 @@
           <div v-else="isEarthMap" @click="animateUpToEarth">回退到地球</div>
         </div>
         <!-- 地球下方(3) -->
-        <div class="position-center-bottom">
+        <div class="position-center-bottom" data-html2canvas-ignore>
           <img src="./assets/earth/bottomBg.svg" />
           <div class="circle-outer">
             <div class="map-enter enter0" @click="animateDownInEarthMap">801</div>
@@ -194,6 +194,7 @@
             <svg class="path-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
               <path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
             </svg>
+            
             <!-- <div class="ball ball1">1</div>
             <div class="ball ball2">2</div>
             <div class="ball ball3">3</div>
@@ -209,8 +210,37 @@
               :style="{backgroundImage: computedBallBg(item), opacity: ballPoints[index].opacity}"
               :key="index"  
               @click="clickBall(item)"
-            >
-              <!-- `url('./img/homepage/resituation/source-ball-${item.type}.svg')` -->
+            > 
+              <!-- 资源对应的能力数据展示牌 -->
+              <div class="current-resource-data" :class="[`current-resource-data-${item.index}`]">
+                <div class="title">{{ item.typeName }}</div>
+                <div class="content">
+                  <div class="item">
+                    <span class="label">在用资源数量</span>
+                    <div class="value">
+                      <span class="count">{{ item.statistic.use }}</span>个
+                    </div>
+                  </div>
+                  <div class="item">
+                    <span class="label">补给渠道数量</span>
+                    <div class="value multiple">
+                      <div class="item">平台引接 <span class="count">{{ item.statistic.connect }}</span></div>
+                      <div class="item">导入源 <span class="count">{{ item.statistic.import }}</span></div>
+                      <div class="item">公开采集资源 <span class="count">{{ item.statistic.collect }}</span></div>
+                    </div>
+                  </div>
+                  <div class="item">
+                    <span class="label">后备补给能力</span>
+                    <div class="value">
+                      <span class="count">1</span>小时补给<span class="count">{{ item.statistic.supply }}</span>个
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="ball-count">
+                <div class="label">节点数量</div>
+                <div class="value">{{ item.nodeCounts || '--' }}</div>
+              </div>
             </div>
           </div>
           <!-- 支撑态势标题 -->
@@ -221,9 +251,9 @@
           <!-- <div class="support-section" id="support-chart"></div> -->
         </div>
         <!-- 左下(3) -->
-        <div class="position-left">
+        <div class="position-left" data-html2canvas-ignore>
           <!-- 左侧非任务视图 -->
-          <div class="position-animate-container" v-show="!currentView || (currentView && currentView.key !== viewTask.key)">
+          <div class="position-animate-container position-animate-container-front">
             <div class="outer-container wh100">
               <div class="inner-container ">
                 <div class="corner corner-top-left"></div>
@@ -232,7 +262,7 @@
                 <div class="corner corner-bottom-right"></div>
                 <div class="left-section">
                   <div class="position-title">
-                    <div class="position-title-content text">安全监测</div>
+                    <div class="position-title-content text" @click="test">安全监测</div>
                   </div>
                   <!-- 安全监测 -->
                   <div class="safe-monitor">
@@ -403,10 +433,10 @@
               </div>
             </div>
           </div>
-          <!-- 左侧任务视图 - 最外层使用position-animate-container -->
-          <div class="position-animate-container" v-show="currentView.key === viewTask.key">
-            <!-- 隔离域1 -->
-            <div class="outer-container selectable wh50">
+          <!-- 左侧任务视图 - 最外层使用position-animate-container  -->
+          <div class="position-animate-container position-animate-container-back" >
+            <!-- 隔离域M -->
+            <div class="outer-container selectable wh50" :class="{active: selectTask && selectTask.igroup_id === tasks.M.igroup_id}" @click="changeTask(tasks.M)">
               <div class="inner-container task-inner">
                 <div class="corner corner-top-left"></div>
                 <div class="corner corner-top-right"></div>
@@ -414,7 +444,7 @@
                 <div class="corner corner-bottom-right"></div>
                 <div class="task-section">
                   <div class="position-title">
-                    <div class="position-title-content text">XXTS隔离域001</div>
+                    <div class="position-title-content text">{{ tasks.M.title }}</div>
                   </div>
                   <div class="task-top">
                     <div class="top">
@@ -424,41 +454,286 @@
                       <!-- 任务数量 -->
                       <div class="task-total">
                         <div class="value">
-                          <div class="num-item-20" v-for="(num, ind) in formatNumsData(tasks.task1.taskTotal, 1, 1).value" :key="ind"
+                          <div class="num-item-20" v-for="(num, ind) in formatNumsData(tasks.M.taskTotal, 1, 1).value" :key="ind"
                             :class="{dot: num === '.'}">
                             <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
                               <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
                             </div>
                           </div>
-                          <span class="num-item-inner-item">{{ formatNumsData(tasks.task1.taskTotal).unit }}</span>
+                          <span class="num-item-inner-item">{{ formatNumsData(tasks.M.taskTotal).unit }}</span>
                           <span class="unit">个</span>
                         </div>
                         <div class="label">任务用量</div>
                       </div>
-                      <div class="task-speed-chart"></div>
+                      <div class="task-speed-chart" id="transfer-chart-M" @click.stop="() => ({})"></div>
                     </div>
-                    <div class="bottom"></div>
+                    <div class="bottom">
+                      <div class="inner">
+                        <div class="task-time-counts">
+                          <div class="counts-item">
+                            <span class="label">最长持续</span>
+                            <span class="value">{{ tasks.M.max_duration }}</span>
+                          </div>
+                          <div class="counts-item">
+                            <span class="label">平均持续</span>
+                            <span class="value">{{ tasks.M.avg_duration }}</span>
+                          </div>
+                        </div>
+                        <div class="task-mini-charts">
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.M.create_success_rate_last ? `${tasks.M.create_success_rate_last}%` : tasks.M.create_success_rate_last }}</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.M.create_success_rate" :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建耗时</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.M.create_avg_duration_last_str }}</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.M.create_avg_duration" :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务执行成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.M.session_support_last ? `${tasks.M.session_support_last}%` : tasks.M.session_support_last }}</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.M.session_support" :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="task-bottom"></div>
+                  <div class="task-bottom">
+                    <div class="top">
+                      <div class="item">
+                        <div class="top task-channel-pool">
+                          <div class="icon">
+                            <img src="./img/homepage/resituation/task-bottom-icon.svg" />
+                          </div>
+                          <div class="counts">
+                            <div class="top">
+                              <span class="total">{{ tasks.M.total }}</span>
+                              <span class="center">/</span>
+                              <span class="using">{{ tasks.M.using }}</span>
+                              <span class="using-percent">{{ tasks.M.using_percent ? `${tasks.M.using_percent.toFixed(1)}%` : `${tasks.M.using_percent}%` }}</span>
+                            </div>
+                            <div class="bottom">实时通道总量 / 已用通道</div>
+                          </div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建耗时</span>
+                          <span class="value">{{ tasks.M.avg_create_time ? `${tasks.M.avg_create_time.toFixed(1)}s`  : tasks.M.avg_create_time}}</span>
+                        </div>
+                      </div>
+                      <div class="item">
+                        <div class="top">
+                          <div class="task-channel-chart" id="channel-pool-M" @click.stop="() => ({})"></div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建成功率</span>
+                          <span class="value">{{ tasks.M.avg_success ? `${(tasks.M.avg_success * 100).toFixed(2)}%` :
+                            tasks.M.avg_success}}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="bottom">
+                      <div class="row" v-for="(row, key) in tasks.M.resources" :key="key">
+                        <div class="task-resource-label">{{ row.label }}</div>
+                        <div class="task-resource-container" @mousewheel="taskResourceWheel($event, row, 'M', key)">
+                          <div class="inner" :class="[`task-M-resource-${key}`]" :style="{height: `calc(100% * ${row.rows.length})`}">
+                            <div class="task-resource-row" v-for="(resourceRow, resourceRowIndex) in row.rows" :key="resourceRowIndex">
+                              <div class="task-resource-row-item" v-for="(resource, resourceIndex) in resourceRow.items" :key="resourceIndex">
+                                <div class="icon">
+                                  <img :src="`./img/homepage/resituation/resource-bottom-${resource.src}.svg`" />
+                                </div>
+                                <div class="content">
+                                  <span class="label">{{resource.label}}</span>
+                                  <span class="num">X {{resource.num}}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="task-resource-track">
+                          <div class="track-container" v-if="row.rows.length > 1">
+                            <div class="track-item" :class="{active: row.currentIndex === track.index}" v-for="(track, index) in row.rows" :key="track.index"></div>
+                          </div>
+                        </div>
+                        <div class="task-resource-counts">
+                          <span>现有数量</span>
+                          <span class="value center"> / </span>
+                          <span class="value count">{{ formatNumsData(row.total).value + formatNumsData(row.total).unit }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-            <!-- 隔离域2 -->
-            <div class="outer-container selectable wh50">
+            <!-- 隔离域R -->
+            <div class="outer-container selectable wh50" :class="{active: selectTask && selectTask.igroup_id === tasks.R.igroup_id}" @click="changeTask(tasks.R)">
               <div class="inner-container task-inner">
                 <div class="corner corner-top-left"></div>
                 <div class="corner corner-top-right"></div>
                 <div class="corner corner-bottom-left"></div>
                 <div class="corner corner-bottom-right"></div>
-                <div class="task-section"></div>
+                <div class="task-section">
+                  <div class="position-title">
+                    <div class="position-title-content text">{{ tasks.R.title }}</div>
+                  </div>
+                  <div class="task-top">
+                    <div class="top">
+                      <div class="task-top-icon">
+                        <img src="./img/homepage/resituation/task-top-icon2.svg" />
+                      </div>
+                      <!-- 任务数量 -->
+                      <div class="task-total">
+                        <div class="value">
+                          <div class="num-item-20" v-for="(num, ind) in formatNumsData(tasks.R.taskTotal, 1, 1).value" :key="ind"
+                            :class="{dot: num === '.'}">
+                            <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                              <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                            </div>
+                          </div>
+                          <span class="num-item-inner-item">{{ formatNumsData(tasks.R.taskTotal).unit }}</span>
+                          <span class="unit">个</span>
+                        </div>
+                        <div class="label">任务用量</div>
+                      </div>
+                      <div class="task-speed-chart" id="transfer-chart-R" @click.stop="() => ({})"></div>
+                    </div>
+                    <div class="bottom">
+                      <div class="inner">
+                        <div class="task-time-counts">
+                          <div class="counts-item">
+                            <span class="label">最长持续</span>
+                            <span class="value">{{ tasks.R.max_duration }}</span>
+                          </div>
+                          <div class="counts-item">
+                            <span class="label">平均持续</span>
+                            <span class="value">{{ tasks.R.avg_duration }}</span>
+                          </div>
+                        </div>
+                        <div class="task-mini-charts">
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.R.create_success_rate_last }}%</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.R.create_success_rate"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建耗时</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.R.create_avg_duration_last_str }}</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.R.create_avg_duration"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务执行成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.R.session_support_last }}%</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.R.session_support"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="task-bottom">
+                    <div class="top">
+                      <div class="item">
+                        <div class="top task-channel-pool">
+                          <div class="icon">
+                            <img src="./img/homepage/resituation/task-bottom-icon.svg" />
+                          </div>
+                          <div class="counts">
+                            <div class="top">
+                              <span class="total">{{ tasks.R.total }}</span>
+                              <span class="center">/</span>
+                              <span class="using">{{ tasks.R.using }}</span>
+                              <span class="using-percent">{{ tasks.R.using_percent ? `${tasks.R.using_percent.toFixed(1)}%` :
+                                `${tasks.R.using_percent}%` }}</span>
+                            </div>
+                            <div class="bottom">实时通道总量 / 已用通道</div>
+                          </div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建耗时</span>
+                          <span class="value">{{ tasks.R.avg_create_time ? `${tasks.R.avg_create_time.toFixed(1)}s` :
+                            tasks.R.avg_create_time}}</span>
+                        </div>
+                      </div>
+                      <div class="item">
+                        <div class="top">
+                          <div class="task-channel-chart" id="channel-pool-R" @click.stop="() => ({})"></div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建成功率</span>
+                          <span class="value">{{ tasks.R.avg_success ? `${(tasks.R.avg_success * 100).toFixed(2)}%` :
+                            tasks.R.avg_success}}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="bottom">
+                      <div class="row" v-for="(row, key) in tasks.R.resources" :key="key">
+                        <div class="task-resource-label">{{ row.label }}</div>
+                        <div class="task-resource-container" @mousewheel="taskResourceWheel($event, row, 'R', key)">
+                          <div class="inner" :class="[`task-R-resource-${key}`]" :style="{height: `calc(100% * ${row.rows.length})`}">
+                            <div class="task-resource-row" v-for="(resourceRow, resourceRowIndex) in row.rows" :key="resourceRowIndex">
+                              <div class="task-resource-row-item" v-for="(resource, resourceIndex) in resourceRow.items"
+                                :key="resourceIndex">
+                                <div class="icon">
+                                  <img :src="`./img/homepage/resituation/resource-bottom-${resource.src}.svg`" />
+                                </div>
+                                <div class="content">
+                                  <span class="label">{{resource.label}}</span>
+                                  <span class="num">X {{resource.num}}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="task-resource-track">
+                          <div class="track-container" v-if="row.rows.length > 1">
+                            <div class="track-item" :class="{active: row.currentIndex === track.index}" v-for="(track, index) in row.rows"
+                              :key="track.index"></div>
+                          </div>
+                        </div>
+                        <div class="task-resource-counts">
+                          <span>现有数量</span>
+                          <span class="value center"> / </span>
+                          <span class="value count">{{ formatNumsData(row.total).value + formatNumsData(row.total).unit }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
         <!-- 右下(3) -->
-        <div class="position-right">
+        <div class="position-right" data-html2canvas-ignore>
           <!-- 右侧非任务视图 -->
-          <div class="position-animate-container" v-show="!currentView || (currentView && currentView.key !== viewTask.key)">
+          <div class="position-animate-container position-animate-container-front">
             <div class="outer-container wh100">
               <div class="inner-container">
                 <div class="corner corner-top-left"></div>
@@ -533,7 +808,11 @@
                   <div class="position-title">
                     <div class="position-title-content text">服务状态</div>
                   </div>
-                  <div class="s3"></div>
+                  <!-- 服务状态部分 -->
+                  <div class="service-cotainer">
+                    <div class="top"></div>
+                    <div class="bottom"></div>
+                  </div>
                   <div class="position-title">
                     <div class="position-title-content text">故障告警</div>
                   </div>
@@ -557,25 +836,305 @@
             </div>
           </div>
           <!-- 右侧任务视图 - 最外层使用position-animate-container-->
-          <div class="position-animate-container" v-show="currentView.key === viewTask.key">
-            <!-- 隔离域1 -->
-            <div class="outer-container selectable wh50">
+          <div class="position-animate-container position-animate-container-back">
+            <!-- 隔离域T -->
+            <div class="outer-container selectable wh50" :class="{active: selectTask && selectTask.igroup_id === tasks.T.igroup_id}" @click="changeTask(tasks.T)">
               <div class="inner-container task-inner">
                 <div class="corner corner-top-left"></div>
                 <div class="corner corner-top-right"></div>
                 <div class="corner corner-bottom-left"></div>
                 <div class="corner corner-bottom-right"></div>
-                <div class="task-section"></div>
+                <div class="task-section">
+                  <div class="position-title">
+                    <div class="position-title-content text">{{ tasks.T.title }}</div>
+                  </div>
+                  <div class="task-top">
+                    <div class="top">
+                      <div class="task-top-icon">
+                        <img src="./img/homepage/resituation/task-top-icon3.svg" />
+                      </div>
+                      <!-- 任务数量 -->
+                      <div class="task-total">
+                        <div class="value">
+                          <div class="num-item-20" v-for="(num, ind) in formatNumsData(tasks.T.taskTotal, 1, 1).value" :key="ind"
+                            :class="{dot: num === '.'}">
+                            <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                              <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                            </div>
+                          </div>
+                          <span class="num-item-inner-item">{{ formatNumsData(tasks.T.taskTotal).unit }}</span>
+                          <span class="unit">个</span>
+                        </div>
+                        <div class="label">任务用量</div>
+                      </div>
+                      <div class="task-speed-chart" id="transfer-chart-T" @click.stop="() => ({})"></div>
+                    </div>
+                    <div class="bottom">
+                      <div class="inner">
+                        <div class="task-time-counts">
+                          <div class="counts-item">
+                            <span class="label">最长持续</span>
+                            <span class="value">{{ tasks.T.max_duration }}</span>
+                          </div>
+                          <div class="counts-item">
+                            <span class="label">平均持续</span>
+                            <span class="value">{{ tasks.T.avg_duration }}</span>
+                          </div>
+                        </div>
+                        <div class="task-mini-charts">
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.T.create_success_rate_last }}%</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.T.create_success_rate"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建耗时</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.T.create_avg_duration_last_str }}</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.T.create_avg_duration"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务执行成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.T.session_support_last }}%</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.T.session_support"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="task-bottom">
+                    <div class="top">
+                      <div class="item">
+                        <div class="top task-channel-pool">
+                          <div class="icon">
+                            <img src="./img/homepage/resituation/task-bottom-icon.svg" />
+                          </div>
+                          <div class="counts">
+                            <div class="top">
+                              <span class="total">{{ tasks.T.total }}</span>
+                              <span class="center">/</span>
+                              <span class="using">{{ tasks.T.using }}</span>
+                              <span class="using-percent">{{ tasks.T.using_percent ? `${tasks.T.using_percent.toFixed(1)}%` :
+                                `${tasks.T.using_percent}%` }}</span>
+                            </div>
+                            <div class="bottom">实时通道总量 / 已用通道</div>
+                          </div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建耗时</span>
+                          <span class="value">{{ tasks.T.avg_create_time ? `${tasks.T.avg_create_time.toFixed(1)}s` :
+                            tasks.T.avg_create_time}}</span>
+                        </div>
+                      </div>
+                      <div class="item">
+                        <div class="top">
+                          <div class="task-channel-chart" id="channel-pool-T" @click.stop="() => ({})"></div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建成功率</span>
+                          <span class="value">{{ tasks.T.avg_success ? `${(tasks.T.avg_success * 100).toFixed(2)}%` :
+                            tasks.T.avg_success}}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="bottom">
+                      <div class="row" v-for="(row, key) in tasks.T.resources" :key="key">
+                        <div class="task-resource-label">{{ row.label }}</div>
+                        <div class="task-resource-container" @mousewheel="taskResourceWheel($event, row, 'T', key)">
+                          <div class="inner" :class="[`task-T-resource-${key}`]" :style="{height: `calc(100% * ${row.rows.length})`}">
+                            <div class="task-resource-row" v-for="(resourceRow, resourceRowIndex) in row.rows" :key="resourceRowIndex">
+                              <div class="task-resource-row-item" v-for="(resource, resourceIndex) in resourceRow.items"
+                                :key="resourceIndex">
+                                <div class="icon">
+                                  <img :src="`./img/homepage/resituation/resource-bottom-${resource.src}.svg`" />
+                                </div>
+                                <div class="content">
+                                  <span class="label">{{resource.label}}</span>
+                                  <span class="num">X {{resource.num}}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="task-resource-track">
+                          <div class="track-container" v-if="row.rows.length > 1">
+                            <div class="track-item" :class="{active: row.currentIndex === track.index}" v-for="(track, index) in row.rows"
+                              :key="track.index"></div>
+                          </div>
+                        </div>
+                        <div class="task-resource-counts">
+                          <span>现有数量</span>
+                          <span class="value center"> / </span>
+                          <span class="value count">{{ formatNumsData(row.total).value + formatNumsData(row.total).unit }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <!-- 隔离域2 -->
-            <div class="outer-container selectable wh50">
+            <!-- 隔离域F -->
+            <div class="outer-container selectable wh50" :class="{active: selectTask && selectTask.igroup_id === tasks.F.igroup_id}" @click="changeTask(tasks.F)">
               <div class="inner-container task-inner">
                 <div class="corner corner-top-left"></div>
                 <div class="corner corner-top-right"></div>
                 <div class="corner corner-bottom-left"></div>
                 <div class="corner corner-bottom-right"></div>
-                <div class="task-section"></div>
+                <div class="task-section">
+                  <div class="position-title">
+                    <div class="position-title-content text">{{ tasks.F.title }}</div>
+                  </div>
+                  <div class="task-top">
+                    <div class="top">
+                      <div class="task-top-icon">
+                        <img src="./img/homepage/resituation/task-top-icon4.svg" />
+                      </div>
+                      <!-- 任务数量 -->
+                      <div class="task-total">
+                        <div class="value">
+                          <div class="num-item-20" v-for="(num, ind) in formatNumsData(tasks.F.taskTotal, 1, 1).value" :key="ind"
+                            :class="{dot: num === '.'}">
+                            <div class="num-item-inner" :data-height="num" v-if="num !== '.'">
+                              <div class="num-item-inner-item" v-for="n in 10">{{ n - 1 }}</div>
+                            </div>
+                          </div>
+                          <span class="num-item-inner-item">{{ formatNumsData(tasks.F.taskTotal).unit }}</span>
+                          <span class="unit">个</span>
+                        </div>
+                        <div class="label">任务用量</div>
+                      </div>
+                      <div class="task-speed-chart" id="transfer-chart-F" @click.stop="() => ({})"></div>
+                    </div>
+                    <div class="bottom">
+                      <div class="inner">
+                        <div class="task-time-counts">
+                          <div class="counts-item">
+                            <span class="label">最长持续</span>
+                            <span class="value">{{ tasks.F.max_duration }}</span>
+                          </div>
+                          <div class="counts-item">
+                            <span class="label">平均持续</span>
+                            <span class="value">{{ tasks.F.avg_duration }}</span>
+                          </div>
+                        </div>
+                        <div class="task-mini-charts">
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.F.create_success_rate_last }}%</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.F.create_success_rate"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务创建耗时</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.F.create_avg_duration_last_str }}</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.F.create_avg_duration"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                          <div class="task-mini-charts-item">
+                            <div class="top">任务执行成功率</div>
+                            <div class="bottom">
+                              <div class="label">{{ tasks.F.session_support_last }}%</div>
+                              <div class="chart">
+                                <g2-line-mini :data="tasks.F.session_support"
+                                  :styles="{ stroke: '#05FDFC', fill: 'rgba(5, 253, 252, 0.1)' }"></g2-line-mini>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="task-bottom">
+                    <div class="top">
+                      <div class="item">
+                        <div class="top task-channel-pool">
+                          <div class="icon">
+                            <img src="./img/homepage/resituation/task-bottom-icon.svg" />
+                          </div>
+                          <div class="counts">
+                            <div class="top">
+                              <span class="total">{{ tasks.F.total }}</span>
+                              <span class="center">/</span>
+                              <span class="using">{{ tasks.F.using }}</span>
+                              <span class="using-percent">{{ tasks.F.using_percent ? `${tasks.F.using_percent.toFixed(1)}%` :
+                                `${tasks.F.using_percent}%` }}</span>
+                            </div>
+                            <div class="bottom">实时通道总量 / 已用通道</div>
+                          </div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建耗时</span>
+                          <span class="value">{{ tasks.F.avg_create_time ? `${tasks.F.avg_create_time.toFixed(1)}s` :
+                            tasks.F.avg_create_time}}</span>
+                        </div>
+                      </div>
+                      <div class="item">
+                        <div class="top">
+                          <div class="task-channel-chart" id="channel-pool-F" @click.stop="() => ({})"></div>
+                        </div>
+                        <div class="bottom">
+                          <span class="label">近24h平均创建成功率</span>
+                          <span class="value">{{ tasks.F.avg_success ? `${(tasks.F.avg_success * 100).toFixed(2)}%` :
+                            tasks.F.avg_success}}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="bottom">
+                      <div class="row" v-for="(row, key) in tasks.F.resources" :key="key">
+                        <div class="task-resource-label">{{ row.label }}</div>
+                        <div class="task-resource-container" @mousewheel="taskResourceWheel($event, row, 'F', key)">
+                          <div class="inner" :class="[`task-F-resource-${key}`]" :style="{height: `calc(100% * ${row.rows.length})`}">
+                            <div class="task-resource-row" v-for="(resourceRow, resourceRowIndex) in row.rows" :key="resourceRowIndex">
+                              <div class="task-resource-row-item" v-for="(resource, resourceIndex) in resourceRow.items"
+                                :key="resourceIndex">
+                                <div class="icon">
+                                  <img :src="`./img/homepage/resituation/resource-bottom-${resource.src}.svg`" />
+                                </div>
+                                <div class="content">
+                                  <span class="label">{{resource.label}}</span>
+                                  <span class="num">X {{resource.num}}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="task-resource-track">
+                          <div class="track-container" v-if="row.rows.length > 1">
+                            <div class="track-item" :class="{active: row.currentIndex === track.index}" v-for="(track, index) in row.rows"
+                              :key="track.index"></div>
+                          </div>
+                        </div>
+                        <div class="task-resource-counts">
+                          <span>现有数量</span>
+                          <span class="value center"> / </span>
+                          <span class="value count">{{ formatNumsData(row.total).value + formatNumsData(row.total).unit }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -594,6 +1153,8 @@
     <script src="js/captcha.js"></script>
     <script src="js/chartsGL.js"></script>
     <script src="./assets/js/lodash@4.17.21.js"></script>
+    <script src="./assets/js/antv/g2@5.4.0.js"></script>
+    <script src="./zn/component/miniLineChart.js"></script>
     <!-- 引入地球相关依赖 -->
     <script src="./assets/js/three/build/three.js"></script>
     <script src="./assets/js/three/build/OrbitControls.js"></script>
@@ -618,10 +1179,6 @@
     <script src="./js/view.js"></script>
     <script src="./js/earth-map.js"></script>
     <script>
-      // document.addEventListener("DOMContentLoaded", (event) => {
-      //   gsap.registerPlugin(MotionPathPlugin);
-      //   console.log('注册插件MotionPath完成')
-      // });
       gsap.registerPlugin(MotionPathPlugin);
       $api.Account.GetUserinfo(
         function (d) {
@@ -632,6 +1189,34 @@
           window.location.href = 'login.html';
         }
       );
+      // 左侧资源类的字典映射
+      let resourceTypeLeft = [
+        { src: 'jc', value: 'AIRPORT_PROXY', label: '机场代理' },
+        { src: 'yzx', value: 'DPN_VPS', label: '云专线' },
+        { src: 'nm', value: 'ANONYMOUS_NETWORK', label: '匿名网络' },
+        { src: 'bj', value: 'BW_POP', label: '边境无线' },
+        { src: 'wlw', value: 'IOT', label: '物联网代理' },
+        { src: 'wx', value: 'SAT_POP', label: '卫星通讯' },
+        { src: 'yzj', value: 'VPS', label: '云主机' },
+        { src: 'zt', value: 'SDWAN_POP', label: '直通专线' },
+        { src: 'bd', value: 'SDWAN_VPS', label: '绑定专线' },
+        { src: 'zz', value: 'STATIC_RESIDENCE_PROXY', label: '静态住宅代理' },
+        { src: 'zz', value: 'TRENDS_RESIDENCE_PROXY', label: '动态住宅代理' },
+      ];
+      // 底下的资源类字典映射
+      let resourceTypeBottom = [
+        { type: 'bj', value: 'BW_POP', label: '边境无线' },
+        { type: 'wx', value: 'SAT_POP', label: '卫星通讯' },
+        { type: 'yzj', value: 'VPS', label: '云主机' },
+        { type: 'jc', value: 'AIRPORT_PROXY', label: '机场代理' },
+        { type: 'zz', value: 'STATIC_RESIDENCE_PROXY', label: '住宅代理' },
+        { type: 'zz', value: 'TRENDS_RESIDENCE_PROXY', label: '住宅代理' },
+        { type: 'wlw', value: 'IOT', label: '物联网代理' },
+        { type: 'yzx', value: 'DPN_VPS', label: '云专线' },
+        { type: 'nm', value: 'ANONYMOUS_NETWORK', label: '匿名网络' },
+        { type: 'yys', value: 'SDWAN_POP', label: '边境无线' },
+        { type: 'yys', value: 'SDWAN_VPS', label: '边境无线' },
+      ];
       // 调用下钻地球后渲染地图的飞线数据
       let flightData = [
         { start: [91.1, 29.6], end: [116.4, 39.9] },
@@ -646,8 +1231,12 @@
       let transparentColors = ['rgba(5, 253, 252, 0)', 'rgba(58, 137, 255, 0)', 'rgba(246, 255, 0, 0)', 'rgba(151, 235, 205, 0)', 'rgba(9, 187, 255, 0)', 'rgba(255, 204, 128, 0)', 'rgba(250, 145, 150, 0)', 'rgba(128, 188, 255, 0)'];
       // 资源分布折线图使用的颜色
       let resourceLineChartColors = [ 'rgba(5,253,252, 1)', 'rgba(246, 255, 0, 1)'];
-      let resourceLineChartLinearColors = ['rgba(5,253,252, .5)', 'rgba(246, 255, 0, .5)'];
+      let resourceLineChartLinearColors = ['rgba(5,253,252, .8)', 'rgba(246, 255, 0, .8)'];
       let resourceLineChartTransparentColors = ['rgba(5,253,252, 0)', 'rgba(246, 255, 0, 0)'];
+      // 通道池折线图使用的颜色
+      let channelLineChartColors = ['rgba(58, 137, 255, 1)', 'rgba(5, 253, 252, 1)'];
+      let channelLineChartLinearColors = ['rgba(58, 137, 255, .8)', 'rgba(5, 253, 252, .8)'];
+      let channelLineChartTransparentColors = ['rgba(58, 137, 255, 0)', 'rgba(5, 253, 252, 0)'];
       // 安全加固饼图颜色
       let pieChartColors = ['rgb(128,188,255)', 'rgb(162,225,249)', 'rgb(151,235,205)', 'rgb(186,225,179)', 'rgb(255,204,128)', 'rgb(250,145,150)']
       // 转换echart图标的字体函数
@@ -658,8 +1247,177 @@
         return res * fontSize;
       }
       // 传输态势折线图默认配置项
-      // risk-top-section
       let transferOption = {
+        // 总的背景色
+        backgroundColor: 'rgba(255, 255, 255, 0)',
+        color: chartColors,
+        // 全局字体样式
+        textStyle: {
+          color: '#868e97',
+          fontSize: setChartSize(8)
+        },
+        grid: {
+          // left: setChartSize(5),
+          left: setChartSize(12),
+          top: setChartSize(5),
+          right: setChartSize(12),
+          bottom: setChartSize(20),
+          containLabel: false,
+          backgroundColor: 'transparent'
+        },
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(24, 34, 107, .7)',
+          borderColor: 'rgba(50, 57, 103, 0.9)',
+          borderWidth: 1,
+          textStyle: {
+            color: '#ddeeff',
+            fontSize: setChartSize(14)
+          },
+          axisPointer: {
+            type: 'line', // 设置为线型指示器
+            lineStyle: {
+              type: 'dashed' // 线的类型，可以是 'solid', 'dashed', 或 'dotted'
+            }
+          }
+        },
+        legend: {
+          data: [],
+          // icon: 'circle',
+          // itemWidth: 8,
+          // itemHeight: 8,
+          // icon: 'roundRect',
+          icon: 'rect',
+          itemWidth: setChartSize(20),
+          itemHeight: setChartSize(2),
+          textStyle: {
+            fontSize: setChartSize(14),
+            color: '#868e97'
+          },
+          // top: setChartSize(0),
+          top: 0,
+          // right: 0
+          right: setChartSize(20)
+        },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: [],
+          // x轴轴线刻度字
+          axisLabel: {
+            color: 'rgba(221, 238, 255, 0.48)',
+            // fontSize: 14,
+            fontSize: setChartSize(8),
+            // margin: setChartSize(12)
+          },
+          axisLine: {
+            show: false,
+          },
+          axisTick: {
+            show: false
+          },
+          // 背景刻度线
+          splitLine: {
+            lineStyle: {
+              type: 'dashed'
+            }
+          }
+        },
+        // yAxis.axisLabel.formatter
+        yAxis: {
+          show: false,
+          type: 'value',
+          nameTextStyle: {
+            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
+            align: 'left'
+          },
+          // y轴轴线刻度字
+          axisLabel: {
+            // 设置格式
+            // formatter: '{(value / 1000).toFixed(0)}Kbps',
+            color: '#868e97',
+            fontSize: setChartSize(14),
+            // margin: setChartSize(12)
+          },
+          // axisLine: {
+          // 	show: true
+          // },
+          // 背景刻度线
+          splitLine: {
+            show: true,
+            lineStyle: {
+              type: 'dashed',
+              color: '#868e97'
+            }
+          }
+        },
+        series: []
+      };
+      // 安全加固的默认饼图配置
+      let defaultPieOption = {
+        backgroundColor: 'transparent',
+        grid: {
+          containLabel: true
+        },
+        legend: {
+          show: false,
+          data: [],
+          icon: 'roundRect',
+          orient: 'vertical',
+          right: setChartSize(30),
+          itemWidth: 20,
+          itemHeight: 12,
+          textStyle: {
+            fontSize: 14
+          }
+        },
+        tooltip: {
+          trigger: 'item',
+          confine: true,
+          // formatter(params){}
+          backgroundColor: 'rgba(24, 34, 107, .7)',
+          borderColor: 'rgba(50, 57, 103, 0.9)',
+          borderWidth: 1,
+          textStyle: {
+            color: '#ddeeff',
+            fontSize: setChartSize(14)
+          }
+        },
+        series: [{
+          type: 'pie',
+          // radius: ['16%', '28%'],
+          radius: ['30%', '75%'],
+          avoidLabelOverlap: true,
+          itemStyle: {
+            borderRadius: 2,
+            borderWidth: 3,
+            // borderColor: 'rgba(0, 0, 0, 0.8)'
+            borderColor: 'rgb(12, 16, 48)'
+          },
+          label: {
+            show: true,
+            color: '#fff',
+            fontSize: setChartSize(10),
+            position: 'outside',
+            // formatter: '{b}\n{d}%'
+            formatter: '{b}\n{c}个'
+          },
+          emphasis: {
+            disabled: false,
+            scale: false,
+            label: {
+              show: true
+            }
+          },
+          labelLine: {
+            show: true
+          },
+          data: []
+        }]
+      };
+
+      // 双线图基本配置
+      let defaultMutipleLineOption = {
         // 总的背景色
         backgroundColor: 'rgba(255, 255, 255, 0)',
         color: chartColors,
@@ -673,11 +1431,11 @@
           // top: 35,
           // right: 20,
           // bottom: 20,
-          left: setChartSize(20),
+          left: setChartSize(5),
           // top: setChartSize(35),
-          top: setChartSize(35),
-          right: setChartSize(20),
-          bottom: setChartSize(20),
+          top: setChartSize(10),
+          right: setChartSize(5),
+          bottom: setChartSize(5),
           containLabel: true,
           backgroundColor: 'transparent'
         },
@@ -769,182 +1527,10 @@
         },
         series: []
       };
-      // 支撑态势的配置项
-      let supportOption = JSON.parse(JSON.stringify(transferOption));
-      supportOption.grid.bottom = setChartSize(0);
-      supportOption.xAxis.boundaryGap = setChartSize(20);
-      supportOption.yAxis = [
-        {
-          type: 'value',
-          name: '任务数量(个)',
-          nameLocation: 'end',
-          nameTextStyle: {
-            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
-            align: 'left'
-          },
-          splitLine: {
-            lineStyle: {
-              type: 'solid'
-            }
-          },
-          // y轴轴线刻度字
-          axisLabel: {
-            // 设置格式
-            // formatter: '{value}bps',
-            color: '#868e97',
-            fontSize: setChartSize(14),
-            margin: setChartSize(12)
-          },
-          axisLine: {
-            show: true
-          },
-          // 背景刻度线
-          splitLine: {
-            lineStyle: {
-              type: 'dashed',
-              color: '#868e97'
-            },
-            show: false
-          }
-        },
-        {
-          type: 'value',
-          name: '执行成功率(%)',
-          nameLocation: 'end',
-          nameTextStyle: {
-            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
-            align: 'right'
-          },
-          splitLine: {
-            lineStyle: {
-              type: 'solid'
-            }
-          },
-          // y轴轴线刻度字
-          axisLabel: {
-            // 设置格式
-            // formatter: '{value}bps',
-            color: '#868e97',
-            fontSize: setChartSize(14),
-            margin: setChartSize(12)
-          },
-          axisLine: {
-            show: true
-          },
-          // 背景刻度线
-          splitLine: {
-            lineStyle: {
-              type: 'dashed',
-              color: '#868e97'
-            }
-          }
-        }
-      ];
-      supportOption.legend = [
-        {
-          show: true,
-          orient: 'horizontal',
-          left: 'center',
-          top: 0,
-          align: 'auto',
-          backgroundColor: 'rgba(0,0,0,0)',
-          borderColor: '#ccc',
-          borderRadius: 0,
-          borderWidth: 0,
-          padding: setChartSize(5),
-          itemGap: setChartSize(10),
-          itemWidth: setChartSize(25),
-          itemHeight: setChartSize(14),
-          textStyle: {
-            color: '#868e97',
-            fontSize: setChartSize(14)
-          }
-          // symbolRotate: 'inherit',
-          // symbolKeepAspect: true,
-          // inactiveColor: '#ccc',
-          // inactiveBorderColor: '#ccc',
-          // inactiveBorderWidth: 'auto',
-        }
-      ];
-      // 安全加固的默认饼图配置
-      let defaultPieOption = {
-        backgroundColor: 'transparent',
-        grid: {
-          containLabel: true
-        },
-        legend: {
-          show: false,
-          data: [],
-          icon: 'roundRect',
-          orient: 'vertical',
-          right: setChartSize(30),
-          itemWidth: 20,
-          itemHeight: 12,
-          textStyle: {
-            fontSize: 14
-          }
-        },
-        tooltip: {
-          trigger: 'item',
-          confine: true,
-          // formatter(params){}
-          backgroundColor: 'rgba(24, 34, 107, .7)',
-          borderColor: 'rgba(50, 57, 103, 0.9)',
-          borderWidth: 1,
-          textStyle: {
-            color: '#ddeeff',
-            fontSize: setChartSize(14)
-          }
-        },
-        series: [{
-          type: 'pie',
-          // radius: ['16%', '28%'],
-          radius: ['30%', '75%'],
-          avoidLabelOverlap: true,
-          itemStyle: {
-            borderRadius: 2,
-            borderWidth: 3,
-            // borderColor: 'rgba(0, 0, 0, 0.8)'
-            borderColor: 'rgb(12, 16, 48)'
-          },
-          label: {
-            show: true,
-            color: '#fff',
-            fontSize: setChartSize(10),
-            position: 'outside',
-            // formatter: '{b}\n{d}%'
-            formatter: '{b}\n{c}个'
-          },
-          emphasis: {
-            disabled: false,
-            scale: false,
-            label: {
-              show: true
-            }
-          },
-          labelLine: {
-            show: true
-          },
-          data: []
-        }]
-      };
-
       // 工具函数
       function round(number, precision = 2) {
         return Math.round(+number + "e" + precision) / Math.pow(10, precision);
       }
-      // 默认的左下角资源统计的中间资源对象
-      let defaultResourceCenter = {
-        resourceType: undefined,
-        key: undefined,
-        count: undefined,
-        districtList: undefined,
-        staticCount: undefined,
-        dynamicCount: undefined,
-        districtCount: undefined,
-        protocolCount: undefined,
-        sourceCount: undefined
-      };
       $app = new Vue({
         el: '#app',
         data() {
@@ -963,10 +1549,10 @@
               key: 'now',
               imgPre: 'ct',
               centerTop: [
-                { label: '实时通道数量', value: '13820' },
-                { label: '实时网络负载', value: '1.52' },
-                { label: '实时任务数量', value: '236' },
-                { label: '实时任务支撑率', value: '532' }
+                { label: '实时通道数量', value: '0' },
+                { label: '实时网络负载', value: '0', isFloat: true },
+                { label: '实时任务数量', value: '0' },
+                { label: '实时任务支撑率', value: '99.9', isFloat: true }
               ],
               mapDatas: []
             },
@@ -975,10 +1561,10 @@
               key: 'source',
               imgPre: 'zy',
               centerTop: [
-                { label: '资源类型', value: '893' },
-                { label: '节点数量', value: '23' },
-                { label: '覆盖地区', value: '86' },
-                { label: '补给渠道', value: '236' }
+                { label: '资源类型', key: 'resource_type_count',value: '0' },
+                { label: '节点数量', key: 'node_count',value: '0' },
+                { label: '覆盖地区', key: 'region_count',value: '0' },
+                { label: '补给渠道', key: 'provider_count',value: '0' }
               ],
               mapDatas: [
                 { E: 121.564438, N: 25.037555, name: "台北市", type: 'bj', rank: 'middle' },
@@ -988,7 +1574,7 @@
                 { E: 121.019789, N: 14.472021, name: "帕拉尼亚克", type: 'zz', rank: 'small' },
                 { E: -119.417932, N: 36.778261, name: "加利福尼亚州", type: 'wlw', rank: 'large' },
                 { E: 100.506322, N: 13.761612, name: "曼谷", type: 'yzx', rank: 'middle' },
-                { E: 103.762593, N: 1.470747, name: "新山", type: 'jr', rank: 'small' },
+                { E: 103.762593, N: 1.470747, name: "新山", type: 'yys', rank: 'small' },
                 { E: 90.402832, N: 23.715806, name: "达卡", type: 'nm', rank: 'large' },
               ]
             },
@@ -997,10 +1583,10 @@
               key: 'network',
               imgPre: 'wl',
               centerTop: [
-                { label: '通道架构', value: '13820' },
-                { label: '隐匿传输模式', value: '1.52' },
-                { label: '通道数量', value: '236' },
-                { label: '通道有效率', value: '532' }
+                { label: '通道架构', key: 'channel_type_count', value: '0' },
+                { label: '隐匿传输模式', key: 'trans_mode_count', value: '0' },
+                { label: '通道数量', key: 'channel_count', value: '0' },
+                { label: '通道有效率', key: 'channel_efficiency', value: '1', isFloat: true }
               ],
               mapDatas: []
             },
@@ -1009,10 +1595,10 @@
               key: 'task',
               imgPre: 'rw',
               centerTop: [
-                { label: '业务模式', value: '23' },
-                { label: '分域分区', value: '56' },
-                { label: '任务数量', value: '678' },
-                { label: '任务支撑率', value: '98' }
+                { label: '业务模式', key: 'label_count', value: '0' },
+                { label: '分域分区', key: 'igroup_count', value: '0' },
+                { label: '任务数量', key: 'session_count', value: '0' },
+                { label: '任务支撑率', key: 'session_support_rate', value: '0', isFloat: true }
               ],
               mapDatas: []
             },
@@ -1021,15 +1607,15 @@
             // 当前选中激活的资源球
             currentBall: null,
             balls: [
-              { index: 1, type: 'nm', typeName: '匿名网络', tl: null, positionTL: null },
-              { index: 2, type: 'jr', typeName: '接入主机', tl: null, positionTL: null },
-              { index: 3, type: 'yzx', typeName: '云专线', tl: null, positionTL: null },
-              { index: 4, type: 'wlw', typeName: '物联网代理', tl: null, positionTL: null },
-              { index: 5, type: 'zz', typeName: '住宅代理', tl: null, positionTL: null },
-              { index: 6, type: 'jc', typeName: '机场代理', tl: null, positionTL: null },
-              { index: 7, type: 'yzj', typeName: '云主机', tl: null, positionTL: null },
-              { index: 8, type: 'wx', typeName: '卫星通讯', tl: null, positionTL: null },
-              { index: 9, type: 'bj', typeName: '边境无线', tl: null, positionTL: null }
+              { index: 1, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'nm', typeName: '匿名网络', tl: null, positionTL: null },
+              { index: 2, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'yys', typeName: '运营商专线', tl: null, positionTL: null },
+              { index: 3, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'yzx', typeName: '云专线', tl: null, positionTL: null },
+              { index: 4, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'wlw', typeName: '物联网代理', tl: null, positionTL: null },
+              { index: 5, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'zz', typeName: '住宅代理', tl: null, positionTL: null },
+              { index: 6, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'jc', typeName: '机场代理', tl: null, positionTL: null },
+              { index: 7, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'yzj', typeName: '云主机', tl: null, positionTL: null },
+              { index: 8, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'wx', typeName: '卫星通讯', tl: null, positionTL: null },
+              { index: 9, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'bj', typeName: '边境无线', tl: null, positionTL: null }
             ],
             // 小球点位对应的样式
             ballPoints: [
@@ -1167,55 +1753,323 @@
             ], 
             // 选择的隔离域
             selectTask: null,
-            // 任务面板数据
+            // todo 任务面板数据
             tasks: {
-              task1: {
-                title: 'XXTS隔离域001(M)',
+              M: {
+                title: 'XXTS隔离域004(M)',
                 igroup_id: 4,
                 // 选择时的地图飞线数据
-                mapDatas: [],
+                mapDatas: [
+                  { startArray: { name: '杭州', N: 30.246026, E: 120.210792 },
+                    endArray: [{ 
+                      name: '华盛顿',
+                      N: 47.75, //维度
+                      E: -120.74, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '伦敦', N: 51.509865, E: -0.118092 },
+                    endArray: [{
+                      name: '华盛顿',
+                      N: 47.75, //维度
+                      E: -120.74, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '悉尼', N: -33.859972, E: 151.211111 },
+                    endArray: [{
+                      name: '华盛顿',
+                      N: 47.75, //维度
+                      E: -120.74, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  }
+                ],
                 // 任务用量
                 taskTotal: '0',
                 // 最长持续
                 max_duration: '--',
                 // 平均持续
-                avg_duration: '--'
+                avg_duration: '--',
+                // 任务创建成功率
+                create_success_rate: [],
+                // 任务创建成功率
+                create_success_rate_last: 0,
+                // 创建任务耗时
+                create_avg_duration: [],
+                create_avg_duration_last: 0,
+                create_avg_duration_last_str: '0',
+                // 通道池的数据
+                avg_create_time: 0,
+                avg_success: 0,
+                total: 0,
+                using: 0,
+                using_percent: 0,
+                resources: {
+                  entry: {
+                    label: '入口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  relay: {
+                    label: '中继',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  exit: {
+                    label: '出口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  }
+                }
               },
-              task2: {
-                title: 'XXTS隔离域001(R)',
+              R: {
+                title: 'XXTS隔离域006(R)',
                 igroup_id: 6,
                 // 选择时的地图飞线数据
-                mapDatas: [],
+                mapDatas: [
+                {                     startArray: { name: '杭州', N: 30.246026, E: 120.210792 },
+                    endArray: [{
+                      name: '东京',
+                      N: 35.689381, //维度
+                      E: 139.69181, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '伦敦', N: 51.509865, E: -0.118092 },
+                    endArray: [{
+                      name: '东京',
+                      N: 35.689381, //维度
+                      E: 139.69181, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '悉尼', N: -33.859972, E: 151.211111 },
+                    endArray: [{
+                      name: '东京',
+                      N: 35.689381, //维度
+                      E: 139.69181, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  }
+                ],
                 // 任务用量
                 taskTotal: '0',
                 // 最长持续
                 max_duration: '--',
                 // 平均持续
-                avg_duration: '--'
+                avg_duration: '--',
+                // 任务创建成功率
+                create_success_rate: [],
+                // 任务创建成功率
+                create_success_rate_last: 0,
+                // 创建任务耗时
+                create_avg_duration: [],
+                create_avg_duration_last: 0,
+                create_avg_duration_last_str: '0',
+                // 通道池的数据
+                avg_create_time: 0,
+                avg_success: 0,
+                total: 0,
+                using: 0,
+                using_percent: 0,
+                resources: {
+                  entry: {
+                    label: '入口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  relay: {
+                    label: '中继',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  exit: {
+                    label: '出口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  }
+                }
               },
-              task3: {
-                title: 'XXTS隔离域001(T)',
+              T: {
+                title: 'XXTS隔离域005(T)',
                 igroup_id: 5,
                 // 选择时的地图飞线数据
-                mapDatas: [],
+                mapDatas: [
+                {                                         startArray: { name: '杭州', N: 30.246026, E: 120.210792 },
+                    endArray: [{
+                      name: '高雄',
+                      N: 23.01087, //维度
+                      E: 120.666, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '伦敦', N: 51.509865, E: -0.118092 },
+                    endArray: [{
+                      name: '高雄',
+                      N: 23.01087, //维度
+                      E: 120.666, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '悉尼', N: -33.859972, E: 151.211111 },
+                    endArray: [{
+                      name: '高雄',
+                      N: 23.01087, //维度
+                      E: 120.666, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  }
+                ],
                 // 任务用量
                 taskTotal: '0',
                 // 最长持续
                 max_duration: '--',
                 // 平均持续
-                avg_duration: '--'
+                avg_duration: '--',
+                // 任务创建成功率
+                create_success_rate: [],
+                // 任务创建成功率
+                create_success_rate_last: 0,
+                // 创建任务耗时
+                create_avg_duration: [],
+                create_avg_duration_last: 0,
+                create_avg_duration_last_str: '0',
+                // 通道池的数据
+                avg_create_time: 0,
+                avg_success: 0,
+                total: 0,
+                using: 0,
+                using_percent: 0,
+                resources: {
+                  entry: {
+                    label: '入口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  relay: {
+                    label: '中继',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  exit: {
+                    label: '出口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  }
+                }
               },
-              task4: {
-                title: 'XXTS隔离域001(M)',
+              F: {
+                title: 'XXTS隔离域007(F)',
                 igroup_id: 7,
                 // 选择时的地图飞线数据
-                mapDatas: [],
+                mapDatas: [
+                {   startArray: { name: '杭州', N: 30.246026, E: 120.210792 },
+                    endArray: [{
+                      name: '马尼拉',
+                      N: 14.35, //维度
+                      E: 120.58, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '伦敦', N: 51.509865, E: -0.118092 },
+                    endArray: [{
+                      name: '马尼拉',
+                      N: 14.35, //维度
+                      E: 120.58, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  },
+                  {
+                    startArray: { name: '悉尼', N: -33.859972, E: 151.211111 },
+                    endArray: [{
+                      name: '马尼拉',
+                      N: 14.35, //维度
+                      E: 120.58, //经度
+                      label: 'xxts',
+                      status: 'tc'
+                    }]
+                  }
+                ],
                 // 任务用量
                 taskTotal: '0',
                 // 最长持续
                 max_duration: '--',
                 // 平均持续
-                avg_duration: '--'
+                avg_duration: '--',
+                // 任务创建成功率
+                create_success_rate: [],
+                // 任务创建成功率
+                create_success_rate_last: 0,
+                // 创建任务耗时
+                create_avg_duration: [],
+                create_avg_duration_last: 0,
+                create_avg_duration_last_str: '0',
+                // 通道池的数据
+                avg_create_time: 0,
+                avg_success: 0,
+                total: 0,
+                using: 0,
+                using_percent: 0,
+                resources: {
+                  entry: {
+                    label: '入口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  relay: {
+                    label: '中继',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  },
+                  exit: {
+                    label: '出口',
+                    currentIndex: 0,
+                    total: 0,
+                    rows: [],
+                    animating: false,
+                  }
+                }
               },
             },
             // <====================
@@ -1395,6 +2249,30 @@
               // 支撑态势
               support: {
                 chart: null
+              },
+              M: {
+                chart: null
+              },
+              R: {
+                chart: null
+              },
+              T: {
+                chart: null
+              },
+              F: {
+                chart: null
+              },
+              channelM: {
+                chart: null
+              },
+              channelR: {
+                chart: null
+              },
+              channelT: {
+                chart: null
+              },
+              channelF: {
+                chart: null
               }
             }
           };
@@ -1407,39 +2285,8 @@
           $app = this;
           // 初始时设置当前视图为初始视图
           this.currentView = this.viewNow;
-          $api.situation.getSourceView({},function (res){
-            console.log('资源视图数据')
-            console.log(res)
-          })
-          $api.situation.getNetworkView({}, function (res) {
-            console.log('网络视图数据')
-            console.log(res)
-          })
-          $api.situation.getTaskView({}, function (res) {
-            console.log('任务视图数据')
-            console.log(res)
-          })
-
-          // $api.Account.GetUserinfo(async function (user) {
-          //   console.log('尝试先获取用户信息')
-          //   console.log(user)
-          //   let igroupDatas = [];
-          //   const datas = (await $app.getIgroup(user.id)) || { igroup_data: [] };
-          //   console.log('获取隔离域组')
-          //   console.log(datas)
-          // }, function (err) {
-          //   if (err.data == '没有权限' || err.status == 403) window.location.href = 'login.html';
-          //   else if (!window.$app) {
-          //     let h1 = document.createElement('h1');
-          //     h1.innerHTML = '<div style="text-align: center;line-height: 200px;">' + err + '</div>';
-          //     document.body.appendChild(h1);
-          //   }
-          // })
-          this.getIgroupTransport(4);
-          this.queryIgroupStatisticInfo(4)
         },
         mounted() {
-          this.initIgroupDatas(4)
           this.init();
           // $app.updateTimer = setInterval(this.update, 10000);
           window.addEventListener('resize', $app.resize);
@@ -1536,76 +2383,6 @@
           }
         },
         methods: {
-          initIgroupDatas(igroup_id){
-            Object.entries(this.tasks).forEach(([taskKey, task]) => {
-              let taskGroupId = task.igroup_id;
-              $api.transferSituation.igroupTransport(
-                { params: { igroup_id:  taskGroupId } },
-                function (res){
-                  if (res.code === 200 && res.data) {
-                    $app.tasks[taskKey].max_duration = res.data.max_duration ? $app.overviewFormatTime(res.data.max_duration) : '--';
-                    $app.tasks[taskKey].avg_duration = res.data.avg_duration ? $app.overviewFormatTime(res.data.avg_duration) : '--';
-                    $app.tasks[taskKey].taskTotal = res.data.count ? `${res.data.count}` : '0';
-                    console.log(taskKey)
-                    console.log($app.tasks[taskKey])
-                  }
-                },
-                function (err){
-                  console.log(err)
-                }
-              );
-            })
-            
-          },
-          // 隔离域数据拉取1
-          // $api.transferSituation.igroupTransport
-          // 隔离组数据2
-          // $api.isolation.getIgroupStatisticInfo
-          // 传输速率 type: 上行 input; 下行 output
-          // $api.transferSituation.getTransportRate
-          getIgroupTransport(igroup_id) {
-            return new Promise((resolve, reject) => {
-              $api.transferSituation.igroupTransport(
-                { params: { igroup_id } },
-                res => {
-                  // console.log('隔离与数据1')
-                  // console.log(res)
-                  const { code, data } = res;
-                  if (code === 200 && data) {
-                    return resolve(data);
-                  }
-                  return resolve({ count: 0, avg_duration: 0, max_duration: 0 });
-                },
-                err => {
-                  reject(err);
-                }
-              );
-            });
-          },
-          // 隔离域数据拉取
-          queryIgroupStatisticInfo(igroup_id) {
-            return new Promise((resolve, reject) => {
-              $api.isolation.getIgroupStatisticInfo(
-                { params: { igroup_id } },
-                (res) => {
-                  // console.log('隔离与数据2')
-                  // console.log(res)
-                  const { code, data, msg } = res;
-                  if (code === 200 && data) {
-                    resolve(data);
-                  } else {
-                    resolve({})
-                  }
-                },
-                (err) => {
-                  console.error(err);
-                  reject(err);
-                },
-                () => { }
-              );
-            })
-          },
-
           startEditing(){
             this.isEditing = true;
             this.$nextTick(()=>{
@@ -1618,7 +2395,6 @@
           },
           timeRangeChange(val) {
             // 筛选支持态势图表数据
-            // this.getSupport(true); 
           },
           test(e) {
             // this.$refs.earth.clearAllDatas();
@@ -1631,9 +2407,6 @@
 
             // 地球下钻
             // this.animateDownInEarthMap();
-            // 任务视图飞跃点
-            // this.animateFlyToPoint({ N: 116.4074, E: 39.9042 });
-            // 
           },  
           ttt(){
             // 地球上窜
@@ -1642,9 +2415,6 @@
             this.animateBallsRotate();
           },
           render() {
-            /*
-						
-						*/
             this.$refs.earth.renderDatas([
               {
                 startArray: {
@@ -1665,6 +2435,14 @@
             ]);
           },
           // ============> 工具函数
+          // 对象数组根据某个属性去重
+          uniqueArray(arr, attr) {
+            const res = new Map();
+            return arr.filter(item => {
+              let attrItem = item[attr];
+              return !res.has(attrItem) && res.set(attrItem, 1);
+            });
+          },
           // 隔离域计算最长持续、平均持续秒自动转换
           overviewFormatTime(seconds) {
             if (seconds < 60) {
@@ -1688,38 +2466,26 @@
             const days = _.round(_d, 1);
             return `${days}天`;
           },
-          // 地球左下角资源统计 - 中间选择资源时是否展示该资源对象的条目判断
-          resourceSelectIsShow(key){
-            let notShow = ['resourceType', 'key'];
-            return !notShow.includes(key);
-          },
-          // 地球左下角资源统计 - 计算回显展示的key中文名称
-          computedResourceSelectLabel(key){
-            // resourceShowLabels
-            let findLabel = $app.resourceStatis.resourceShowLabels.find(item => item.value === key);
-            if (findLabel){
-              return findLabel.label ? findLabel.label : '';
-            } else {
-              return '';
-            }
-          },
-          // 地球左下角资源统计 - 计算回显展示的值
-          computedResourceSelectValue(value){
-            if (value !== null && value !== undefined){
-              return Array.isArray(value) && value.length > 0 ? value[0] : value;
-            } else {
-              return '--';
-            }
-          },
           // 工具函数 - 转换图表的流量数据单位
-          formatBytesData(value, fixed = 0) {
+          formatBytesData(value, fixed = 1, floatFixed = 1) {
+            let num = +value;
             const units = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y', 'B'];
             let index = 0;
-            while (value >= 1000 && index < units.length - 1) {
-              value /= 1000;
+            while (num >= 1000 && index < units.length - 1) {
+              num /= 1000;
               index++;
             }
-            return { value: value.toFixed(fixed), unit: units[index] };
+            let result = 0;
+            if (index > 0) {
+              result = num.toFixed(fixed);
+            } else {
+              if (parseInt(num) === num) {
+                result = num.toFixed(0);
+              } else {
+                result = num.toFixed(floatFixed)
+              }
+            }
+            return { value: result, unit: units[index] };
           },
           // 工具函数 - 转换普通数字数据单位
           formatNumsData(value, fixed = 1, floatFixed = 1) {
@@ -1810,6 +2576,116 @@
               this.charts[dataChartKey].chart.setOption(option);
             }
           },
+          // utils - 格式化小数
+          formatDecimal(val) {
+            if (val === null || val === undefined || val === '') return 0;
+            const num = Number(val);
+            if (isNaN(num)) return val;
+            return parseFloat(num.toFixed(2));
+          },
+          // utils - 辅助函数：获取最后一个值
+          getLast(list, key = 'y') {
+            return list.length ? list[list.length - 1][key] : 0;
+          },
+          // utils
+          formatDuration(ms, options = {}) {
+            const {
+              decimal = 0, // 默认保留0位小数（即整数）
+              keepDecimal = false, // 默认自动去除末尾多余的0
+              language = 'en'
+            } = options;
+            if (ms <= 0) return language === 'zh' ? '0毫秒' : '0ms';
+            // 定义时间单位换算 (毫秒)
+            const timeUnits = [
+              { unit: '天', en: 'd', ms: 24 * 60 * 60 * 1000 },
+              { unit: '小时', en: 'h', ms: 60 * 60 * 1000 },
+              { unit: '分钟', en: 'm', ms: 60 * 1000 },
+              { unit: '秒', en: 's', ms: 1000 },
+              { unit: '毫秒', en: 'ms', ms: 1 }
+            ];
+            let remainingMs = ms;
+            const result = [];
+            for (let i = 0; i < timeUnits.length; i++) {
+              const { unit, en, ms: unitMs } = timeUnits[i];
+              // 计算当前单位的值
+              const value = Math.floor(remainingMs / unitMs);
+              if (value > 0) {
+                let displayValue = value;
+                let suffix = language === 'zh' ? unit : en;
+                // 如果不是最后一个单位（毫秒），且还有剩余毫秒数，则计算小数
+                // 或者如果这就是最后一个单位
+                if (i < timeUnits.length - 1) {
+                  // 计算小数部分：剩余毫秒数 / 当前单位的毫秒数
+                  const fraction = remainingMs % unitMs / unitMs;
+                  // 如果开启了小数位，或者小数部分非常显著（这里简单处理，只要有剩余就算）
+                  if (decimal > 0) {
+                    // 将整数和小数合并，并保留指定小数位
+                    const rawValue = value + fraction;
+                    displayValue = rawValue.toFixed(decimal);
+
+                    // 核心逻辑：如果不需要强制保留小数，去除末尾的 0
+                    if (!keepDecimal) {
+                      displayValue = parseFloat(displayValue);
+                    }
+                  }
+                }
+                // // 英文复数处理
+                // if (language === 'en' && displayValue > 1) {
+                //   suffix += 's';
+                // }
+                result.push(`${displayValue}${suffix}`);
+                // 如果我们已经显示了带小数的单位，后面的单位就不需要显示了（例如 1.5小时 就不需要再显示 30分钟）
+                // 除非你希望像 "1小时 30分" 这样显示，那就不需要 break，但通常带小数时只显示最大单位
+                if (decimal > 0) break;
+                remainingMs %= unitMs; // 更新剩余毫秒数（仅当显示整数时继续循环）
+              }
+            }
+            // 兜底：如果结果为空（极小的值），显示毫秒
+            if (result.length === 0) {
+              return language === 'zh' ? `${ms}毫秒` : `${ms}ms`;
+            }
+            return language === 'zh' ? result.join('') : result.join(' ');
+          },
+          /**
+          * 处理图表数据映射
+          * @param {Array} sourceList - 源数据数组
+          * @param {String} xKey - X轴字段名
+          * @param {String} yKey - Y轴字段名
+          * @param {Function} transformY - Y轴数据预处理函数 (可选)
+          * @returns {Array} 格式化后的图表数据
+          */
+          mapChartData(sourceList, xKey, yKey, transformY = null) {
+            if (!sourceList) return [];
+            return sourceList.map(o => {
+              // 1. 获取原始 Y 值
+              let rawY = o[yKey];
+              // 2. 如果有预处理函数，先执行预处理 (例如单位换算)
+              if (transformY) {
+                rawY = transformY(rawY);
+              }
+              // 3. 核心逻辑：格式化小数
+              // 规则：保留两位小数，如果是整数 (如 10.00) 则去除小数部分 (变为 10)
+              // 注意：这里假设 Y 值是数字类型。如果是字符串需先 parseFloat
+              const formattedY = $app.formatDecimal(rawY);
+              return {
+                x: o[xKey],
+                y: formattedY
+              };
+            });
+          },
+          // 工具函数 - 根据国家代码获取对应国家国标路径
+          getCountryObj(value) {
+            let result = {
+              chineseName: value,
+              imageUrl: null
+            }
+            const findItem = ChannelDict.alpha_opt.find(item => value === item['alpha-2']);
+            if (findItem) {
+              result.chineseName = findItem.chineseName;
+              result.imageUrl = `./assets/country/${findItem['alpha-2'].toLowerCase()}.svg`;
+            }
+            return result;
+          },
           // ============> 动画函数
           // 进入页面的初始化动画
           enterAnimate() {
@@ -1829,6 +2705,7 @@
                   gsap.fromTo('.position-center-top-bottom', { opacity: 0 }, { opacity: 1, duration: 0.5})
                   // $app.animateNumberItemInner('.left-section');
                   $app.animateNumberItemInner('.position-left');
+                  $app.animateNumberItemInner('.position-right');
                   $app.animateNumberItemInner('.right-section');
                   // 驱动地球上方数字滚动动画
                   $app.animateNumberItemInner('.position-center-top');
@@ -1911,7 +2788,7 @@
             earthDom.style.zIndex = -1;
             earthMapDom.style.zIndex = 0;
             // 传入中国中心位置的经纬度2D点位获取两个3D点位
-            let { target, position } = $app.$refs.earth.outReturnAnimationVector({ N: 108.55, E: 40.18994 }, 50);
+            let { target, position } = $app.$refs.earth.outReturnAnimationVector({ N: 40.18994 , E: 108.55 }, 50);
             // 获取相机移动当前的最远距离点位
             let maxDisPoint = $app.$refs.earth.outReturnMaxDisPoint();
             // 设置地球可以拉近，地球控制器原始minDistance为220
@@ -2102,7 +2979,7 @@
                     $app.$refs.earth.controls.autoRotate = false;
                   },
                   onUpdate() {
-                    $app.$refs.earth.camera.updateMatrixWorld();
+                    // $app.$refs.earth.camera.updateMatrixWorld();
                     // 注释掉了相机飞过去时实时更改控制器目标为目标点的逻辑
                     // $app.$refs.earth.controls.target.copy(target);
                     // $app.$refs.earth.controls.update();
@@ -2428,15 +3305,71 @@
                 }
               }
             });
+            gsap.to('.ball-count', {
+              opacity: 1,
+              y: 0,
+              stagger: -0.15,
+              duration: 0.5,
+              delay: 1.5
+            });
+            gsap.to(`.current-resource-data-${$app.currentBall.index}`, {
+              opacity: 1,
+              rotateY: 0,
+              duration: 0.5,
+              delay: 1.5
+            });
           },
           // 驱动小球开始恢复转圈
-          animateBallsRotate() {
+          animateBallsRotate(index) {
             if (!this.isBallsPosition) return;
             this.isBallsPosition = false;
-            this.balls.forEach((ball, ballIndex) => {
-              ball.positionTL.eventCallback("onReverseComplete", () => ball.tl.play());
-              ball.positionTL.reverse();
+            gsap.to(`.current-resource-data-${index}`, {
+              opacity: 0,
+              rotateY: 90,
+              duration: 0.5
             });
+            gsap.to('.ball-count', {
+              opacity: 0,
+              y: '50%',
+              stagger: 0.15,
+              duration: 0.5,
+              onComplete(){
+                $app.balls.forEach((ball, ballIndex) => {
+                  ball.positionTL.eventCallback("onReverseComplete", () => ball.tl.play());
+                  ball.positionTL.reverse();
+                });
+              }
+            });
+          },
+          // 进入任务视图驱动默认前面视图翻转到后面
+          animatePositionContainerRotate(){
+            gsap.to('.position-animate-container-front', {
+              rotationY: 180,
+              duration: 1.5,
+              zIndex: 0,
+              ease: "power2.inOut"
+            })
+            gsap.to('.position-animate-container-back', {
+              rotationY: 360,
+              duration: 1.5,
+              zIndex: 1,
+              ease: "power2.inOut"
+            })
+          },
+          // 反向翻转任务视图的左右两侧
+          animatePositionContainerRotateReverse(){
+            gsap.to('.position-animate-container-front', {
+              rotationY: 0,
+              duration: 1.5,
+              zIndex: 1,
+              ease: "power2.inOut"
+            })
+            gsap.to('.position-animate-container-back', {
+              rotationY: 180,
+              duration: 1.5,
+              zIndex: 1,
+              ease: "power2.inOut"
+            })
           },
           // 驱动数字滚动动画 - 需要传入对应区域的外层选择器 - 在数值获取到并转为String后调用
           animateNumberItemInner(dom) {
@@ -2484,40 +3417,6 @@
               this.positionTop.tl.reverse();
             }
           },
-          // 左下角资源统计动画 - 卫星进入 2000
-          animateResourceLeftBottom(){
-            let tl = gsap.timeline();
-            let leftItem = document.querySelector('.left-item');
-            tl.to('.left-item', { skewX: 0, height: '18.77%', opacity: 1, duration: 1, onComplete(){
-              leftItem.classList.add('show');
-              tl.pause();
-              setTimeout(() => {
-                leftItem.classList.remove('show');
-                tl.play();
-              }, 3000);
-            }});
-            tl.to('.left-item', { skewX: 50, height: '4%', opacity: 0, duration: 1, delay: 1});
-            for (let item of $app.resourceStatis.center){
-              let indexItemDom = document.querySelector(`.center-item-${item.index}`);
-              tl.to(`.center-item-${item.index}`, { rotateY: '0deg', opacity: 1, duration: 1, onComplete(){
-                indexItemDom.classList.add('show');
-                tl.pause();
-                setTimeout(() => {
-                  indexItemDom.classList.remove('show');
-                  tl.play();
-                }, 3000);
-              }});
-              tl.to(`.center-item-${item.index}`, { rotateY: '90deg', opacity: 0, duration: 1, delay: 1 })
-            }
-            tl.to('.bottom-item', { filter: 'blur(0)', opacity: 1, duration: 1.5, onComplete(){
-              tl.pause();
-              setTimeout(() => {
-                tl.play();
-              }, 3000)
-            } });
-            tl.to('.bottom-item', { filter: 'blur(0.03125rem)', opacity: 0, duration: 1.5 });
-            tl.repeat(-1)
-          },
           // ============> 事件函数
           datePickerFocus() {
             this.dateBg = 'select';
@@ -2552,21 +3451,27 @@
           },
           // 初始化数据
           init() {
+            // 初始化任务视图的数据
+            this.initIgroupDatas();
+            // 驱动底部小球运动
             this.animateBalls();
+            // 获取资源数据(资源视图)
+            this.getResourceDatas();
+            // 获取网络数据(网络视图)
+            this.getNetworkDatas();
+            // 获取任务视图数据
+            this.getTaskDatas();
             // earthleftdata
             // this.getEarchDatas();
-            this.getEarthDatasReal();
-            // (地球下方)获取支撑态势图表数据
-            // this.getSupport();
+            // this.getEarthDatasReal();
             // 获取顶部三个数
             this.getTopThree();
             // 获取地球右侧数据
             this.getEarthRight();
+            
           },
           // 间隔更新数据
           update() {
-            // 获取支撑态势图表数据
-            // this.getSupport(true);
             // 获取顶部三个数
             this.getTopThree(true);
             this.getEarthRight(true);
@@ -2719,6 +3624,9 @@
                   $app.currentView = $app.viewNow;
                 } else {
                   $app.currentView = $app.viewSource;
+                  if (tempCurrentKey === $app.viewTask.key) {
+                    $app.animatePositionContainerRotateReverse();
+                  }
                 }
                 gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg', duration: 2, ease: 'expo.out', onComplete(){ 
                   $app.animateNumberItemInner('.position-center-top');
@@ -2726,9 +3634,10 @@
                   if (tempCurrentKey === $app.viewSource.key) {
                     $app.$refs.earth.outRenderNetworkView($app.viewNetwork.mapDatas);
                   } else {
-                    let mapDatas = $app.isBallsPosition ? $app.viewSource.mapDatas.filter(item => item.type === $app.currentBall.type ) : $app.viewSource.mapDatas;
+                    let mapDatas = $app.currentBall ? $app.currentBall.mapDatas : $app.viewSource.mapDatas;
                     $app.$refs.earth.outRenderSourcePoint(mapDatas);
-                    $app.$refs.earth.outRenderSourceLabel(mapDatas);
+                    $app.currentBall && $app.$refs.earth.outRenderSourceLabel(mapDatas);
+                    // $app.$refs.earth.outRenderSourceLabel(mapDatas);
                   }
                   $app.viewChanging = false;
                 }})
@@ -2753,6 +3662,9 @@
                   $app.currentView = $app.viewNow;
                 } else {
                   $app.currentView = $app.viewNetwork;
+                  if (tempCurrentKey === $app.viewTask.key) {
+                    $app.animatePositionContainerRotateReverse();
+                  }
                 }
                 gsap.fromTo('.center-top-item', { rotateY: '90deg' }, { rotateY: '0deg', duration: 2, ease: 'expo.out', onComplete() { 
                   $app.animateNumberItemInner('.position-center-top'); 
@@ -2766,6 +3678,8 @@
           },
           // resituation - 点击任务视图按钮 
           showTaskView() {
+            // todo 这里应该要制作左右两边的转换动画
+            this.animateNumberItemInner('.selectable');
             if (this.isEarthMap) return;
             // 保存一下点击时的当前视图key 
             let tempCurrentKey = this.currentView.key;
@@ -2776,6 +3690,7 @@
               rotateY: '90deg', duration: 0.4, ease: 'power1.out', onComplete() {
                 if ($app.currentView.key === $app.viewTask.key) {
                   $app.currentView = $app.viewNow;
+                  $app.animatePositionContainerRotateReverse();
                 } else {
                   $app.currentView = $app.viewTask;
                 }
@@ -2785,19 +3700,38 @@
                     $app.$refs.earth.outRenderNetworkView($app.viewNetwork.mapDatas);
                     $app.viewChanging = false;
                   } else {
+                    if (!$app.selectTask) $app.selectTask = $app.tasks.M;
+                    $app.animatePositionContainerRotate();
+                    $app.$refs.earth.outRenderTaskView($app.selectTask.mapDatas);
                     $app.viewChanging = false;
+                    $app.animateFlyToPoint($app.selectTask.mapDatas[0].endArray[0])
                   }
                 } })
               }
             });
           },
+          // 任务视图点击选择对应的隔离域事件
+          changeTask(taskItem){
+            if (this.selectTask.igroup_id && this.selectTask.igroup_id === taskItem.igroup_id) {
+              this.animateFlyToPoint(this.selectTask.mapDatas[0].endArray[0]);
+              return;
+            }
+            this.selectTask = taskItem;
+            this.viewChanging = true;
+            this.$refs.earth.clearAllDatas();
+            this.$refs.earth.outRenderTaskView(this.selectTask.mapDatas);
+            this.viewChanging = false;
+            this.animateFlyToPoint(this.selectTask.mapDatas[0].endArray[0]);
+          },
           // 点击大圆盘的资源小球
           clickBall(ball){
+            console.log(ball)
             let mapDatas = this.viewSource.mapDatas;
             // 地球视图切换中，阻止此事件
             if (this.viewChanging) return;
             this.viewChanging = true;
             this.$refs.earth.clearAllDatas();
+            // 当前视图不是资源视图 - 先驱动上方四个数字
             if (this.currentView.key !== this.viewSource.key){
               gsap.fromTo('.center-top-item', { rotateY: '0deg' }, {
                 rotateY: '90deg', duration: 0.4, ease: 'power1.out', onComplete(){
@@ -2806,26 +3740,77 @@
                     $app.animateNumberItemInner('.position-center-top');
                   }})
                 }
-              })
+              });
+              // 如果是任务视图要把左右两侧翻过来
+              if (this.currentView.key === this.viewTask.key){
+                this.animatePositionContainerRotateReverse();
+              }
             }
             if (!this.currentBall) {
               this.currentBall = ball;
               this.animateBallsStopAndPosition();
-              mapDatas = mapDatas.filter(data => data.type === ball.type);
+              // mapDatas = mapDatas.filter(data => data.type === ball.type);
+              mapDatas = ball.mapDatas;
               this.$refs.earth.outRenderSourcePoint(mapDatas);
               this.$refs.earth.outRenderSourceLabel(mapDatas);
             } else if (this.currentBall && this.currentBall.type !== ball.type) {
+              gsap.to(`.current-resource-data-${this.currentBall.index}`, {
+                opacity: 0,
+                rotateY: 90,
+                duration: 0.5,
+                onComplete(){
+                  gsap.to(`.current-resource-data-${ball.index}`, {
+                    opacity: 1,
+                    rotateY: 0,
+                    duration: 0.5
+                  });
+                }
+              });
               this.currentBall = ball;
-              mapDatas = mapDatas.filter(data => data.type === ball.type);
+              // mapDatas = mapDatas.filter(data => data.type === ball.type);
+              mapDatas = ball.mapDatas;
               this.$refs.earth.outRenderSourcePoint(mapDatas);
               this.$refs.earth.outRenderSourceLabel(mapDatas);
             } else if (this.currentBall && this.currentBall.type === ball.type) {
+              let currentBallIndex = this.currentBall.index;
               this.currentBall = null;
-              this.animateBallsRotate();
+              this.animateBallsRotate(currentBallIndex);
               this.$refs.earth.outRenderSourcePoint(mapDatas);
-              this.$refs.earth.outRenderSourceLabel(mapDatas);
+              // this.$refs.earth.outRenderSourceLabel(mapDatas);
             }
             this.viewChanging = false;
+          },
+          // 任务视图隔离域资源行的滚轮事件 positionTopWheel
+          taskResourceWheel(e, resourceRow, taskKey, rowKey){
+            if (resourceRow.animating){
+              return;
+            }
+            // 向下滚动
+            if (e.wheelDelta < 0) {
+              if (resourceRow.rows.length <= 1 || resourceRow.currentIndex === (resourceRow.rows.length - 1)) return;
+              resourceRow.animating = true; 
+              let dom = document.querySelector(`.task-${taskKey}-resource-${rowKey}`);
+              resourceRow.currentIndex++;
+              // let moveDis = (dom.clientHeight / resourceRow.rows.length) + resourceRow.currentIndex;
+              let moveDis = dom.clientHeight / resourceRow.rows.length;
+              gsap.to(dom, { top: `-${resourceRow.currentIndex * moveDis}`, duration: 0.8, ease: 'power4.inOut',onComplete(){
+                resourceRow.animating = false;
+              } });
+            }
+            // 向上滚动
+            if (e.wheelDelta > 0){
+              if (resourceRow.rows.length < 2 || resourceRow.currentIndex === 0) return;
+              resourceRow.animating = true;
+              let dom = document.querySelector(`.task-${taskKey}-resource-${rowKey}`);
+              resourceRow.currentIndex--;
+              // let moveDis = (dom.clientHeight / resourceRow.rows.length) + resourceRow.currentIndex;
+              let moveDis = dom.clientHeight / resourceRow.rows.length;
+              gsap.to(dom, {
+                top: `-${resourceRow.currentIndex * moveDis}`, duration: 0.8, ease: 'power4.inOut', onComplete() {
+                  resourceRow.animating = false;
+                }
+              });
+            }
           },
           // ============> 数据函数
           // 获取地球的跳转数据
@@ -2930,6 +3915,515 @@
               }
             )
           },
+          // 初始化四个隔离域的数据
+          initIgroupDatas() {
+            Object.entries(this.tasks).forEach(async ([taskKey, task]) => {
+              let taskGroupId = task.igroup_id;
+              // 获取总任务用量、最长持续、平均持续
+              $api.transferSituation.igroupTransport(
+                { params: { igroup_id: taskGroupId } },
+                function (res) {
+                  if (res.code === 200 && res.data) {
+                    $app.tasks[taskKey].max_duration = res.data.max_duration ? $app.overviewFormatTime(res.data.max_duration) : '--';
+                    $app.tasks[taskKey].avg_duration = res.data.avg_duration ? $app.overviewFormatTime(res.data.avg_duration) : '--';
+                    $app.tasks[taskKey].taskTotal = res.data.count ? `${res.data.count}` : '0';
+                  }
+                },
+                function (err) {
+                  console.log(err)
+                }
+              );
+              // 获取三个小mini图表数据
+              $api.isolation.getIgroupStatisticInfo(
+                { params: { igroup_id: taskGroupId } },
+                function (res) {
+                  if (res.code === 200 && res.data) {
+                    // 任务执行成功率(第三个小图)
+                    let session_support = res.data.session_support || [];
+                    let taskSessionSupport = $app.mapChartData(session_support, 'time_window', 'success_rate');
+                    $app.tasks[taskKey].session_support = taskSessionSupport;
+                    $app.tasks[taskKey].session_support_last = $app.getLast(taskSessionSupport);
+
+                    // 任务创建成功率
+                    const create_time_change = res.data.create_time_change || [];
+                    const createTimeRate = $app.mapChartData(create_time_change, 'time_window', 'success_rate');
+                    $app.tasks[taskKey].create_success_rate = createTimeRate;
+                    $app.tasks[taskKey].create_success_rate_last = $app.getLast(createTimeRate);
+                    // 创建任务耗时
+                    const createDuration = $app.mapChartData(create_time_change, 'time_window', 'avg_duration');
+                    $app.tasks[taskKey].create_avg_duration = createDuration;
+                    const create_avg_duration_last = $app.getLast(createDuration) * 1000;
+                    if (create_avg_duration_last) {
+                      $app.tasks[taskKey].create_avg_duration_last = create_avg_duration_last;
+                      $app.tasks[taskKey].create_avg_duration_last_str = $app.formatDuration(create_avg_duration_last, { decimal: 2 });
+                    }
+                  }
+                },
+                function (err) {
+                  console.log(err)
+                }
+              );
+              // 获取上下行图表数据
+              let transferDatas = await $app.getIgroupTransfer(taskGroupId);
+              let times = transferDatas[0].times;
+              let ups = transferDatas.find(item => item.input).input;
+              let downs = transferDatas.find(item => item.output).output;
+              // 处理上下行图表
+              $app.deelIgroupTransfer({ times, ups, downs }, taskKey);
+              // 获取下方通道池统计数据
+              $api.networkSituation.getNewCPool(
+                { params: { igroup_id: taskGroupId } },
+                function (res) {
+                  if (res.code === 200 && res.data && res.data.status_result) {
+                    $app.tasks[taskKey].avg_create_time = res.data.status_result.avg_create_time;
+                    $app.tasks[taskKey].avg_success = res.data.status_result.avg_success;
+                    $app.tasks[taskKey].total = res.data.status_result.total;
+                    $app.tasks[taskKey].using = res.data.status_result.using;
+                    $app.tasks[taskKey].using_percent = res.data.status_result.using_percent;
+                  }
+                }
+              );
+              // 获取通道量线图数据
+              $api.networkSituation.getChannelTotalUsage(
+                { params: { igroup_id: taskGroupId } },
+                function (res) {
+                  let times = [];
+                  let totals = [];
+                  let usages = [];
+                  if (res.code === 200 && res.data && res.data.total && res.data.usage_total) {
+                    times = res.data.total.timestamps || [];
+                    totals = res.data.total.values || [];
+                    usages = res.data.usage_total.values || [];
+                  }
+                  $app.deelIgroupChannel({ times, totals, usages }, taskKey);
+                }
+              )
+              // 获取出口入口中继等资源统计数据
+              $api.situation.getTaskResources(
+                { params: { igroup_id: taskGroupId } },
+                function (res) {
+                  if (res.code === 200 && res.data) {
+                    Object.keys($app.tasks[taskKey].resources).forEach(key => {
+                      $app.tasks[taskKey].resources[key].currentIndex = 0;
+                      $app.tasks[taskKey].resources[key].total = res.data[`${key}_total`] || 0;
+                      let rowsLength = Math.ceil(res.data[key].length / 3);
+                      let resourcesRows = [];
+                      for (let index = 0; index < rowsLength; index++) {
+                        resourcesRows.push({ index, items: [] });
+                      }
+                      if (Array.isArray(res.data[key]) && res.data[key].length > 0) {
+                        res.data[key].reduce((result, resource, currentIndex) => {
+                          let resourceType = resourceTypeLeft.find(item => item.value === resource.resource_type);
+                          let nmResource = resourceTypeLeft.find(item => item.value === 'ANONYMOUS_NETWORK');
+                          let item = { ...resource };
+                          if (resourceType) {
+                            item.src = resourceType.src;
+                            item.label = resourceType.label;
+                          } else {
+                            item.src = nmResource.src;
+                            item.label = nmResource.label;
+                          }
+                          let resultIndex = Math.ceil((currentIndex + 1) / 3) - 1;
+                          result[resultIndex].items.push(item);
+                          return result;
+                        }, resourcesRows);
+                      }
+                      $app.tasks[taskKey].resources[key].rows = resourcesRows;
+                    })
+                  }
+                },
+                function (err) {
+                  console.log(err)
+                }
+              );
+            })
+          },
+          // 获取隔离域上下行速率数据
+          getIgroupTransfer(igroup_id) {
+            let types = ['input', 'output'];
+            return Promise.all(types.map(type => {
+              return new Promise((resolve, reject) => {
+                $api.transferSituation.getTransportRate(
+                  { params: { type, igroup_id } },
+                  function (res) {
+                    if (res.code === 200 && res.data && res.data.timestamps && res.data.values) {
+                      resolve({
+                        times: res.data.timestamps,
+                        [type]: res.data.values
+                      });
+                    } else {
+                      resolve({
+                        times: [],
+                        [type]: []
+                      });
+                    }
+                  },
+                  function (err) {
+                    resolve({
+                      times: [],
+                      [type]: []
+                    });
+                  }
+                )
+              });
+            }))
+          },
+          // 处理上下行速率图表
+          deelIgroupTransfer(datas, taskKey, isUpdate) {
+            let option = JSON.parse(JSON.stringify(transferOption));
+            option.color = resourceLineChartColors;
+            !isUpdate && $app.charts[taskKey].chart && $app.charts[taskKey].chart.clear();
+            option.series = [];
+            option.legend.data = [];
+            option.grid.top = setChartSize(10);
+            // 填充x时间轴
+            let now = Date.now();
+            let times = [];
+            times.length = 8;
+            times.fill(now);
+            times = times.map((item, index) => {
+              let timer = new Date(item - 600000 * index);
+              let hour = `${timer.getHours()}`.padStart(2, 0);
+              let min = `${timer.getMinutes()}`.padStart(2, 0);
+              let sec = `${timer.getSeconds()}`.padStart(2, 0);
+              return `${hour}:${min}:${sec}`;
+            });
+            times.reverse();
+            if (Array.isArray(datas.times) && datas.times.length > 0) {
+              times = datas.times.map(item => {
+                let timer = new Date(item);
+                let hour = `${timer.getHours()}`.padStart(2, 0);
+                let min = `${timer.getMinutes()}`.padStart(2, 0);
+                let sec = `${timer.getSeconds()}`.padStart(2, 0);
+                return `${hour}:${min}:${sec}`;
+              });
+            }
+            option.xAxis.data = times;
+            option.yAxis.splitNumber = 3;
+            option.series.push({
+              name: '上行速率',
+              data: datas.ups && datas.ups.length > 0 ? datas.ups : [],
+              type: 'line',
+              symbol: 'none',
+              lineStyle: { width: 1 },
+              areaStyle: { color: null }
+            });
+            option.series.push({
+              name: '下行速率',
+              data: datas.downs && datas.downs.length > 0 ? datas.downs : [],
+              type: 'line',
+              symbol: 'none',
+              lineStyle: { width: 1 },
+              areaStyle: { color: null }
+            });
+            option.legend = {
+              show: true,
+              orient: 'horizontal',
+              top: '5%',
+              right: '5%',
+              bottom: 0,
+              align: 'auto',
+              backgroundColor: 'rgba(0,0,0,0)',
+              borderColor: '#ccc',
+              borderRadius: 0,
+              borderWidth: 0,
+              padding: setChartSize(5),
+              itemGap: setChartSize(10),
+              // itemWidth: setChartSize(25),
+              // itemHeight: setChartSize(14),
+              itemWidth: setChartSize(12),
+              itemHeight: setChartSize(2),
+              textStyle: {
+                color: '#DDEEFF',
+                fontSize: setChartSize(8)
+              },
+              icon: 'roundRect'
+            };
+            option.legend.data = ['上行速率', '下行速率'];
+            option.tooltip.formatter = function (params) {
+              let results = params.map((pItem) => {
+                let value = $app.formatBytesData(pItem.value).value + $app.formatBytesData(pItem.value).unit;
+                return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value}bps</span></div>`;
+              });
+              results.unshift(params[0].axisValue);
+              return results.join('');
+            }
+            // 统一处理颜色渐变样式
+            option.series.forEach((item, index) => {
+              item.areaStyle.color = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: resourceLineChartLinearColors[index] },
+                { offset: 1, color: resourceLineChartTransparentColors[index] }
+              ]);
+            });
+            $app.setCharts(taskKey, `transfer-chart-${taskKey}`, option);
+          },
+          // 处理隔离域通道池图表
+          deelIgroupChannel(datas, taskKey, isUpdate) {
+            let option = JSON.parse(JSON.stringify(transferOption));
+            option.color = channelLineChartColors;
+            !isUpdate && $app.charts[`channel${taskKey}`].chart && $app.charts[`channel${taskKey}`].chart.clear();
+            option.series = [];
+            option.legend.data = [];
+            option.grid.top = setChartSize(10);
+            // 填充x时间轴
+            let now = Date.now();
+            let times = [];
+            times.length = 8;
+            times.fill(now);
+            times = times.map((item, index) => {
+              let timer = new Date(item - 600000 * index);
+              let hour = `${timer.getHours()}`.padStart(2, 0);
+              let min = `${timer.getMinutes()}`.padStart(2, 0);
+              let sec = `${timer.getSeconds()}`.padStart(2, 0);
+              return `${hour}:${min}:${sec}`;
+            });
+            times.reverse();
+            if (Array.isArray(datas.times) && datas.times.length > 0) {
+              times = datas.times.map(item => {
+                let timer = new Date(item);
+                let hour = `${timer.getHours()}`.padStart(2, 0);
+                let min = `${timer.getMinutes()}`.padStart(2, 0);
+                let sec = `${timer.getSeconds()}`.padStart(2, 0);
+                return `${hour}:${min}:${sec}`;
+              });
+            }
+            option.xAxis.data = times;
+            option.yAxis.splitNumber = 3;
+            option.series.push({
+              name: '通道总量',
+              data: datas.totals && datas.totals.length > 0 ? datas.totals : [],
+              type: 'line',
+              symbol: 'none',
+              lineStyle: { width: 1 },
+              areaStyle: { color: null }
+            });
+            option.series.push({
+              name: '已用通道量',
+              data: datas.usages && datas.usages.length > 0 ? datas.usages : [],
+              type: 'line',
+              symbol: 'none',
+              lineStyle: { width: 1 },
+              areaStyle: { color: null }
+            });
+            option.legend = {
+              show: true,
+              orient: 'horizontal',
+              top: '5%',
+              right: '5%',
+              bottom: 0,
+              align: 'auto',
+              backgroundColor: 'rgba(0,0,0,0)',
+              borderColor: '#ccc',
+              borderRadius: 0,
+              borderWidth: 0,
+              padding: setChartSize(5),
+              itemGap: setChartSize(10),
+              // itemWidth: setChartSize(25),
+              // itemHeight: setChartSize(14),
+              itemWidth: setChartSize(12),
+              itemHeight: setChartSize(2),
+              textStyle: {
+                color: '#DDEEFF',
+                fontSize: setChartSize(8)
+              },
+              icon: 'roundRect'
+            };
+            option.legend.data = ['通道总量', '已用通道量'];
+            option.tooltip.formatter = function (params) {
+              let results = params.map((pItem) => {
+                let value = $app.formatNumsData(pItem.value).value + $app.formatNumsData(pItem.value).unit;
+                return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value}个</span></div>`;
+              });
+              results.unshift(params[0].axisValue);
+              return results.join('');
+            }
+            // 统一处理颜色渐变样式
+            option.series.forEach((item, index) => {
+              item.areaStyle.color = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                { offset: 0, color: channelLineChartLinearColors[index] },
+                { offset: 1, color: channelLineChartTransparentColors[index] }
+              ]);
+            });
+            $app.setCharts(`channel${taskKey}`, `channel-pool-${taskKey}`, option);
+          },
+          // 获取资源视图顶部数据及资源光柱数据  
+          getResourceDatas(){
+            $api.situation.getSourceView({}, function (res) {
+              console.log('资源视图数据')
+              console.log(res)
+              if (res.code === 200 && res.data){
+                if (res.data.resource_type_count) {
+                  let centerItem = $app.viewSource.centerTop.find(item => item.key === 'resource_type_count');
+                  centerItem.value = res.data.resource_type_count + '';
+                }
+                if (res.data.node_count) {
+                  let centerItem = $app.viewSource.centerTop.find(item => item.key === 'node_count');
+                  centerItem.value = res.data.node_count + '';
+                }
+                if (res.data.provider_count) {
+                  let centerItem = $app.viewSource.centerTop.find(item => item.key === 'provider_count');
+                  centerItem.value = res.data.provider_count + '';
+                }
+                if (res.data.region_count) {
+                  let centerItem = $app.viewSource.centerTop.find(item => item.key === 'region_count');
+                  centerItem.value = res.data.region_count + '';
+                }
+
+                if (Array.isArray(res.data.resource_list) && res.data.resource_list.length > 0){
+                  let maxCount = Math.max(...res.data.resource_list.map(item => item.count));
+                  let splitNum = Math.floor(maxCount / 3);
+                  console.log(`总的资源数据列表资源个数(不考虑地点重复): ${res.data.resource_list.length}`);
+                  // 总的返回数据构建资源光柱数据结构
+                  let resourceDates = res.data.resource_list.map(item => {
+                    let resourceObj = {};
+                    if (item.province) {
+                      resourceObj.name = item.province
+                    } else {
+                      resourceObj.name = $app.getCountryObj(item.country).chineseName || '';
+                    }
+                    let findType = resourceTypeBottom.find(resourceType => resourceType.value === item.resource_type);
+                    resourceObj.type = findType ? findType.type : 'nm';
+                    //  <= splitNum  |  > splitNum <= splitNum * 2 | > splitNum * 3
+                    if (item.count <= splitNum) {
+                      resourceObj.rank = 'small';
+                    } else if (item.count > splitNum && item.count <= (splitNum * 2)) {
+                      resourceObj.rank = 'middle';
+                    } else {
+                      resourceObj.rank = 'large';
+                    }
+                    resourceObj.N = +item.geo.latwgs;
+                    resourceObj.E = +item.geo.lngwgs;
+                    resourceObj.count = item.count
+                    return resourceObj;
+                  }); 
+                  // 总的资源光柱使用省份名称去重后的去渲染
+                  $app.viewSource.mapDatas = $app.uniqueArray(resourceDates, 'name');
+                  console.log(`渲染的总数据(自己封装去重)的个数: ${$app.viewSource.mapDatas.length}`);
+                  // 各个资源球对应光柱数据使用去重前的数据进行渲染，保证每种资源同地名可以各个渲染
+                  $app.balls.forEach(ball => {
+                    ball.mapDatas = resourceDates.filter(item => item.type === ball.type);
+                    ball.nodeCounts = ball.mapDatas.reduce((total, item) => {
+                      total += item.count;
+                      return total;
+                    }, 0);
+                  });
+                }
+              }
+            }, function (err){
+              console.log(err)
+            })
+          },
+          // 获取网络视图顶部数据
+          getNetworkDatas(){
+            // viewNetwork:
+            let labels = ['zlkz', 'sjhc', 'xxts'];
+            $api.situation.getNetworkView({}, function (res) {
+              console.log('网络视图数据')
+              console.log(res)
+              if (res.code === 200 && res.data){
+                if (res.data.channel_type_count){
+                  let centerItem = $app.viewNetwork.centerTop.find(item => item.key === 'channel_type_count');
+                  centerItem.value = res.data.channel_type_count + '';
+                }
+                if (res.data.trans_mode_count){
+                  let centerItem = $app.viewNetwork.centerTop.find(item => item.key === 'trans_mode_count');
+                  centerItem.value = res.data.trans_mode_count + '';
+                }
+                if (res.data.channel_count) {
+                  let centerItem = $app.viewNetwork.centerTop.find(item => item.key === 'channel_count');
+                  centerItem.value = res.data.channel_count + '';
+                }
+                if (res.data.channel_efficiency) {
+                  console.log((res.data.channel_efficiency * 100).toFixed(1))
+                  let centerItem = $app.viewNetwork.centerTop.find(item => item.key === 'channel_efficiency');
+                  centerItem.value = (res.data.channel_efficiency * 100).toFixed(1) + '';
+                }
+              }
+              if (res.code === 200 && res.data.graph && Array.isArray(res.data.graph.edges) && Array.isArray(res.data.graph.nodes) && res.data.graph.edges.length === res.data.graph.nodes.length) {
+                let { nodes, edges } = res.data.graph;
+                let result = [];
+                edges.forEach((endArr, nodeIndex) => {
+                  let node = {
+                    startArray: nodes[nodeIndex],
+                    endArray: []
+                  };
+                  endArr.forEach((end, endIndex) => {
+                    let endCode = end.toString(2).padStart(5, '0');
+                    let lineStr = endCode.slice(3);
+                    let lineCode = endCode.slice(0, 3);
+                    let lines = lineCode.split('');
+                    let statusCode = endCode.slice(3);
+                    // console.log('图表码')
+                    // console.log(endCode)
+                    if (end !== 0 && statusCode !== '00') {
+                      lines.forEach((line, lineType) => {
+                        if (line !== '0') {
+                          let status = 'tc'
+                          switch (statusCode) {
+                            case '01':
+                              status = 'tc';
+                              break;
+                            case '11':
+                              status = 'yj';
+                              break;
+                            case '10':
+                              status = 'zd';
+                              break;
+                          }
+                          let endNode = {
+                            name: nodes[endIndex].name,
+                            N: nodes[endIndex].N,
+                            E: nodes[endIndex].E,
+                            label: labels[lineType],
+                            status
+                          }
+                          nodeIndex !== endIndex && node.endArray.push(endNode);
+                        }
+                      });
+                    }
+                  });
+                  result.push(node);
+                });
+                // console.log(result)
+                $app.jumps = result;
+                $app.viewNetwork.mapDatas = result;
+              }
+              $app.$refs.earth.init();
+            }, function (err){
+              console.log(err)
+              $app.$refs.earth.init();
+            }, function (){
+              $app.enterAnimate();
+              setTimeout(() => {
+                $app.changeRotation();
+              }, 8000);
+            })
+          },
+          // 获取任务视图数据 viewTask:
+          getTaskDatas(){
+            $api.situation.getTaskView({}, function (res) {
+              console.log('任务视图数据')
+              console.log(res)
+              if (res.code === 200 && res.data){
+                if (res.data.label_count) {
+                  let centerItem = $app.viewTask.centerTop.find(item => item.key === 'label_count');
+                  centerItem.value = res.data.label_count + '';
+                }
+                if (res.data.igroup_count) {
+                  let centerItem = $app.viewTask.centerTop.find(item => item.key === 'igroup_count');
+                  centerItem.value = res.data.igroup_count + '';
+                }
+                if (res.data.session_count) {
+                  let centerItem = $app.viewTask.centerTop.find(item => item.key === 'session_count');
+                  centerItem.value = res.data.session_count + '';
+                }
+                if (res.data.session_support_rate) {
+                  let centerItem = $app.viewTask.centerTop.find(item => item.key === 'session_support_rate');
+                  centerItem.value = (res.data.session_support_rate * 100).toFixed(1) + '';
+                }
+              }
+            })
+          },
           // 获取首页顶端前三项数据
           getTopThree(isUpdate) {
             Promise.all([
@@ -2974,108 +4468,6 @@
                 isUpdate && $app.animateNumberItemInner('.position-center-top');
               })
             
-          },
-          // 获取地球下方支撑态势图表 数据
-          getSupport(isUpdate) {
-            let option = JSON.parse(JSON.stringify(supportOption));
-            option.color = ['#3A89FF'];
-            !isUpdate && $app.deelSupportError(option);
-            const reqParams = {
-              start_time: this.charts.transfer.params.start_time,
-              end_time: this.charts.transfer.params.end_time
-            };
-            $api.situation.getSupport(
-              { params: reqParams },
-              function (res) {
-                if (res.code === 200 && res.data && Array.isArray(res.data.time) && Array.isArray(res.data.percent) && Array.isArray(res.data.total)) {
-                  !isUpdate && $app.charts.support.chart && $app.charts.support.chart.clear();
-                  let { time, percent, total } = res.data;
-                  option.xAxis.data =
-                    Array.isArray(time) && time.length > 0
-                      ? time.map((t) => {
-                          return new Date(t).toLocaleString();
-                        })
-                      : [];
-                  option.series = [];
-                  option.legend.data = [];
-                  option.series.push({
-                    name: '任务数量',
-                    yAxisIndex: 0,
-                    data: total,
-                    type: 'bar',
-                    itemStyle: {
-                      color: '#05fcfc'
-                    }
-                  });
-                  option.series.push({
-                    name: '执行成功率',
-                    yAxisIndex: 1,
-                    data: percent,
-                    type: 'line',
-                    // symbol: 'none',
-                    symbolSize: 6,
-                    // smooth: true,
-                    lineStyle: {
-                      width: 1,
-                      // color:  'rgba(38, 249, 195, 1)'
-                      color: 'rgb(58, 137, 255)'
-                    },
-                    areaStyle: {
-                      color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-                        // { offset: 0, color: linearChartColors[3]},
-                        // { offset: 1, color: transparentColors[3]}
-                        { offset: 0, color: 'rgba(58, 137, 255, .7)' },
-                        { offset: 1, color: 'rgba(58, 137, 255, 0)' }
-                      ])
-                    }
-                  });
-                  option.tooltip.formatter = (params) => {
-                    // let results = params.map(pItem => `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${pItem.value} bps</span></div>`);
-                    let results = params.map((pItem) => {
-                      let unit = pItem.seriesType === 'line' ? '%' : '个';
-                      let value = pItem.seriesType === 'line' ? pItem.value.toFixed(2) : pItem.value;
-                      return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value} ${unit}</span></div>`;
-                    });
-                    results.unshift(params[0].axisValue);
-                    return results.join('');
-                  };
-                  option.legend.data.push('执行成功率', '任务数量');
-                  $app.setCharts('support', 'support-chart', option);
-                } else {
-                  $app.deelSupportError(option);
-                }
-              },
-              function (err) {
-                console.log(err);
-                $app.deelSupportError(option);
-              }
-            );
-          },
-          // 处理支撑态势数据错误或为空
-          deelSupportError(option) {
-            let now = Date.now();
-            let times = [];
-            times.length = 8;
-            times.fill(now);
-            times = times.map((item, index) => {
-              return new Date(item - 600000 * index).toLocaleString();
-            });
-            times.reverse();
-            option.xAxis.data = times;
-            option.series = [];
-            option.legend.data = [];
-            // option.yAxis[0].splitLine.show = true;
-            // option.yAxis[0].splitLine.showMinLine = true;
-            // option.yAxis[0].splitLine.showMaxLine = true;
-            // option.yAxis[0].max = 10;
-            // option.yAxis[0].min = 5;
-            option.yAxis[1].splitLine.show = true;
-            option.yAxis[1].splitLine.showMinLine = true;
-            option.yAxis[1].splitLine.showMaxLine = true;
-            option.yAxis[1].max = 100;
-            option.yAxis[1].min = 0;
-            option.yAxis[0].splitLine.show = false;
-            $app.setCharts('support', 'support-chart', option);
           },
           // earthleftdata
           // 获取地球左侧资源分布数据 - 饼图和折线图
@@ -3389,8 +4781,8 @@
             // secondchart - 资源储备
             option.tooltip.formatter = function (params){
               let results = params.map((pItem) => {
-                let value = $app.formatNumsData(pItem.value).value + $app.formatNumsData(pItem.value).unit;
-                return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value} 个</span></div>`;
+                let value = $app.formatBytesData(pItem.value).value + $app.formatBytesData(pItem.value).unit;
+                return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value} bps</span></div>`;
               });
               results.unshift(params[0].axisValue);
               return results.join('');
