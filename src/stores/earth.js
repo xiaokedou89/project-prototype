@@ -288,9 +288,11 @@ function createLightPillar(options) {
   const geometry = new THREE.PlaneBufferGeometry(options.radius * 0.05, height);
   geometry.rotateX(Math.PI / 2);
   geometry.translate(0, 0, height / 2);
+  let color = options.index == 0 ? options.punctuation.lightColumn.startColor : options.punctuation.lightColumn.endColor;
+  if (options.isTaskLight) color = options.taskColor;
   const material = new THREE.MeshBasicMaterial({
     map: options.textures.light_column,
-    color: options.index == 0 ? options.punctuation.lightColumn.startColor : options.punctuation.lightColumn.endColor,
+    color,
     transparent: true,
     side: THREE.DoubleSide,
     depthWrite: false //是否对深度缓冲区有任何的影响
@@ -502,12 +504,102 @@ function circleLine(x, y, r, startAngle, endAngle, color) {
   line.computeLineDistances();
   return line;
 }
+// 任务线
+function taskCircleLine(x, y, r, startAngle, endAngle, color) {
+  const geometry = new THREE.BufferGeometry(); //声明一个几何体对象Geometry
+  //  ArcCurve创建圆弧曲线
+  const arc = new THREE.ArcCurve(x, y, r, startAngle, endAngle, false);
+  //getSpacedPoints是基类Curve的方法，返回一个vector2对象作为元素组成的数组
+  const points = arc.getSpacedPoints(80); //分段数50，返回51个顶点
+  geometry.setFromPoints(points); // setFromPoints方法从points中提取数据改变几何体的顶点属性vertices
+  // 基础线条材质
+  // const material = new THREE.LineBasicMaterial({
+  //   color:color || 0xd18547,
+  // });
+  // @important
+  // 使用虚线材质线条 - 把虚线线条间隔和虚线长度初始设置为0模拟实线
+  const material = new THREE.LineDashedMaterial({
+    color: color || 0xd18547,
+    dashSize: 1,
+    gapSize: 1,
+    scale: 1
+  });
+  const line = new THREE.Line(geometry, material); //线条模型对象
+  // @important 这里要创建线以后计算一下虚线的间隔
+  line.computeLineDistances();
+  return line;
+}
 
 /*
  * 绘制一条圆弧飞线
  * 5个参数含义：( 飞线圆弧轨迹半径, 开始角度, 结束角度)
  */
 function createFlyLine(radius, startAngle, endAngle, color) {
+  const geometry = new THREE.BufferGeometry(); //声明一个几何体对象BufferGeometry
+  //  ArcCurve创建圆弧曲线
+  const arc = new THREE.ArcCurve(0, 0, radius, startAngle, endAngle, false);
+  //getSpacedPoints是基类Curve的方法，返回一个vector2对象作为元素组成的数组
+  const pointsArr = arc.getSpacedPoints(100); //分段数80，返回81个顶点
+  geometry.setFromPoints(pointsArr); // setFromPoints方法从pointsArr中提取数据改变几何体的顶点属性vertices
+  // 每个顶点对应一个百分比数据attributes.percent 用于控制点的渲染大小
+  const percentArr = []; //attributes.percent的数据
+  for (let i = 0; i < pointsArr.length; i++) {
+    // @important - 这里可以把每个点的渲染大小再减小来提升飞线段的视觉效果
+    // percentArr.push(i / pointsArr.length);
+    percentArr.push(i / pointsArr.length / 2);
+  }
+  const percentAttribue = new THREE.BufferAttribute(new Float32Array(percentArr), 1);
+  // 通过顶点数据percent点模型从大到小变化，产生小蝌蚪形状飞线
+  geometry.attributes.percent = percentAttribue;
+  // 批量计算所有顶点颜色数据
+  const colorArr = [];
+  for (let i = 0; i < pointsArr.length; i++) {
+    const color1 = new THREE.Color(0xec8f43); //轨迹线颜色 青色
+    const color2 = new THREE.Color(0xf3ae76); //黄色
+    const color = color1.lerp(color2, i / pointsArr.length);
+    colorArr.push(color.r, color.g, color.b);
+  }
+  // 设置几何体顶点颜色数据
+  geometry.attributes.color = new THREE.BufferAttribute(new Float32Array(colorArr), 3);
+  // @important - 这里可以修改飞线段的线属性:
+  /*
+  {
+    size: 线段大小
+    opacity: 颜色透明度
+  }
+  */
+  const materialOptions = {
+    size: 2,
+    opacity: 0.8,
+    // vertexColors: VertexColors, //使用顶点颜色渲染
+    transparent: true,
+    depthWrite: false
+  };
+  // 点模型渲染几何体每个顶点
+  const material = new THREE.PointsMaterial(materialOptions);
+  // 修改点材质的着色器源码(注意：不同版本细节可能会稍微会有区别，不过整体思路是一样的)
+  material.onBeforeCompile = function (shader) {
+    // 顶点着色器中声明一个attribute变量:百分比
+    shader.vertexShader = shader.vertexShader.replace(
+      'void main() {',
+      [
+        'attribute float percent;', //顶点大小百分比变量，控制点渲染大小
+        'void main() {'
+      ].join('\n') // .join()把数组元素合成字符串
+    );
+    // 调整点渲染大小计算方式
+    shader.vertexShader = shader.vertexShader.replace(
+      'gl_PointSize = size;',
+      ['gl_PointSize = percent * size;'].join('\n') // .join()把数组元素合成字符串
+    );
+  };
+  const FlyLine = new THREE.Points(geometry, material);
+  material.color = new THREE.Color(color);
+  FlyLine.name = '飞行线';
+  FlyLine.userData['isFlyLine'] = true;
+  return FlyLine;
+}
+function taskCreateFlyLine(radius, startAngle, endAngle, color) {
   const geometry = new THREE.BufferGeometry(); //声明一个几何体对象BufferGeometry
   //  ArcCurve创建圆弧曲线
   const arc = new THREE.ArcCurve(0, 0, radius, startAngle, endAngle, false);
@@ -625,6 +717,55 @@ function arcXOY(radius, startPoint, endPoint, options, lineType, lineStatus) {
 
   return arcline;
 }
+function taskArcXOY(radius, startPoint, endPoint, options, lineType, lineStatus){
+  // 计算两点的中点
+  const middleV3 = new THREE.Vector3().addVectors(startPoint, endPoint).multiplyScalar(0.5);
+  // 弦垂线的方向dir(弦的中点和圆心构成的向量)
+  const dir = middleV3.clone().normalize();
+  // 计算球面飞线的起点、结束点和球心构成夹角的弧度值
+  const earthRadianAngle = radianAOB(startPoint, endPoint, new THREE.Vector3(0, 0, 0));
+  /*设置飞线轨迹圆弧的中间点坐标
+  弧度值 * radius * 0.2：表示飞线轨迹圆弧顶部距离地球球面的距离
+  起点、结束点相聚越远，构成的弧线顶部距离球面越高*/
+  // @important
+  // const arcTopCoord = dir.multiplyScalar(radius + earthRadianAngle * radius * 0.2) // 黄色飞行线的高度
+  const arcTopCoord = dir.multiplyScalar(radius + earthRadianAngle * radius * 0.05);
+  //求三个点的外接圆圆心(飞线圆弧轨迹的圆心坐标)
+  const flyArcCenter = threePointCenter(startPoint, endPoint, arcTopCoord);
+  // 飞线圆弧轨迹半径flyArcR
+  const flyArcR = Math.abs(flyArcCenter.y - arcTopCoord.y);
+  /*坐标原点和飞线起点构成直线和y轴负半轴夹角弧度值
+  参数分别是：飞线圆弧起点、y轴负半轴上一点、飞线圆弧圆心*/
+  const flyRadianAngle = radianAOB(startPoint, new THREE.Vector3(0, -1, 0), flyArcCenter);
+  const startAngle = -Math.PI / 2 + flyRadianAngle; //飞线圆弧开始角度
+  const endAngle = Math.PI - startAngle; //飞线圆弧结束角度
+  // 调用圆弧线模型的绘制函数
+  // @important
+  const arcline = taskCircleLine(flyArcCenter.x, flyArcCenter.y, flyArcR, startAngle, endAngle, options.color);
+  arcline.userData['lineType'] = lineType;
+  arcline.userData['lineStatus'] = lineStatus;
+  // const arcline = new  Group();// 不绘制轨迹线，使用 Group替换circleLine()即可
+  arcline.center = flyArcCenter; //飞线圆弧自定一个属性表示飞线圆弧的圆心
+  arcline.topCoord = arcTopCoord; //飞线圆弧自定一个属性表示飞线圆弧中间也就是顶部坐标
+
+  // const flyAngle = Math.PI/ 10; //飞线圆弧固定弧度
+  const flyAngle = (endAngle - startAngle) / 7; //飞线圆弧的弧度和轨迹线弧度相关
+  // 绘制一段飞线，圆心做坐标原点
+  const flyLine = taskCreateFlyLine(flyArcR, startAngle, startAngle + flyAngle, options.flyLineColor);
+  flyLine.position.y = flyArcCenter.y; //平移飞线圆弧和飞线轨迹圆弧重合
+  //飞线段flyLine作为飞线轨迹arcLine子对象，继承飞线轨迹平移旋转等变换
+  arcline.add(flyLine);
+  //飞线段运动范围startAngle~flyEndAngle
+  flyLine.flyEndAngle = endAngle - startAngle - flyAngle;
+  flyLine.startAngle = startAngle;
+  // arcline.flyEndAngle：飞线段当前角度位置，这里设置了一个随机值用于演示
+  flyLine.AngleZ = arcline.flyEndAngle * Math.random();
+  // flyLine.rotation.z = arcline.AngleZ;
+  // arcline.flyLine指向飞线段,便于设置动画是访问飞线段
+  arcline.userData['flyLine'] = flyLine;
+
+  return arcline;
+}
 
 /**输入地球上任意两点的经纬度坐标，通过函数flyArc可以绘制一个飞线圆弧轨迹
  * lon1,lat1:轨迹线起点经纬度坐标
@@ -642,6 +783,22 @@ function flyArc(radius, lon1, lat1, lon2, lat2, options, lineType, lineStatus) {
   const startEndQua = _3Dto2D(startSphereCoord, endSphereCoord);
   // 调用arcXOY函数绘制一条圆弧飞线轨迹
   const arcline = arcXOY(radius, startEndQua.startPoint, startEndQua.endPoint, options, lineType, lineStatus);
+  arcline.quaternion.multiply(startEndQua.quaternion);
+  return arcline;
+}
+// 创建任务视图的飞线
+function taskFlyArc(radius, lon1, lat1, lon2, lat2, options, lineType, lineStatus){
+  const sphereCoord1 = lon2xyz(radius, lon1, lat1); //经纬度坐标转球面坐标
+  // startSphereCoord：轨迹线起点球面坐标
+  const startSphereCoord = new THREE.Vector3(sphereCoord1.x, sphereCoord1.y, sphereCoord1.z);
+  const sphereCoord2 = lon2xyz(radius, lon2, lat2);
+  // startSphereCoord：轨迹线结束点球面坐标
+  const endSphereCoord = new THREE.Vector3(sphereCoord2.x, sphereCoord2.y, sphereCoord2.z);
+
+  //计算绘制圆弧需要的关于y轴对称的起点、结束点和旋转四元数
+  const startEndQua = _3Dto2D(startSphereCoord, endSphereCoord);
+  // 调用arcXOY函数绘制一条圆弧飞线轨迹
+  const arcline = taskArcXOY(radius, startEndQua.startPoint, startEndQua.endPoint, options, lineType, lineStatus);
   arcline.quaternion.multiply(startEndQua.quaternion);
   return arcline;
 }
@@ -1056,6 +1213,60 @@ class Earth {
       })
     );
   }
+  // 创建任务的光柱
+  async createTaskPoint(datas){
+    this.markupPoint.clear();
+    let points = [];
+    if (Array.isArray(datas) && datas.length > 0) {
+      let allEnd = datas[0].endArray[0];
+      // datas.push({ startArray: allEnd });
+      points = datas.map(item => item);
+      points.push({ startArray: allEnd })
+    }
+    await Promise.all(
+      points.map(async (item) => {
+        const radius = this.options.earth.radius;
+        const lon = item.startArray.E; //经度
+        const lat = item.startArray.N; //纬度
+        // @important - 底座点位周边的材质(蓝色光圈)
+        this.punctuationMaterial = new THREE.MeshBasicMaterial({
+          // color: this.options.punctuation.circleColor,
+          color: 0xffffff,
+          // map: this.options.textures.label,
+          map: this.options.textures.circle,
+          transparent: true, //使用背景透明的png贴图，注意开启透明计算
+          depthWrite: false //禁止写入深度缓冲区数据
+        });
+
+        const mesh = createPointMesh({ radius, lon, lat, material: this.punctuationMaterial }); //光柱底座矩形平面
+        mesh.userData['selectable'] = true;
+        mesh.userData['positionName'] = item.startArray.name;
+        this.markupPoint.add(mesh);
+        const LightPillar = createLightPillar({
+          radius: this.options.earth.radius,
+          lon,
+          lat,
+          index: 0,
+          textures: this.options.textures,
+          punctuation: this.options.punctuation,
+          isTaskLight: true,
+          taskColor: 0xffffff
+        }); //光柱
+        LightPillar.userData['isLightPillar'] = true;
+        LightPillar.userData['selectable'] = true;
+        LightPillar.userData['positionName'] = item.startArray.name;
+        this.markupPoint.add(LightPillar);
+        const WaveMesh = createWaveMesh({ radius, lon, lat, textures: this.options.textures }); //波动光圈
+        WaveMesh.userData['isWaveMesh'] = true;
+        WaveMesh.userData['selectable'] = true;
+        WaveMesh.userData['positionName'] = item.startArray.name;
+        this.markupPoint.add(WaveMesh);
+        this.waveMeshArr.push(WaveMesh);
+        this.markupPoint.userData['isMarkupPoint'] = true;
+        this.earthGroup.add(this.markupPoint);
+      })
+    );
+  }
   // 创建资源柱状点
   /**
    * 
@@ -1116,17 +1327,6 @@ class Earth {
     datas.forEach((item, index) => {
       let heightRatio = 0.6;
       // 根据资源的等级设置光柱高度
-      // switch (item.rank) {
-      //   case 'small':
-      //     heightRatio = 0.3;
-      //     break;
-      //   case 'middle':
-      //     heightRatio = 0.6;
-      //     break;
-      //   case 'large':
-      //     heightRatio = 1;
-      //     break;
-      // }
       switch (item.rank) {
         case 'small':
           heightRatio = 0.3;
@@ -1142,7 +1342,10 @@ class Earth {
       let material = new THREE.MeshBasicMaterial({
         color: item.color,
         transparent: true,
-        opacity: 0.8,
+        // transparent: false,
+        // todotodo 尝试修改立方体的透明度
+        // opacity: 0.8,
+        opacity: 1,
         depthWrite: false,
         fog: false,
       });
@@ -1169,7 +1372,9 @@ class Earth {
         normal
       );
       mesh.quaternion.copy(quaternion);
-      let hg = this.createHUIGUANG(geoHeight, 0xfffef4);
+      // todotodo 尝试修改光柱辉光颜色 
+      // let hg = this.createHUIGUANG(geoHeight, 0xfffef4);
+      let hg = this.createHUIGUANG(geoHeight, 0x808080);
 
       // 底部内光圈的材质
       let innerQuanMaterial = new THREE.MeshBasicMaterial({
@@ -1224,7 +1429,9 @@ class Earth {
   // 创建辉光平面体
   createHUIGUANG(h, color) {
     // let geometry = new THREE.PlaneGeometry(0.35, h)
+    // 尝试修改辉光平面，减小辉光平面的宽度
     let geometry = new THREE.PlaneGeometry(3, h)
+    // let geometry = new THREE.PlaneGeometry(1.8, h)
     geometry.translate(0, h / 2, 0)
     // geometry.translate(0, 0, 0)
     const texture = this.options.textures.huiguang;
@@ -1279,6 +1486,50 @@ class Earth {
         const sprite = new THREE.Sprite(material);
         const len = 5 + (item.name.length - 2) * 2;
         sprite.scale.set(len, 3, 1);
+        sprite.position.set(p.x * 1.1, p.y * 1.1, p.z * 1.1);
+        sprite.userData['type'] = 'label';
+        sprite.userData['selectable'] = true;
+        sprite.userData['positionName'] = item.name;
+        // this.earth.add(sprite);
+        tempGroup.add(sprite);
+      });
+    });
+    tempGroup.userData['isLabelGroup'] = true;
+    this.earthGroup.add(tempGroup);
+  }
+  // 为资源视图创建新的不乱的数据标签
+  createSourceNewSpriteLabel(datas){
+    let tempGroup = new THREE.Group();
+    datas.forEach(item => {
+      const p = lon2xyz(this.options.earth.radius * 1.001, item.E, item.N);
+      const div = `<h6 class="fire-resource-label">${item.name}</h6>`;
+      const shareContent = document.getElementById('html2canvas');
+      shareContent.innerHTML = div;
+      const opts = {
+        backgroundColor: null, // 背景透明
+        scale: 3,
+        dpi: window.devicePixelRatio,
+        // @important 这个函数可以过滤遍历标签label的途径dom从而优化遍历路径和生成标签label的时间，大大减少加载速度
+        ignoreElements(e) {
+          if ((e.tagName !== 'META' && e.tagName !== 'DIV' && e.tagName !== 'STYLE') || e.contains(shareContent) || shareContent.contains(e) || e.tagName === 'HEAD' || e.tagName === 'LINK') {
+            return false;
+          }
+          return true;
+        }
+      };
+      html2canvas(document.getElementById('html2canvas'), opts).then((canvas) => {
+        const dataURL = canvas.toDataURL('image/png');
+        const map = new THREE.TextureLoader().load(dataURL);
+        const material = new THREE.SpriteMaterial({
+          map: map,
+          transparent: true
+        });
+        const sprite = new THREE.Sprite(material);
+        const len = 5 + (item.name.length - 2) * 2;
+        sprite.scale.set(len, 3, 1);
+        // sprite.scale.set(len * 2 / 3, 2, 1);
+        // 缩小一些
+        // sprite.scale.set(len * 7 / 9, 3 * 7 / 9, 1);
         sprite.position.set(p.x * 1.1, p.y * 1.1, p.z * 1.1);
         sprite.userData['type'] = 'label';
         sprite.userData['selectable'] = true;
@@ -1477,6 +1728,26 @@ class Earth {
       });
     });
   }
+  createTaskFlyLine(datas){
+    this.flyLineArcGroup = new THREE.Group();
+    this.flyLineArcGroup.userData['taskLineArray'] = [];
+    this.earthGroup.add(this.flyLineArcGroup);
+    datas.forEach((cities) => {
+      if (Array.isArray(cities.endArray) && cities.endArray.length > 0) {
+        cities.endArray.forEach(item => {
+          let flyLine = JSON.parse(JSON.stringify(this.options.flyLine));
+          // flyLine.color = 0xffff00;
+          // flyLine.flyLineColor = 0xffff00
+          flyLine.color = 0x0dffff;
+          flyLine.flyLineColor = 0x0dffff
+          const arcline = taskFlyArc(this.options.earth.radius, cities.startArray.E, cities.startArray.N, item.E, item.N, flyLine, item.label || 'xxts', item.status || 'tc');
+          this.flyLineArcGroup.add(arcline); // 飞线插入flyArcGroup中
+          this.flyLineArcGroup.userData['taskLineArray'].push(arcline.userData['flyLine']);
+          this.flyLineArcGroup.userData['isLinesGroup'] = true;
+        });
+      }
+    });
+  }
   show() {
     gsap.to(this.group.scale, {
       x: 1,
@@ -1489,6 +1760,12 @@ class Earth {
   render() {
     this.flyLineArcGroup?.userData['flyLineArray']?.forEach((fly) => {
       fly.rotation.z += this.options.flyLine.speed; // 调节飞线速度
+      if (fly.rotation.z >= fly.flyEndAngle) fly.rotation.z = 0;
+    });
+    this.flyLineArcGroup?.userData['taskLineArray']?.forEach((fly) => {
+      // 调节飞线速度
+      // fly.rotation.z += 0.008; 
+      fly.rotation.z += 0.016; 
       if (fly.rotation.z >= fly.flyEndAngle) fly.rotation.z = 0;
     });
     if (this.isRotation) {
@@ -1538,7 +1815,7 @@ class Earth {
 // 导出的地球组件
 const MyEarth = {
   template: `<div id="my-earth" class="my-earth">
-    <div id="loading">
+    <div id="loading" data-html2canvas-ignore>
       <div class="sk-chase">
         <div class="sk-chase-dot"></div>
         <div class="sk-chase-dot"></div>
@@ -1553,7 +1830,7 @@ const MyEarth = {
       <h6 class="fire-div"></h6>
       <h6 class="fire-label"></h6>
     </h6>
-    <div id="earth-canvas"></div>
+    <div id="earth-canvas" data-html2canvas-ignore></div>
   </div>`,
   props: {
     datas: {
@@ -1625,24 +1902,25 @@ const MyEarth = {
       type: Object,
       default() {
         return {
-          // 边境 - @蓝
-          bj: 0x0000FF,
+          // 边境 - @白
+          bj: 0xcccccc,
           // 卫星 - @紫!
           wx: 0x800080,
           // 云主机 - @绿
           yzj: 0x008000,
           // 机场 - @黄
           jc: 0xFFFF00,
-          // 住宅 - @橙
-          zz: 0xFFA500,
-          // 物联网 - @红
+          // 住宅 - @蓝
+          zz: 0x0000FF,
+          // 物联网 - @亮蓝
           wlw: 0xFF0000,
           // 云专线 - @黑
-          yzx: 0x000000,
-          // 接入主机 - @亮蓝
-          jr: 0x00FFFF,
-          // 匿名 - @白
-          nm: 0xffffff
+          // yzx: 0x000000,
+          yzx: 0x191970,
+          // 接入主机 - @红
+          yys: 0x00FFFF,
+          // 匿名 - @橙
+          nm: 0xFFA500
         }
       }
     },
@@ -1909,8 +2187,8 @@ const MyEarth = {
       const R = this.earth.options.earth.radius;
       // const target = lon2xyz(R, N, E);
       const turnY = this.earth.earthGroup.rotation.y;
-      const target = rotateLon2xyz(R, N, E, turnY);
-      const position = getPointAlongRay(N, E, -distance, R, turnY);
+      const target = rotateLon2xyz(R, E, N, turnY);
+      const position = getPointAlongRay(E, N, -distance, R, turnY);
       return { target, position };
     },
     // 外部方法 - 计算从目前视角拉远到控制器的最远距离点位
@@ -1950,7 +2228,8 @@ const MyEarth = {
     },
     // 外部方法 - 渲染资源标牌
     outRenderSourceLabel(datas){
-      this.earth.createSourceSpriteLabel(datas);
+      // this.earth.createSourceSpriteLabel(datas);
+      this.earth.createSourceNewSpriteLabel(datas);
     },
     // 外部方法 - 渲染网络视图
     async outRenderNetworkView(datas){
@@ -1960,6 +2239,20 @@ const MyEarth = {
       this.earth.createSpriteLabelAsync();
       // this.createAnimateCircle() // 创建环绕卫星
       this.earth.createFlyLine(); // 创建飞线
+    },
+    // 外部方法渲染任务视图的飞线及标牌数据(先使用老的飞线)
+    async outRenderTaskView(datas){
+      let points = [];
+      if (Array.isArray(datas) && datas.length > 0) {
+        points.push(datas[0].endArray[0]);
+        datas.forEach(item => {
+          points.push(item.startArray);
+        })
+      }
+      await this.earth.createTaskPoint(datas);
+      this.earth.createTaskFlyLine(datas);
+      
+      this.earth.createSourceSpriteLabel(points);
     }
   }
 };
