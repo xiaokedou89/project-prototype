@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
+	<title>驱动动画测试</title>
+	<script src="./resize.js"></script>
+	<link href="./homepage.css" rel="stylesheet" />
+	<body>
+		<div id="app">
+			<div class="position-center-bottom">
+				<img src="./image/bottomBg.svg" />
+				<div class="circle-outer">
+					<svg class="path-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
+						<path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
+					</svg>
+					<div 
+						class="ball" 
+						v-for="(item, index) in balls"
+						:class="[`ball${index+1}`, {active: currentBall && currentBall.type === item.type}]"
+						:style="{backgroundImage: computedBallBg(item), opacity: ballPoints[index].opacity}" :key="index"
+						@click="clickBall(item)"></div>
+				</div>
+			</div>
+		</div>
+		<script src="./vue.js"></script>
+		<script src="./MotionPathPlugin.min.js"></script>
+		<script src="./gsap.min.js"></script>
+		<script>
+			gsap.registerPlugin(MotionPathPlugin);
+			$app = new Vue({
+				el: '#app',
+				data(){
+					return {
+						// 记录底下大圆盘上小球是否归拢
+						isBallsPosition: false,
+						// 当前选中激活的资源球
+						currentBall: null,
+						balls: [
+							{ index: 1, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'nm', typeName: '匿名网络', tl: null, positionTL: null },
+							{ index: 2, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'yys', typeName: '运营商专线', tl: null, positionTL: null },
+							{ index: 3, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'yzx', typeName: '云专线', tl: null, positionTL: null },
+							{ index: 4, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'wlw', typeName: '物联网代理', tl: null, positionTL: null },
+							{ index: 5, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'zz', typeName: '住宅代理', tl: null, positionTL: null },
+							{ index: 6, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'jc', typeName: '机场代理', tl: null, positionTL: null },
+							{ index: 7, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'yzj', typeName: '云主机', tl: null, positionTL: null },
+							{ index: 8, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'wx', typeName: '卫星通讯', tl: null, positionTL: null },
+							{ index: 9, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'bj', typeName: '边境无线', tl: null, positionTL: null }
+						],
+						// 小球点位对应的样式
+						ballPoints: [
+							// 在椭圆左侧
+							{ positionIndex: 0, opacity: 1, scale: 1 },
+							{ positionIndex: 1, opacity: 1, scale: 1 },
+							{ positionIndex: 2, opacity: 1, scale: 1 },
+							{ positionIndex: 3, opacity: 1, scale: 1 },
+							{ positionIndex: 4, opacity: 1, scale: 1 },
+							{ positionIndex: 5, opacity: 1, scale: 1 },
+							{ positionIndex: 6, opacity: 1, scale: 1 },
+							{ positionIndex: 7, opacity: 1, scale: 1 },
+							{ positionIndex: 8, opacity: 1, scale: 1 }
+							// { positionIndex: 0, opacity: 1, scale: 1 },
+							// { positionIndex: 1, opacity: 1 / 9, scale: 1 },
+							// { positionIndex: 2, opacity: 0, scale: 1 },
+							// { positionIndex: 3, opacity: 0, scale: 1 },
+							// { positionIndex: 4, opacity: 5 / 9, scale: 1 },
+							// { positionIndex: 5, opacity: 1, scale: 1 },
+							// { positionIndex: 6, opacity: 1, scale: 1 },
+							// { positionIndex: 7, opacity: 1, scale: 1 },
+							// { positionIndex: 8, opacity: 1, scale: 1 }
+						],
+						// 小球聚拢状态下的位置，index => 从椭圆右顶点0.5的位置开始算: index * (半圈的进度为0.5 / (10段距离))
+						ballShowPoints: [
+							{ positionIndex: 1, position: 0.5 + 1 * 0.5 / 10 },
+							{ positionIndex: 2, position: 0.5 + 2 * 0.5 / 10 },
+							{ positionIndex: 3, position: 0.5 + 3 * 0.5 / 10 },
+							{ positionIndex: 4, position: 0.5 + 4 * 0.5 / 10 },
+							{ positionIndex: 5, position: 0.5 + 5 * 0.5 / 10 },
+							{ positionIndex: 6, position: 0.5 + 6 * 0.5 / 10 },
+							{ positionIndex: 7, position: 0.5 + 7 * 0.5 / 10 },
+							{ positionIndex: 8, position: 0.5 + 8 * 0.5 / 10 },
+							{ positionIndex: 9, position: 0.5 + 9 * 0.5 / 10 },
+						],
+					}
+				},
+				computed: {
+					// 获取资源小球的背景图
+					computedBallBg() {
+						return function (item) {
+							return `url('./image/source-ball-${item.type}.svg')`;
+						}
+					},
+				},
+				created(){
+					$app = this;
+				},
+				mounted(){
+					this.animateBalls();
+				},
+				methods: {
+					clickBall(ball) {
+						console.log(ball)
+						if (!this.currentBall) {
+							this.currentBall = ball;
+							this.animateBallsStopAndPosition();
+						} else if (this.currentBall && this.currentBall.type !== ball.type) {
+							this.currentBall = ball;
+						} else if (this.currentBall && this.currentBall.type === ball.type) {
+							this.currentBall = null;
+							this.animateBallsRotate();
+						}
+					},
+					animateBalls() {
+						this.balls.forEach((ball, ballIndex) => {
+							ball.tl = gsap.timeline();
+							for (let currentIndex = ball.index; currentIndex < 10; currentIndex++) {
+								const opacityIndex = currentIndex === 9 ? 0 : currentIndex;
+								ball.tl.to(`.ball${ball.index}`, {
+									duration: 1.5,
+									ease: 'none',
+									opacity: $app.ballPoints[opacityIndex].opacity,
+									motionPath: {
+										path: '#ellipsePath',
+										align: '#ellipsePath',
+										alignOrigin: [0.5, 0.5],
+										start: `${(currentIndex - 1) / 9}`,
+										end: `${currentIndex / 9}`,
+									}
+								})
+							}
+							if (ball.index > 1) {
+								for (let restart = 0; restart < (ball.index - 1); restart++) {
+									ball.tl.to(`.ball${ball.index}`, {
+										opacity: $app.ballPoints[restart].opacity,
+										duration: 1.5,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: `${restart / 9}`,
+											end: `${(restart + 1) / 9}`,
+										}
+									})
+								}
+							}
+							ball.tl.repeat(-1)
+						})
+					},
+					animateBallsStopAndPosition(){
+						if (this.isBallsPosition) return;
+						this.isBallsPosition = true;
+						// 定位一个标记点小球作为运动标准(找中心点位index为4的小球)
+						let centerIndex = 4;
+						let centerBall = this.balls[centerIndex];
+						// 标记小球的移动目标位置
+						let centerBallTarget = this.ballShowPoints[centerIndex].position;
+						// 标记小球的当前位置： (时间线进度 + index * 1/9) % 1
+						let centerBallCurrent = (centerBall.tl.progress() + (centerIndex / 9)) % 1;
+						// 判断标记点小球是要向前移动 
+						// let isCenterBallGo = centerBallCurrent < centerBallTarget;
+						let isCenterBallGo = true;
+						if (centerBallCurrent > centerBallTarget) {
+							isCenterBallGo = false;
+						} else if (centerBallCurrent < centerBallTarget && centerBallCurrent <= 0.25) {
+							isCenterBallGo = false;
+						}
+						this.balls.forEach((ball, ballIndex) => {
+							ball.tl.pause();
+							if (ball.positionTL) {
+								ball.positionTL.clear();
+							}
+							ball.positionTL = gsap.timeline();
+							// 当前小球的移动进度
+							let currentDis = (ball.tl.progress() + ballIndex * 1 / 9) % 1;
+							let targetDis = $app.ballShowPoints[ballIndex].position;
+							let totalTime = 1.5;
+							// 驱动中心球 当前球就是中心球 前进状态
+							if (ballIndex === centerIndex && isCenterBallGo) {
+								ball.positionTL.to(`.ball${ball.index}`, {
+									duration: totalTime,
+									ease: 'none',
+									motionPath: {
+										path: '#ellipsePath',
+										align: '#ellipsePath',
+										alignOrigin: [0.5, 0.5],
+										start: currentDis,
+										end: targetDis
+									}
+								});
+							}
+							if (ballIndex === centerIndex && !isCenterBallGo && currentDis >= 0.75) {
+								ball.positionTL.to(`.ball${ball.index}`, {
+									duration: totalTime,
+									ease: 'none',
+									motionPath: {
+										path: '#ellipsePath',
+										align: '#ellipsePath',
+										alignOrigin: [0.5, 0.5],
+										start: currentDis - 1,
+										end: targetDis - 1
+									}
+								});
+							}
+							if (ballIndex === centerIndex && !isCenterBallGo && currentDis <= 0.25) {
+								let startTime = (currentDis / (currentDis + 1 - targetDis)) * totalTime;
+								let endTime = totalTime - startTime;
+								ball.positionTL.to(`.ball${ball.index}`, {
+									duration: startTime,
+									ease: 'none',
+									motionPath: {
+										path: '#ellipsePath',
+										align: '#ellipsePath',
+										alignOrigin: [0.5, 0.5],
+										start: currentDis - 1,
+										end: -1
+									}
+								});
+								ball.positionTL.to(`.ball${ball.index}`, {
+									duration: endTime,
+									ease: 'none',
+									motionPath: {
+										path: '#ellipsePath',
+										align: '#ellipsePath',
+										alignOrigin: [0.5, 0.5],
+										start: 0,
+										end: targetDis - 1
+									}
+								});
+							}
+							// 中心球前进 当前球小于中心球
+							if (isCenterBallGo && ballIndex < centerIndex) {
+								if (currentDis < targetDis) {
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: totalTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis,
+											end: targetDis
+										}
+									});
+								} else if (currentDis > targetDis) {
+									let startTime = (1 - currentDis) / (1 - currentDis + targetDis);
+									let endTime = totalTime - startTime;
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: startTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis,
+											end: 1
+										}
+									});
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: endTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: 0,
+											end: targetDis
+										}
+									});
+								}
+							}
+							// 中心球前进 当前球大于中心球
+							if (isCenterBallGo && ballIndex > centerIndex) {
+								if (currentDis >= 0.25 && currentDis < targetDis) {
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: totalTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis,
+											end: targetDis
+										}
+									});
+								}
+								if (currentDis > targetDis) {
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: totalTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis - 1,
+											end: targetDis - 1
+										}
+									});
+								}
+								if (currentDis < 0.25 && currentDis < targetDis) {
+									let startTime = (currentDis / (currentDis + (1 - targetDis))) * totalTime;
+									let endTime = totalTime - startTime;
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: startTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis - 1,
+											end: -1
+										}
+									});
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: endTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: 0,
+											end: targetDis - 1
+										}
+									});
+								}
+							}
+							// 中心球后退 当前球大于中心球
+							if (!isCenterBallGo && ballIndex > centerIndex) {
+								if (currentDis > targetDis) {
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: totalTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis - 1,
+											end: targetDis - 1
+										}
+									});
+								}
+								if (currentDis <= targetDis) {
+									let startTime = currentDis / (currentDis + 1 - targetDis) * totalTime;
+									let endTime = totalTime - startTime;
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: startTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis - 1,
+											end: -1
+										}
+									});
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: endTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: 0,
+											end: targetDis - 1
+										}
+									});
+								}
+							}
+							// 中心球后退 当前球小中心球
+							if (!isCenterBallGo && ballIndex < centerIndex) {
+								if (currentDis > targetDis) {
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: totalTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis - 1,
+											end: targetDis - 1
+										}
+									});
+								}
+								if (currentDis < targetDis && currentDis > 0.25) {
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: totalTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis,
+											end: targetDis
+										}
+									});
+								}
+								if (currentDis < targetDis && currentDis <= 0.25) {
+									let startTime = (currentDis / (currentDis + 1 - targetDis)) * totalTime;
+									let endTime = totalTime - startTime;
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: startTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: currentDis - 1,
+											end: -1
+										}
+									});
+									ball.positionTL.to(`.ball${ball.index}`, {
+										duration: endTime,
+										ease: 'none',
+										motionPath: {
+											path: '#ellipsePath',
+											align: '#ellipsePath',
+											alignOrigin: [0.5, 0.5],
+											start: 0,
+											end: targetDis - 1
+										}
+									});
+								}
+							}
+						});
+					},
+					animateBallsRotate(){
+						if (!this.isBallsPosition) return;
+						this.isBallsPosition = false;
+						this.balls.forEach((ball, ballIndex) => {
+							ball.positionTL.eventCallback("onReverseComplete", () => ball.tl.play());
+							ball.positionTL.reverse();
+						});
+					}
+				}
+			})
+		</script>
+	</body>
+</html>
