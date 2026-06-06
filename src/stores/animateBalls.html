@@ -4,12 +4,12 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 	<meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests" />
 	<title>驱动动画测试</title>
-	<script src="./resize.js"></script>
-	<link href="./homepage.css" rel="stylesheet" />
+	<script src="./js/resize.js"></script>
+	<link href="./css/homepage.css" rel="stylesheet" />
 	<body>
 		<div id="app">
 			<div class="position-center-bottom">
-				<img src="./image/bottomBg.svg" />
+				<img src="./assets/images/bottomBg.svg" />
 				<div class="circle-outer">
 					<svg class="path-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
 						<path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
@@ -19,13 +19,13 @@
 						v-for="(item, index) in balls"
 						:class="[`ball${index+1}`, {active: currentBall && currentBall.type === item.type}]"
 						:style="{backgroundImage: computedBallBg(item), opacity: ballPoints[index].opacity}" :key="index"
-						@click="clickBall(item)"></div>
+						@click="clickBall(item)">{{item.index}}</div>
 				</div>
 			</div>
 		</div>
-		<script src="./vue.js"></script>
-		<script src="./MotionPathPlugin.min.js"></script>
-		<script src="./gsap.min.js"></script>
+		<script src="./module/vue2/vue.js"></script>
+		<script src="./module/GSAP3.11.0/MotionPathPlugin.min.js"></script>
+		<script src="./module/GSAP3.11.0/gsap.min.js"></script>
 		<script>
 			gsap.registerPlugin(MotionPathPlugin);
 			$app = new Vue({
@@ -87,7 +87,7 @@
 					// 获取资源小球的背景图
 					computedBallBg() {
 						return function (item) {
-							return `url('./image/source-ball-${item.type}.svg')`;
+							return `url('./assets/images/source-ball-${item.type}.svg')`;
 						}
 					},
 				},
@@ -144,7 +144,29 @@
 									})
 								}
 							}
-							ball.tl.repeat(-1)
+							ball.tl.repeat(-1);
+              ball.tl.eventCallback('onUpdate', () => {
+                const progress = (ball.tl.progress() + (ballIndex / 9)) % 1;
+                const maxScale = 1;
+                const minScale = 0.6;
+                const maxOpacity = 1;
+                const minOpacity = 0;
+                let scale, opacity;
+                if (progress > 0 && progress <= (1 / 12)){
+                  const t = gsap.utils.mapRange(0, 1 / 12, 1, 0, progress);
+                  scale = gsap.utils.mapRange(1, 0, maxScale, minScale, t);
+                  opacity = gsap.utils.mapRange(1, 0, maxOpacity, minOpacity, t);
+                }
+                if (progress >= (5 / 12) && progress < 0.5){
+                  const t = gsap.utils.mapRange(5 / 12, 0.5, 0, 1, progress);
+                  scale = gsap.utils.mapRange(0, 1, minScale, maxScale, t);
+                  opacity = gsap.utils.mapRange(0, 1, minOpacity, maxOpacity, t);
+                }
+                gsap.set(`.ball${ball.index}`, { scale: scale, opacity: opacity });
+                if (progress > (1 / 12) && progress < (5 / 12)){
+                  gsap.set(`.ball${ball.index}`, { scale: minScale, opacity: minOpacity });
+                }
+              });
 						})
 					},
 					animateBallsStopAndPosition(){
@@ -175,7 +197,33 @@
 							let currentDis = (ball.tl.progress() + ballIndex * 1 / 9) % 1;
 							let targetDis = $app.ballShowPoints[ballIndex].position;
 							let totalTime = 1.5;
-							// 驱动中心球 当前球就是中心球 前进状态
+
+              const updateVisuals = (progress) => {
+                const maxScale = 1;
+                const minScale = 0.6;
+                const maxOpacity = 1;
+                const minOpacity = 0;
+                let scale, opacity;
+                if (progress > 0 && progress <= (1 / 12)){
+                  const t = gsap.utils.mapRange(0, 1 / 12, 1, 0, progress);
+                  scale = gsap.utils.mapRange(1, 0, maxScale, minScale, t);
+                  opacity = gsap.utils.mapRange(1, 0, maxOpacity, minOpacity, t);
+                  gsap.set(`.ball${ball.index}`, { scale: scale, opacity: opacity });
+                }
+                if (progress > (1 / 12) && progress < (5 / 12)){
+                  gsap.set(`.ball${ball.index}`, { scale: minScale, opacity: minOpacity });
+                }
+                if (progress >= (5 / 12) && progress < 0.5){
+                  const t = gsap.utils.mapRange(5 / 12, 0.5, 0, 1, progress);
+                  scale = gsap.utils.mapRange(0, 1, minScale, maxScale, t);
+                  opacity = gsap.utils.mapRange(0, 1, minOpacity, maxOpacity, t);
+                  gsap.set(`.ball${ball.index}`, { scale: scale, opacity: opacity });
+                }
+                if (progress >= 0.5 && progress < 1){
+                  gsap.set(`.ball${ball.index}`, { scale: maxOpacity, opacity: maxScale });
+                }
+              };
+							// @驱动中心球 当前球就是中心球 前进状态
 							if (ballIndex === centerIndex && isCenterBallGo) {
 								ball.positionTL.to(`.ball${ball.index}`, {
 									duration: totalTime,
@@ -188,7 +236,13 @@
 										end: targetDis
 									}
 								});
+                ball.positionTL.eventCallback('onUpdate', function(){
+                  let timeProgress = this.progress();
+                  let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                  updateVisuals(pathProgress);
+                });
 							}
+              // @当前球就是中心球 后退 在下半区的后半段
 							if (ballIndex === centerIndex && !isCenterBallGo && currentDis >= 0.75) {
 								ball.positionTL.to(`.ball${ball.index}`, {
 									duration: totalTime,
@@ -201,7 +255,13 @@
 										end: targetDis - 1
 									}
 								});
+                ball.positionTL.eventCallback('onUpdate', function(){
+                  let timeProgress = this.progress();
+                  let pathProgress = targetDis + (currentDis - targetDis) * timeProgress;
+                  updateVisuals(pathProgress);
+                });
 							}
+              // @当前球就是中心球 后退 在上班去的前半段
 							if (ballIndex === centerIndex && !isCenterBallGo && currentDis <= 0.25) {
 								let startTime = (currentDis / (currentDis + 1 - targetDis)) * totalTime;
 								let endTime = totalTime - startTime;
@@ -227,8 +287,18 @@
 										end: targetDis - 1
 									}
 								});
+                ball.positionTL.eventCallback('onUpdate', function(){
+                  let timeProgress = this.progress();
+                  let currentTime = timeProgress * totalTime;
+                  if (currentTime <= startTime){
+                    let pathProgress = currentDis - currentDis * currentTime / startTime;
+                    updateVisuals(pathProgress);
+                  } else {
+                    updateVisuals(0.8);
+                  }
+                });
 							}
-							// 中心球前进 当前球小于中心球
+							// @中心球前进 当前球小于中心球
 							if (isCenterBallGo && ballIndex < centerIndex) {
 								if (currentDis < targetDis) {
 									ball.positionTL.to(`.ball${ball.index}`, {
@@ -242,6 +312,11 @@
 											end: targetDis
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    let timeProgress = this.progress();
+                    let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                    updateVisuals(pathProgress);
+                  });
 								} else if (currentDis > targetDis) {
 									let startTime = (1 - currentDis) / (1 - currentDis + targetDis);
 									let endTime = totalTime - startTime;
@@ -267,9 +342,19 @@
 											end: targetDis
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime){
+                      updateVisuals(0.8);
+                    } else {
+                      let pathProgress = ((currentTime - startTime) / endTime) * targetDis;
+                      updateVisuals(pathProgress);
+                    }
+                  });
 								}
 							}
-							// 中心球前进 当前球大于中心球
+							// @中心球前进 当前球大于中心球
 							if (isCenterBallGo && ballIndex > centerIndex) {
 								if (currentDis >= 0.25 && currentDis < targetDis) {
 									ball.positionTL.to(`.ball${ball.index}`, {
@@ -283,6 +368,12 @@
 											end: targetDis
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    let timeProgress = this.progress();
+                    let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                    let currentTime = timeProgress * totalTime;
+                    updateVisuals(pathProgress);
+                  });
 								}
 								if (currentDis > targetDis) {
 									ball.positionTL.to(`.ball${ball.index}`, {
@@ -296,6 +387,9 @@
 											end: targetDis - 1
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    updateVisuals(0.8);
+                  });
 								}
 								if (currentDis < 0.25 && currentDis < targetDis) {
 									let startTime = (currentDis / (currentDis + (1 - targetDis))) * totalTime;
@@ -322,9 +416,19 @@
 											end: targetDis - 1
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime){
+                      let pathProgress = currentDis - currentDis * currentTime / startTime;
+                      updateVisuals(pathProgress);
+                    } else {
+                      updateVisuals(0.8);
+                    }
+                  });
 								}
 							}
-							// 中心球后退 当前球大于中心球
+							// @中心球后退 当前球大于中心球
 							if (!isCenterBallGo && ballIndex > centerIndex) {
 								if (currentDis > targetDis) {
 									ball.positionTL.to(`.ball${ball.index}`, {
@@ -338,6 +442,9 @@
 											end: targetDis - 1
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    updateVisuals(0.8);
+                  });
 								}
 								if (currentDis <= targetDis) {
 									let startTime = currentDis / (currentDis + 1 - targetDis) * totalTime;
@@ -364,6 +471,16 @@
 											end: targetDis - 1
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime){
+                      let pathProgress = currentDis - currentDis * (currentTime / startTime);
+                      updateVisuals(pathProgress);
+                    } else {
+                      updateVisuals(0.8);
+                    }
+                  });
 								}
 							}
 							// 中心球后退 当前球小中心球
@@ -380,6 +497,9 @@
 											end: targetDis - 1
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    updateVisuals(0.8);
+                  });
 								}
 								if (currentDis < targetDis && currentDis > 0.25) {
 									ball.positionTL.to(`.ball${ball.index}`, {
@@ -393,6 +513,11 @@
 											end: targetDis
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    let timeProgress = this.progress();
+                    let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                    updateVisuals(pathProgress);
+                  });
 								}
 								if (currentDis < targetDis && currentDis <= 0.25) {
 									let startTime = (currentDis / (currentDis + 1 - targetDis)) * totalTime;
@@ -419,6 +544,16 @@
 											end: targetDis - 1
 										}
 									});
+                  ball.positionTL.eventCallback('onUpdate', function(){
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime){
+                      let pathProgress = currentDis - currentDis * currentTime / startTime;
+                      updateVisuals(pathProgress);
+                    } else {
+                      updateVisuals(0.8);
+                    }
+                  });
 								}
 							}
 						});
