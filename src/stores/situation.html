@@ -746,7 +746,7 @@
                   </div>
                   <!-- 系统状态选择部分 -->
                   <div class="system-select-container">
-                    <el-radio v-model="currentSystem" class="system-radio" v-for="(item, index) in systems" :key="index" :label="item.key" :value="item.key">
+                    <el-radio @change="changeCurrentSystem" v-model="currentSystem" class="system-radio" v-for="(item, index) in systems" :key="index" :label="item.key" :value="item.key">
                       <div class="system-item">
                         <div class="top">{{ item.title }}</div>
                         <div class="bottom">
@@ -799,19 +799,172 @@
                       </div>
                     </div>
                   </div>
-                  <div class="s2">
+                  <div class="system-table-container">
                     <!-- 硬件设施的统计表格 -->
-                    <iframe
-                      :src="computedTest"
-                      style="width: 100%; height: 100%; border: none!important;"></iframe>
+                    <div class="table hardware" :class="{anishow: currentSystem === 1}" v-show="currentSystem === 1">
+                      <div class="table-header table-row">
+                        <div class="table-col table-col-1" align>服务器IP</div>
+                        <!-- <div class="table-col table-col-2" align>用途</div> -->
+                        <div class="table-col table-col-3" align>健康值</div>
+                        <div class="table-col table-col-4" align>负载</div>
+                        <div class="table-col table-col-5" align>CPU使用率</div>
+                        <div class="table-col table-col-6" align>内存使用率</div>
+                        <div class="table-col table-col-7" align>分区使用率</div>
+                        <!-- <div class="table-col table-col-8" align>状态</div> -->
+                      </div>
+                      <div class="table-body">
+                        <div class="table-empty" v-if="hardwareDatas.length < 1">
+                          <img src="./img/homepage/watch/empty.svg" />
+                          <div class="empty-label">暂无数据</div>
+                        </div>
+                        <template v-else>
+                          <div class="table-row" v-for="(item, index) in hardwareDatas" :key="index">
+                            <div class="table-col table-col-1" align>
+                              <div class="text-cell">{{ item.ip }}</div>
+                            </div>
+                            <!-- <div class="table-col table-col-2" align>
+                              <div class="text-cell">{{ item.use }}</div>
+                            </div> -->
+                            <div class="table-col table-col-3" align>
+                              <div class="table-col-parent">
+                                <div class="table-col-value">{{ item.health }}</div>
+                                <div class="table-col-child" :data-width="item.health"></div>
+                              </div>
+                            </div>
+                            <div class="table-col table-col-4" align>
+                              <div class="text-cell">{{ item.load }}</div>
+                            </div>
+                            <div class="table-col table-col-5" align>
+                              <div class="table-col-parent percent">
+                                <div class="table-col-value">{{ item.cpu_usage }}%</div>
+                                <div class="table-col-child" :data-width="item.cpu_usage"></div>
+                              </div>
+                            </div>
+                            <div class="table-col table-col-6" align>
+                              <div class="table-col-parent percent">
+                                <div class="table-col-value">{{ item.memory_usage }}%</div>
+                                <div class="table-col-child" :data-width="item.memory_usage"></div>
+                              </div>
+                            </div>
+                            <div class="table-col table-col-7" align>
+                              <div class="table-col-parent percent">
+                                <div class="table-col-value">{{ item.disk_usage }}%</div>
+                                <div class="table-col-child" :data-width="item.disk_usage"></div>
+                              </div>
+                            </div>
+                            <!-- <div class="table-col table-col-8" align>
+                              <div class="text-cell">{{ item.status }}</div>
+                            </div> -->
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                    <!-- 软件的统计表格 -->
+                    <div class="table software" :class="{anishow: currentSystem === 2}" v-show="currentSystem === 2">
+                      <div class="table-header table-row">
+                        <div class="table-col table-col-1" align>服务</div>
+                        <div class="table-col table-col-2" align>服务地址</div>
+                        <div class="table-col table-col-3" align>用途</div>
+                        <div class="table-col table-col-4" align>状态</div>
+                      </div>
+                      <div class="table-body">
+                        <div class="table-empty" v-if="softwareDatas.length < 1">
+                          <img src="./img/homepage/watch/empty.svg" />
+                          <div class="empty-label">暂无数据</div>
+                        </div>
+                        <template v-else>
+                          <div class="table-row" v-for="(item, index) in softwareDatas" :key="index">
+                            <div class="table-col table-col-1" align>
+                              <div class="text-cell">{{ item.service }}</div>
+                            </div>
+                            <div class="table-col table-col-2" align>
+                              <div class="text-cell">{{ item.ip }}</div>
+                            </div>
+                            <div class="table-col table-col-3" align>
+                              <div class="text-cell">{{ item.use }}</div>
+                            </div>
+                            <div class="table-col table-col-4" align>
+                              <div class="text-cell">{{ item.status }}</div>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
+                    <!-- 系统的统计表格 -->
+                    <div class="table system" :class="{anishow: currentSystem === 3}" v-show="currentSystem === 3">
+                      <div class="table-header table-row">
+                        <div class="table-col table-col-1" align>组件</div>
+                        <div class="table-col table-col-2" align>组件描述</div>
+                        <div class="table-col table-col-3" align>状态</div>
+                      </div>
+                      <div class="table-body">
+                        <div class="table-empty" v-if="systemDatas.length < 1">
+                          <img src="./img/homepage/watch/empty.svg" />
+                          <div class="empty-label">暂无数据</div>
+                        </div>
+                        <template v-else>
+                          <div class="table-row" v-for="(item, index) in systemDatas" :key="index">
+                            <div class="table-col table-col-1" align>
+                              <div class="text-cell">{{ item.name }}</div>
+                            </div>
+                            <div class="table-col table-col-2" align>
+                              <div class="text-cell">{{ item.description }}</div>
+                            </div>
+                            <div class="table-col table-col-3" align>
+                              <div class="text-cell">{{ item.status }}</div>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
+                    </div>
                   </div>
                   <div class="position-title">
                     <div class="position-title-content text">服务状态</div>
                   </div>
                   <!-- 服务状态部分 -->
                   <div class="service-cotainer">
-                    <div class="top"></div>
-                    <div class="bottom"></div>
+                    <!-- 顶部的QPS图表 -->
+                    <div class="top" id="service-qps-chart">
+
+                    </div>
+                    <!-- 下方的耗时分布及接口错误率表格 -->
+                    <div class="bottom">
+                      <div class="table-title">耗时分布以及接口错误率</div>
+                      <div class="table">
+                        <div class="table-header table-row">
+                          <div class="table-col table-col-1">请求路径</div>
+                          <div class="table-col table-col-2" align>平均响应</div>
+                          <div class="table-col table-col-3" align>PV</div>
+                          <div class="table-col table-col-4" align>UV</div>
+                          <div class="table-col table-col-5" align>平均返回量</div>
+                        </div>
+                        <div class="table-body">
+                          <div class="table-empty" v-if="apiDatas.length < 1">
+                            <img src="./img/homepage/watch/empty.svg" />
+                            <div class="empty-label">暂无数据</div>
+                          </div>
+                          <template v-else>
+                            <div class="table-row" v-for="(item, index) in apiDatas" :key="index">
+                              <div class="table-col table-col-1">
+                                <div class="text-cell">{{ item.path }}</div>
+                              </div>
+                              <div class="table-col table-col-2" align>
+                                <div class="text-cell">{{ item.avg_res_time }}</div>
+                              </div>
+                              <div class="table-col table-col-3" align>
+                                <div class="text-cell">{{ item.pv }}</div>
+                              </div>
+                              <div class="table-col table-col-4" align>
+                                <div class="text-cell">{{ item.uv }}</div>
+                              </div>
+                              <div class="table-col table-col-5" align>
+                                <div class="text-cell">{{ item.avg_return }}</div>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div class="position-title">
                     <div class="position-title-content text">故障告警</div>
@@ -1239,6 +1392,10 @@
       let channelLineChartTransparentColors = ['rgba(58, 137, 255, 0)', 'rgba(5, 253, 252, 0)'];
       // 安全加固饼图颜色
       let pieChartColors = ['rgb(128,188,255)', 'rgb(162,225,249)', 'rgb(151,235,205)', 'rgb(186,225,179)', 'rgb(255,204,128)', 'rgb(250,145,150)']
+      // 地球右侧服务状态图表颜色
+      let servicelLineChartColors = ['rgba(69, 140, 238, 1)', 'rgba(220, 252, 5, 1)'];
+      let servicelLineChartLinearColors = ['rgba(69, 140, 238, 1)', 'rgba(5, 253, 252, .8)'];
+      let servicelLineChartTransparentColors = ['rgba(69, 140, 238, 1)', 'rgba(5, 253, 252, 0)'];
       // 转换echart图标的字体函数
       function setChartSize(res) {
         const clientWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -1743,6 +1900,31 @@
               time: Date.now(),
               result: '正常'
             },
+            // 三个切换表格对应数据 注意数值一定要保证为Number类型且在0-100之间(尽量保持1位小数)
+            // 硬件
+            hardwareDatas: [],
+            // 软件
+            softwareDatas: [
+              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
+              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
+              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
+              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
+              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
+              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
+              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
+            ],
+            // 系统
+            systemDatas: [
+              { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' },
+              { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' },
+              { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' },
+              { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' },
+              { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' },
+              { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' },
+              { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' }
+            ],
+            // 右侧接口表格数据
+            apiDatas: [],
             // 故障告警列表
             faults: [
               { content: 'MySQL服务器  数据库服务器性能异常' },
@@ -1757,6 +1939,7 @@
             tasks: {
               M: {
                 title: 'XXTS隔离域004(M)',
+                position: { N: 47.75, E: -120.74 },
                 igroup_id: 4,
                 // 选择时的地图飞线数据
                 mapDatas: [
@@ -1836,6 +2019,7 @@
               },
               R: {
                 title: 'XXTS隔离域006(R)',
+                position: { N: 35.689381, E: 139.69181 },
                 igroup_id: 6,
                 // 选择时的地图飞线数据
                 mapDatas: [
@@ -1915,6 +2099,7 @@
               },
               T: {
                 title: 'XXTS隔离域005(T)',
+                position: { N: 23.01087, E: 120.666, },
                 igroup_id: 5,
                 // 选择时的地图飞线数据
                 mapDatas: [
@@ -1994,6 +2179,7 @@
               },
               F: {
                 title: 'XXTS隔离域007(F)',
+                position: { N: 14.35, E: 120.58 },
                 igroup_id: 7,
                 // 选择时的地图飞线数据
                 mapDatas: [
@@ -2230,26 +2416,6 @@
                 data: [],
                 chart: null
               },
-              // 安全风险顶部图表
-              safeRiskTop: {
-                chart: null
-              },
-              // 传输态势
-              transfer: {
-                // 请求参数
-                params: {
-                  tag_regex: 'abc',
-                  group_by: 'label',
-                  traffic_type: 'input',
-                  start_time: null,
-                  end_time: null
-                },
-                chart: null
-              },
-              // 支撑态势
-              support: {
-                chart: null
-              },
               M: {
                 chart: null
               },
@@ -2272,6 +2438,9 @@
                 chart: null
               },
               channelF: {
+                chart: null
+              },
+              serviceQPS: {
                 chart: null
               }
             }
@@ -2374,12 +2543,6 @@
               }
               return timeBody;
             }
-          },
-          iframeSrc(){
-            return window.BaseURL.proxyServices;  
-          },
-          computedTest(){
-            return `${this.iframeSrc}/d-solo/HOME-EARTH/e5a4a7-e5b18f-e58fb3-e4bea7-e79c8b-e69dbf?orgId=1&from=1779956545434&to=1779960145434&timezone=browser&var-db=z_v04_2604&var-project=api_log&var-server_ip=$__all&var-server_ip_old=$__all&var-domain=$__all&var-status=1%3D1&var-uri=%2Fapi%2Fc%2Forder%2Fresult&var-cip=172.20.5.254&var-cal_interval=60&var-datasource=bffru6y51rg8wa&refresh=5m&tab=queries&panelId=206&__feature.dashboardSceneSolo`;
           }
         },
         methods: {
@@ -2407,12 +2570,21 @@
 
             // 地球下钻
             // this.animateDownInEarthMap();
+
           },  
           ttt(){
             // 地球上窜
             // this.animateUpToEarth()
             // 驱动小球恢复旋转
-            this.animateBallsRotate();
+            // this.animateBallsRotate();system-table-container
+            let dom = '.system-table-container'
+            this.$nextTick(() => {
+              let numContainer = document.querySelector(dom);
+              let numContents = Array.from(numContainer.querySelectorAll('.table-col-child'));
+              numContents.forEach((num) => {
+                gsap.to(num, { width: `${num.dataset.width}%`, duration: 1.8, ease: 'power4.inOut' });
+              });
+            });
           },
           render() {
             this.$refs.earth.renderDatas([
@@ -2707,6 +2879,7 @@
                   $app.animateNumberItemInner('.position-left');
                   $app.animateNumberItemInner('.position-right');
                   $app.animateNumberItemInner('.right-section');
+                  $app.animateTableColItem('.right-section');
                   // 驱动地球上方数字滚动动画
                   $app.animateNumberItemInner('.position-center-top');
                   $app.positionTop.showTracks = true;
@@ -3026,7 +3199,29 @@
                   })
                 }
               }
-              ball.tl.repeat(-1)
+              ball.tl.repeat(-1);
+              ball.tl.eventCallback('onUpdate', () => {
+                const progress = (ball.tl.progress() + (ballIndex / 9)) % 1;
+                const maxScale = 1;
+                const minScale = 0.6;
+                const maxOpacity = 1;
+                const minOpacity = 0;
+                let scale, opacity;
+                if (progress > 0 && progress <= (1 / 12)) {
+                  const t = gsap.utils.mapRange(0, 1 / 12, 1, 0, progress);
+                  scale = gsap.utils.mapRange(1, 0, maxScale, minScale, t);
+                  opacity = gsap.utils.mapRange(1, 0, maxOpacity, minOpacity, t);
+                }
+                if (progress >= (5 / 12) && progress < 0.5) {
+                  const t = gsap.utils.mapRange(5 / 12, 0.5, 0, 1, progress);
+                  scale = gsap.utils.mapRange(0, 1, minScale, maxScale, t);
+                  opacity = gsap.utils.mapRange(0, 1, minOpacity, maxOpacity, t);
+                }
+                gsap.set(`.ball${ball.index}`, { scale: scale, opacity: opacity });
+                if (progress > (1 / 12) && progress < (5 / 12)) {
+                  gsap.set(`.ball${ball.index}`, { scale: minScale, opacity: minOpacity });
+                }
+              });
             })
           },
           // 尝试点击小球时停止原所有小球的时间线，聚拢小球
@@ -3058,6 +3253,32 @@
               let currentDis = (ball.tl.progress() + ballIndex * 1 / 9) % 1;
               let targetDis = $app.ballShowPoints[ballIndex].position;
               let totalTime = 1.5;
+              // 根据传入的计算后当前小球进度值实时更新透明度和缩放
+              const updateVisuals = (progress) => {
+                const maxScale = 1;
+                const minScale = 0.6;
+                const maxOpacity = 1;
+                const minOpacity = 0;
+                let scale, opacity;
+                if (progress > 0 && progress <= (1 / 12)) {
+                  const t = gsap.utils.mapRange(0, 1 / 12, 1, 0, progress);
+                  scale = gsap.utils.mapRange(1, 0, maxScale, minScale, t);
+                  opacity = gsap.utils.mapRange(1, 0, maxOpacity, minOpacity, t);
+                  gsap.set(`.ball${ball.index}`, { scale: scale, opacity: opacity });
+                }
+                if (progress > (1 / 12) && progress < (5 / 12)) {
+                  gsap.set(`.ball${ball.index}`, { scale: minScale, opacity: minOpacity });
+                }
+                if (progress >= (5 / 12) && progress < 0.5) {
+                  const t = gsap.utils.mapRange(5 / 12, 0.5, 0, 1, progress);
+                  scale = gsap.utils.mapRange(0, 1, minScale, maxScale, t);
+                  opacity = gsap.utils.mapRange(0, 1, minOpacity, maxOpacity, t);
+                  gsap.set(`.ball${ball.index}`, { scale: scale, opacity: opacity });
+                }
+                if (progress >= 0.5 && progress < 1) {
+                  gsap.set(`.ball${ball.index}`, { scale: maxOpacity, opacity: maxScale });
+                }
+              };
               // 驱动中心球 当前球就是中心球 前进状态
               if (ballIndex === centerIndex && isCenterBallGo) {
                 ball.positionTL.to(`.ball${ball.index}`, {
@@ -3071,6 +3292,11 @@
                     end: targetDis
                   }
                 });
+                ball.positionTL.eventCallback('onUpdate', function () {
+                  let timeProgress = this.progress();
+                  let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                  updateVisuals(pathProgress);
+                });
               }
               if (ballIndex === centerIndex && !isCenterBallGo && currentDis >= 0.75) {
                 ball.positionTL.to(`.ball${ball.index}`, {
@@ -3083,6 +3309,11 @@
                     start: currentDis - 1,
                     end: targetDis - 1
                   }
+                });
+                ball.positionTL.eventCallback('onUpdate', function () {
+                  let timeProgress = this.progress();
+                  let pathProgress = targetDis + (currentDis - targetDis) * timeProgress;
+                  updateVisuals(pathProgress);
                 });
               }
               if (ballIndex === centerIndex && !isCenterBallGo && currentDis <= 0.25) {
@@ -3110,6 +3341,16 @@
                     end: targetDis - 1
                   }
                 });
+                ball.positionTL.eventCallback('onUpdate', function () {
+                  let timeProgress = this.progress();
+                  let currentTime = timeProgress * totalTime;
+                  if (currentTime <= startTime) {
+                    let pathProgress = currentDis - currentDis * currentTime / startTime;
+                    updateVisuals(pathProgress);
+                  } else {
+                    updateVisuals(0.8);
+                  }
+                });
               }
               // 中心球前进 当前球小于中心球
               if (isCenterBallGo && ballIndex < centerIndex) {
@@ -3124,6 +3365,11 @@
                       start: currentDis,
                       end: targetDis
                     }
+                  });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    let timeProgress = this.progress();
+                    let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                    updateVisuals(pathProgress);
                   });
                 } else if (currentDis > targetDis) {
                   let startTime = (1 - currentDis) / (1 - currentDis + targetDis);
@@ -3150,6 +3396,16 @@
                       end: targetDis
                     }
                   });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime) {
+                      updateVisuals(0.8);
+                    } else {
+                      let pathProgress = ((currentTime - startTime) / endTime) * targetDis;
+                      updateVisuals(pathProgress);
+                    }
+                  });
                 }
               }
               // 中心球前进 当前球大于中心球
@@ -3166,6 +3422,12 @@
                       end: targetDis
                     }
                   });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    let timeProgress = this.progress();
+                    let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                    let currentTime = timeProgress * totalTime;
+                    updateVisuals(pathProgress);
+                  });
                 }
                 if (currentDis > targetDis) {
                   ball.positionTL.to(`.ball${ball.index}`, {
@@ -3178,6 +3440,9 @@
                       start: currentDis - 1,
                       end: targetDis - 1
                     }
+                  });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    updateVisuals(0.8);
                   });
                 }
                 if (currentDis < 0.25 && currentDis < targetDis) {
@@ -3205,6 +3470,16 @@
                       end: targetDis - 1
                     }
                   });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime) {
+                      let pathProgress = currentDis - currentDis * currentTime / startTime;
+                      updateVisuals(pathProgress);
+                    } else {
+                      updateVisuals(0.8);
+                    }
+                  });
                 }
               }
               // 中心球后退 当前球大于中心球
@@ -3220,6 +3495,9 @@
                       start: currentDis - 1,
                       end: targetDis - 1
                     }
+                  });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    updateVisuals(0.8);
                   });
                 }
                 if (currentDis <= targetDis) {
@@ -3247,6 +3525,16 @@
                       end: targetDis - 1
                     }
                   });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime) {
+                      let pathProgress = currentDis - currentDis * (currentTime / startTime);
+                      updateVisuals(pathProgress);
+                    } else {
+                      updateVisuals(0.8);
+                    }
+                  });
                 }
               }
               // 中心球后退 当前球小中心球
@@ -3263,6 +3551,9 @@
                       end: targetDis - 1
                     }
                   });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    updateVisuals(0.8);
+                  });
                 }
                 if (currentDis < targetDis && currentDis > 0.25) {
                   ball.positionTL.to(`.ball${ball.index}`, {
@@ -3275,6 +3566,11 @@
                       start: currentDis,
                       end: targetDis
                     }
+                  });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    let timeProgress = this.progress();
+                    let pathProgress = currentDis + (targetDis - currentDis) * timeProgress;
+                    updateVisuals(pathProgress);
                   });
                 }
                 if (currentDis < targetDis && currentDis <= 0.25) {
@@ -3300,6 +3596,16 @@
                       alignOrigin: [0.5, 0.5],
                       start: 0,
                       end: targetDis - 1
+                    }
+                  });
+                  ball.positionTL.eventCallback('onUpdate', function () {
+                    let timeProgress = this.progress();
+                    let currentTime = timeProgress * totalTime;
+                    if (currentTime <= startTime) {
+                      let pathProgress = currentDis - currentDis * currentTime / startTime;
+                      updateVisuals(pathProgress);
+                    } else {
+                      updateVisuals(0.8);
                     }
                   });
                 }
@@ -3373,11 +3679,22 @@
           },
           // 驱动数字滚动动画 - 需要传入对应区域的外层选择器 - 在数值获取到并转为String后调用
           animateNumberItemInner(dom) {
+            // ttt
             this.$nextTick(() => {
               let numContainer = document.querySelector(dom);
               let numContents = Array.from(numContainer.querySelectorAll('.num-item-inner'));
               numContents.forEach((num) => {
                 gsap.to(num, { top: `-${(num.dataset.height * num.clientHeight) / 10}`, duration: 3, ease: 'power4.inOut' });
+              });
+            });
+          },
+          // 驱动表格百分比的宽度动画
+          animateTableColItem(dom){
+            this.$nextTick(() => {
+              let tableColContainer = document.querySelector(dom);
+              let tableCols = Array.from(tableColContainer.querySelectorAll('.table-col-child'));
+              tableCols.forEach((col) => {
+                gsap.to(col, { width: `${col.dataset.width}%`, duration: 1, ease: 'power4.inOut' });
               });
             });
           },
@@ -3466,9 +3783,14 @@
             // this.getEarthDatasReal();
             // 获取顶部三个数
             this.getTopThree();
+            // 获取右侧硬件
+            this.getRightHardwareDatas();
+            // 获取右侧QPS图表数据
+            this.getRightQPS();
+            // 获取右侧api请求表格数据
+            this.getRightApiDatas();
             // 获取地球右侧数据
             this.getEarthRight();
-            
           },
           // 间隔更新数据
           update() {
@@ -3713,7 +4035,7 @@
           // 任务视图点击选择对应的隔离域事件
           changeTask(taskItem){
             if (this.selectTask.igroup_id && this.selectTask.igroup_id === taskItem.igroup_id) {
-              this.animateFlyToPoint(this.selectTask.mapDatas[0].endArray[0]);
+              this.animateFlyToPoint(taskItem.position);
               return;
             }
             this.selectTask = taskItem;
@@ -3721,11 +4043,11 @@
             this.$refs.earth.clearAllDatas();
             this.$refs.earth.outRenderTaskView(this.selectTask.mapDatas);
             this.viewChanging = false;
-            this.animateFlyToPoint(this.selectTask.mapDatas[0].endArray[0]);
+            // this.animateFlyToPoint(this.selectTask.mapDatas[0].endArray[0]);
+            this.animateFlyToPoint(taskItem.position);
           },
           // 点击大圆盘的资源小球
           clickBall(ball){
-            console.log(ball)
             let mapDatas = this.viewSource.mapDatas;
             // 地球视图切换中，阻止此事件
             if (this.viewChanging) return;
@@ -3812,6 +4134,10 @@
               });
             }
           },
+          // 切换右上的系统状态驱动表格动画
+          changeCurrentSystem(){
+            this.animateTableColItem('.position-right');
+          },
           // ============> 数据函数
           // 获取地球的跳转数据
           getEarchDatas() {
@@ -3848,8 +4174,6 @@
                 console.log('真实的地球数据')
                 console.log(res);
                 if (res.code === 200 && res.data && Array.isArray(res.data.edges) && Array.isArray(res.data.nodes) && res.data.edges.length === res.data.nodes.length){
-                  let timeStart = Date.now();
-                  // console.log(`开始 - ${timeStart}`)
                   let { nodes, edges } = res.data;
                   let result = [];
                   edges.forEach((endArr, nodeIndex) => {
@@ -3863,8 +4187,6 @@
                       let lineCode = endCode.slice(0, 3);
                       let lines = lineCode.split('');
                       let statusCode = endCode.slice(3);
-                      // console.log('图表码')
-                      // console.log(endCode)
                       if (end !== 0 && statusCode !== '00'){
                         lines.forEach((line, lineType) => {
                           if (line !== '0'){
@@ -3894,10 +4216,6 @@
                     });
                     result.push(node);
                   });
-                  let timeEnd = Date.now();
-                  // console.log(`结束 - ${timeEnd}`)
-                  // console.log(`处理地球数据用时: ${timeEnd - timeStart}ms`)
-                  // console.log(result)
                   $app.jumps = result;
                   $app.viewNetwork.mapDatas = result;
                 }
@@ -3919,6 +4237,59 @@
           initIgroupDatas() {
             Object.entries(this.tasks).forEach(async ([taskKey, task]) => {
               let taskGroupId = task.igroup_id;
+              let labels = ['zlkz', 'sjhc', 'xxts'];
+              // 获取任务视图的四个隔离域对应的飞线数据
+              $api.situation.getTaskView({ params: { igroup_id: taskGroupId }}, function (res){
+                console.log(`${taskKey}隔离域任务视图`)
+                console.log(res)
+                if (res.code === 200 && res.data && res.data.graph && Array.isArray(res.data.graph.edges) && Array.isArray(res.data.graph.nodes) && res.data.graph.edges.length === res.data.graph.nodes.length) {
+                  let { nodes, edges } = res.data.graph;
+                  let result = [];
+                  edges.forEach((endArr, nodeIndex) => {
+                    let node = {
+                      startArray: nodes[nodeIndex],
+                      endArray: []
+                    };
+                    endArr.forEach((end, endIndex) => {
+                      let endCode = end.toString(2).padStart(5, '0');
+                      let lineStr = endCode.slice(3);
+                      let lineCode = endCode.slice(0, 3);
+                      let lines = lineCode.split('');
+                      let statusCode = endCode.slice(3);
+                      if (end !== 0 && statusCode !== '00') {
+                        lines.forEach((line, lineType) => {
+                          if (line !== '0') {
+                            let status = 'tc'
+                            switch (statusCode) {
+                              case '01':
+                                status = 'tc';
+                                break;
+                              case '11':
+                                status = 'yj';
+                                break;
+                              case '10':
+                                status = 'zd';
+                                break;
+                            }
+                            let endNode = {
+                              name: nodes[endIndex].name,
+                              N: nodes[endIndex].N,
+                              E: nodes[endIndex].E,
+                              label: labels[lineType],
+                              status
+                            }
+                            nodeIndex !== endIndex && node.endArray.push(endNode);
+                          }
+                        });
+                      }
+                    });
+                    result.push(node);
+                  });
+                  $app.tasks[taskKey].mapDatas = result;
+                }
+              }, function (err){
+                console.log(err)
+              })
               // 获取总任务用量、最长持续、平均持续
               $api.transferSituation.igroupTransport(
                 { params: { igroup_id: taskGroupId } },
@@ -4334,7 +4705,6 @@
                   centerItem.value = res.data.channel_count + '';
                 }
                 if (res.data.channel_efficiency) {
-                  console.log((res.data.channel_efficiency * 100).toFixed(1))
                   let centerItem = $app.viewNetwork.centerTop.find(item => item.key === 'channel_efficiency');
                   centerItem.value = (res.data.channel_efficiency * 100).toFixed(1) + '';
                 }
@@ -4353,8 +4723,6 @@
                     let lineCode = endCode.slice(0, 3);
                     let lines = lineCode.split('');
                     let statusCode = endCode.slice(3);
-                    // console.log('图表码')
-                    // console.log(endCode)
                     if (end !== 0 && statusCode !== '00') {
                       lines.forEach((line, lineType) => {
                         if (line !== '0') {
@@ -4384,7 +4752,6 @@
                   });
                   result.push(node);
                 });
-                // console.log(result)
                 $app.jumps = result;
                 $app.viewNetwork.mapDatas = result;
               }
@@ -4467,7 +4834,61 @@
               .then(() => {
                 isUpdate && $app.animateNumberItemInner('.position-center-top');
               })
-            
+          },
+          // 获取右侧硬件表格数据
+          getRightHardwareDatas(){
+            $api.situation.getRightHardwareDatas({}, function(res){
+              if (res.code === 200 && Array.isArray(res.data) && res.data > 0){
+                let datas = res.data;
+                $app.hardwareDatas = datas.map(item => {
+                  let data = Object.assign({}, item);
+                  data.load = `${data.load.toFixed(2)}`;
+                  let percageKeys = ['health','cpu_usage', 'memory_usage', 'disk_usage'];
+                  percageKeys.forEach(key => {
+                    if (typeof data[key] === 'number' && data[key] >= 0 && data[key] <= 100){
+                      data[key] = +(data[key].toFixed(1));
+                    }
+                  });
+                  return data;
+                });
+              }
+            }, function(err){
+              console.log(err)
+            });
+          },
+          // 获取右侧QPS图表数据
+          getRightQPS(){
+            $api.situation.getRightQPS({}, function(res){
+              if (res.code === 200 && Array.isArray(res.data)){
+                let datas = res.data.reduce((result, item) => {
+                  result.times.push(item.time);
+                  result.qps.push(item.qps);
+                  result.uvs.push(item.uv);
+                  return result;
+                }, { times: [], qps: [], uvs: [] });
+                $app.deelServiceQPS(datas);
+              }
+            }, function(err){
+              console.log(err)
+              $app.deelServiceQPS({ times: [], qps: [], uvs: [] });
+            });
+          },
+          // 获取右侧API表格数据
+          getRightApiDatas(){
+            $api.situation.getRightApiDatas({}, function (res){
+              // apiDatas path avg_return(B) avg_res_time(s) pv uv
+              if (res.code === 200 && Array.isArray(res.data) && res.data.length > 0){
+                $app.apiDatas = res.data.map(item => {
+                  let data = Object.assign({}, item);
+                  let { value, unit } = $app.formatBytesData(data.avg_return)
+                  data.avg_return = `${value}${unit}B`;
+                  data.avg_res_time = $app.formatDuration(data.avg_res_time);
+                  return data;
+                });
+              }
+            }, function (err){
+              console.log(err)
+            })
           },
           // earthleftdata
           // 获取地球左侧资源分布数据 - 饼图和折线图
@@ -4810,6 +5231,131 @@
             option.xAxis.axisLabel.show = true;
             option.yAxis.show = true;
             $app.setCharts('distributionLine', 'distribution-line-chart', option);
+          },
+          // ============> 处理图表函数
+          // 处理右侧服务状态的QPS折线图
+          deelServiceQPS(datas, isUpdate){
+            // 处理隔离域通道池图表
+            let option = JSON.parse(JSON.stringify(transferOption));
+            option.title = {
+              text: 'QPS图表',
+              left: setChartSize(12),
+              top: '5%',
+              textStyle: {
+                color: 'rgba(221, 238, 255, 1)',
+                fontSize: setChartSize(12),
+                fontWeight: 400
+              }
+            }
+            option.xAxis.axisLabel.fontSize = setChartSize(10);
+            option.xAxis.axisLabel.color = 'rgba(134, 142, 151, 1)';
+            option.yAxis.show = true;
+            option.yAxis.axisLabel.color = 'rgba(134, 142, 151, 1)';
+            option.yAxis.axisLabel.fontSize = setChartSize(10);
+            option.yAxis.splitLine.lineStyle = { type: 'solid', color: 'rgb(19,48,81)' };
+            option.yAxis.splitNumber = 4;
+            option.yAxis.min = function (value) {
+              let result = Number.isNaN(value.min) ? 5 : null;
+              return result;
+            }
+            option.yAxis.max = function (value) {
+              let result = Number.isNaN(value.max) ? 5 : null;
+              return result;
+            }
+            option.grid.top = setChartSize(40);
+            option.grid.bottom = setChartSize(10);
+            option.grid.right = setChartSize(15);
+            option.grid.containLabel = true;
+            option.legend = {
+              show: true,
+              orient: 'horizontal',
+              top: '5%',
+              right: '5%',
+              bottom: 0,
+              align: 'auto',
+              backgroundColor: 'rgba(0,0,0,0)',
+              borderColor: '#ccc',
+              borderRadius: 0,
+              borderWidth: 0,
+              padding: setChartSize(5),
+              itemGap: setChartSize(10),
+              itemWidth: setChartSize(12),
+              itemHeight: setChartSize(2),
+              textStyle: {
+                color: 'rgba(221, 238, 255, 1)',
+                fontSize: setChartSize(8)
+              },
+              icon: 'roundRect'
+            };
+            option.color = servicelLineChartColors;
+            !isUpdate && $app.charts.serviceQPS.chart && $app.charts.serviceQPS.chart.clear();
+            option.series = [];
+            option.legend.data = [];
+            // 填充x时间轴
+            let now = Date.now();
+            let times = [];
+            times.length = 8;
+            times.fill(now);
+            times = times.map((item, index) => {
+              let timer = new Date(item - 600000 * index);
+              let hour = `${timer.getHours()}`.padStart(2, 0);
+              let min = `${timer.getMinutes()}`.padStart(2, 0);
+              let sec = `${timer.getSeconds()}`.padStart(2, 0);
+              return `${hour}:${min}:${sec}`;
+            });
+            times.reverse();
+            if (Array.isArray(datas.times) && datas.times.length > 0) {
+              times = datas.times.map(item => {
+                let timer = new Date(item);
+                let hour = `${timer.getHours()}`.padStart(2, 0);
+                let min = `${timer.getMinutes()}`.padStart(2, 0);
+                let sec = `${timer.getSeconds()}`.padStart(2, 0);
+                return `${hour}:${min}:${sec}`;
+              });
+            }
+            option.xAxis.data = times;
+            option.series.push({
+              name: '每分钟UV',
+              data: datas.uvs && datas.uvs.length > 0 ? datas.uvs : [],
+              type: 'line',
+              symbol: 'none',
+              lineStyle: { width: 1 },
+              areaStyle: { color: null }
+            });
+            option.series.push({
+              name: 'QPS',
+              data: datas.qps && datas.qps.length > 0 ? datas.qps : [],
+              type: 'line',
+              symbol: 'none',
+              lineStyle: { width: 1 },
+              areaStyle: { color: null }
+            });
+            option.legend.data = ['每分钟UV', 'QPS'];
+            option.tooltip.formatter = function (params) {
+              let results = params.map((pItem) => {
+                let value = $app.formatNumsData(pItem.value).value + $app.formatNumsData(pItem.value).unit;
+                return `<div class='flex_between'><span>${pItem.marker}${pItem.seriesName}</span>&emsp;<span>${value}</span></div>`;
+              });
+              results.unshift(params[0].axisValue);
+              return results.join('');
+            }
+            // 统一处理颜色渐变样式
+            option.series.forEach((item, index) => {
+              // if (item.name === 'QPS') item.areaStype.color = null;
+              if (item.name !== 'QPS'){
+                item.areaStyle.color = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: servicelLineChartColors[index] },
+                  { offset: 1, color: servicelLineChartTransparentColors[index] }
+                ]);
+              } else {
+                item.areaStyle.opacity = 0;
+                item.lineStyle.color = new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+                  { offset: 0, color: 'rgb(222,163,56)' },
+                  { offset: 1, color: 'rgb(108,217,60)' }
+                ]);
+              }
+            });
+            $app.setCharts('serviceQPS', 'service-qps-chart', option);
           }
         }
       });
