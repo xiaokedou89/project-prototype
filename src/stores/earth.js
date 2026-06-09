@@ -898,7 +898,6 @@ class GradientShader {
               `
       )
     }
-    // console.log(material)
   }
 }
 // 声明地球类
@@ -1216,13 +1215,14 @@ class Earth {
   // 创建任务的光柱
   async createTaskPoint(datas){
     this.markupPoint.clear();
-    let points = [];
-    if (Array.isArray(datas) && datas.length > 0) {
-      let allEnd = datas[0].endArray[0];
-      // datas.push({ startArray: allEnd });
-      points = datas.map(item => item);
-      points.push({ startArray: allEnd })
-    }
+    let points = datas;
+    // let points = [];
+    // if (Array.isArray(datas) && datas.length > 0) {
+    //   let allEnd = datas[0].endArray[0];
+    //   // datas.push({ startArray: allEnd });
+    //   points = datas.map(item => item);
+    //   points.push({ startArray: allEnd })
+    // }
     await Promise.all(
       points.map(async (item) => {
         const radius = this.options.earth.radius;
@@ -1456,7 +1456,7 @@ class Earth {
     mesh3.rotateY((Math.PI / 180) * 120)
     return [mesh, mesh2, mesh3]
   }
-  // 为资源视图创建数据标签
+  // 为资源(任务)视图创建数据标签
   createSourceSpriteLabel(datas){
     let tempGroup = new THREE.Group();
     datas.forEach(item => {
@@ -2242,17 +2242,10 @@ const MyEarth = {
     },
     // 外部方法渲染任务视图的飞线及标牌数据(先使用老的飞线)
     async outRenderTaskView(datas){
-      let points = [];
-      if (Array.isArray(datas) && datas.length > 0) {
-        points.push(datas[0].endArray[0]);
-        datas.forEach(item => {
-          points.push(item.startArray);
-        })
-      }
       await this.earth.createTaskPoint(datas);
       this.earth.createTaskFlyLine(datas);
-      
-      this.earth.createSourceSpriteLabel(points);
+      let citys = datas.map(item => item.startArray);
+      this.earth.createSourceSpriteLabel(citys);
     }
   }
 };
