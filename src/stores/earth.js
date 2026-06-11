@@ -1327,12 +1327,23 @@ class Earth {
     datas.forEach((item, index) => {
       let heightRatio = 0.6;
       // 根据资源的等级设置光柱高度
+      // switch (item.rank) {
+      //   case 'small':
+      //     heightRatio = 0.3;
+      //     break;
+      //   case 'middle':
+      //     heightRatio = 0.9;
+      //     break;
+      //   case 'large':
+      //     heightRatio = 1.5;
+      //     break;
+      // }
       switch (item.rank) {
         case 'small':
-          heightRatio = 0.3;
+          heightRatio = 0.1;
           break;
         case 'middle':
-          heightRatio = 0.9;
+          heightRatio = 0.5;
           break;
         case 'large':
           heightRatio = 1.5;
