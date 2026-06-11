@@ -1570,10 +1570,9 @@ class ThreeMap {
   }
   // 添加飞线图层
   addLinkLayer(options) {
-    // console.log('调用了添加飞线图层')
     const config = this.options.config;
     const group = drawFlight.call(this, options, config);
-    // console.log(group)
+    group.name = 'flight';
     this.seriesGroup.add(group);
   }
   // 设置地图配置项
@@ -1771,7 +1770,10 @@ const EarthMap = {
     },
     // 添加飞线数据
     addFlightData(data){
-      const flightSeries = this.options.series.find(s => s.type === 'flight');
+      let flightIndex = this.map.seriesGroup.children.findIndex(item => item.name === 'flight');
+      console.log(flightIndex)
+      flightIndex > 0 && this.map.seriesGroup.children.splice(flightIndex, 1);
+      let flightSeries = this.options.series.find(s => s.type === 'flight');
       if (!flightSeries){
         // this.options.series.push({
         //   type: "flight", // 系列类型标识
@@ -1783,22 +1785,25 @@ const EarthMap = {
         //   headSize: 1, // 粒子头部放大系数，用于强调飞行方向
         //   data
         // });
-        this.options.series.push({
+        flightSeries = {
           type: "flight", // 系列类型标识
           seriesName: "flight", // 系列名称
-          points: 100, // 路径上的粒子总数，越多越平滑但性能开销越大
+          // points: 100, // 路径上的粒子总数，越多越平滑但性能开销越大
+          points: 50,
           flightLen: 50, // 飞行流光的长度（粒子数量），决定可见窗口大小
           speed: 5, // 飞行速度，每帧移动的索引步长
-          flightColor: ["#ffff00", "#FFFFFF"], // 粒子渐变色：[起始颜色, 结束颜色]
+          // 粒子渐变色：[起始颜色, 结束颜色]
+          flightColor: ["#ffff00", "#FFFFFF"],
+          // flightColor: ['#0DFFFF', '#ffffff'],
           headSize: 1, // 粒子头部放大系数，用于强调飞行方向
           data
-        });
+        }
+        this.map.addLinkLayer(flightSeries);
       } else {
         flightSeries.data = data;
+        this.map.addLinkLayer(flightSeries);
       }
-      this.setMap();
-      // console.log('添加飞线数据测试！！！！')
-      // this.map.addLinkLayer(this.options)
+      // this.setMap();
     }
   }
 }
