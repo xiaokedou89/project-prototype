@@ -105,11 +105,11 @@
             </div>
             <!-- 地球控制面板 -->
             <div class="center-earth-control">
-              <a class="earth-control-item" @click="changeRotation">
+              <a class="earth-control-item" :class="{disabled: isEarthMap}" @click="changeRotation">
                 <i class="iconfont icon-diqiu"></i>
                 <span>{{ positionTop.earthRotation ? '暂停旋转' : '开启旋转' }}</span>
               </a>
-              <a class="earth-control-item" @click="resetCamera">
+              <a class="earth-control-item" :class="{disabled: isEarthMap}" @click="resetCamera">
                 <i class="iconfont icon-sijiaoxinxi1"></i>
                 <span>恢复视角</span>
               </a>
@@ -120,15 +120,15 @@
             </div>
             <!-- 地球控制面板 -->
             <div class="center-earth-control">
-              <a class="earth-control-item" @click="changeLineMode">
+              <a class="earth-control-item" :class="{disabled: currentView && (currentView.key == 'task' || currentView.key == 'source')}" @click="changeLineMode">
                 <i class="iconfont" :class="{'icon-xuxian': !positionTop.isDashed, 'icon-shixian': positionTop.isDashed}"></i>
                 <span>{{ positionTop.isDashed ? '实线通道' : '虚线通道' }}</span>
               </a>
-              <a class="earth-control-item" @click="closeMarkupPoint">
+              <a class="earth-control-item" :class="{disabled: currentView && (currentView.key == 'task' || currentView.key == 'source')}" @click="closeMarkupPoint">
                 <i class="iconfont icon-dingwei1"></i>
                 <span>{{ positionTop.showMarkupPoint ? '关闭位点' : '开启位点' }}</span>
               </a>
-              <a class="earth-control-item" @click="changeFlyLineSize">
+              <a class="earth-control-item" :class="{disabled: currentView && (currentView.key == 'task' || currentView.key == 'source')}" @click="changeFlyLineSize">
                 <i class="iconfont icon-cuxixiantiao"></i>
                 <span>{{ getFlyLineSize }}</span>
               </a>
@@ -185,32 +185,23 @@
         <div class="position-center-bottom" data-html2canvas-ignore>
           <img src="./assets/earth/bottomBg.svg" />
           <div class="circle-outer">
-            <div class="map-enter enter0" @click="animateDownInEarthMap">801</div>
-            <div class="map-enter enter1" @click="animateDownInEarthMap">803</div>
-            <div class="map-enter enter2" @click="animateDownInEarthMap">812</div>
-            <div class="map-enter enter3" @click="animateDownInEarthMap">805</div>
-            <div class="map-enter enter4" @click="animateDownInEarthMap">804</div>
-            <div class="map-enter enter5" @click="animateDownInEarthMap">802</div>
+            <div class="map-enter enter0" @click="animateDownInEarthMap(flightData)">801</div>
+            <div class="map-enter enter1" @click="animateDownInEarthMap(flightData)">803</div>
+            <div class="map-enter enter2" @click="animateDownInEarthMap(flightData)">812</div>
+            <div class="map-enter enter3" @click="animateDownInEarthMap(flightData)">805</div>
+            <div class="map-enter enter4" @click="animateDownInEarthMap(flightData)">804</div>
+            <div class="map-enter enter5" @click="animateDownInEarthMap(flightData2)">802</div>
             <svg class="path-svg" viewBox="0 0 800 400" preserveAspectRatio="none">
               <path id="ellipsePath" d="M0,200 A400,200 0 1,1 0,200.1 Z" />
             </svg>
             
-            <!-- <div class="ball ball1">1</div>
-            <div class="ball ball2">2</div>
-            <div class="ball ball3">3</div>
-            <div class="ball ball4">4</div>
-            <div class="ball ball5">5</div>
-            <div class="ball ball6">6</div>
-            <div class="ball ball7">7</div>
-            <div class="ball ball8">8</div>
-            <div class="ball ball9">9</div> -->
             <div class="ball" 
               v-for="(item, index) in balls"
               :class="[`ball${index+1}`, {active: currentBall && currentBall.type === item.type}]"
-              :style="{backgroundImage: computedBallBg(item), opacity: ballPoints[index].opacity}"
+              :style="{backgroundImage: computedBallBg(item)}"
               :key="index"  
               @click="clickBall(item)"
-            > 
+            >
               <!-- 资源对应的能力数据展示牌 -->
               <div class="current-resource-data" :class="[`current-resource-data-${item.index}`]">
                 <div class="title">{{ item.typeName }}</div>
@@ -777,9 +768,10 @@
                               </div>
                             </div>
                           </div>
-                          <div class="system-item-warning" :class="{warning: item.warning}">
+                          <div class="system-item-warning" :class="{warning: item.warning.length > 0}">
                             <i class="warning-icon"></i>
-                            <span>{{ item.warning || '无异常' }}</span>
+                            <span :id="`warning-content-${item.key}`" v-if="item.warning.length > 0">{{ item.warning[item.currentWarning] }}</span>
+                            <span :id="`warning-content-${item.key}`" v-else>无异常</span>
                           </div>
                         </div>
                       </div>
@@ -828,7 +820,7 @@
                             <div class="table-col table-col-3" align>
                               <div class="table-col-parent">
                                 <div class="table-col-value">{{ item.health }}</div>
-                                <div class="table-col-child" :data-width="item.health"></div>
+                                <div class="table-col-child" :class="{wrong: item.health < hardwareHealthThreshold}" :data-width="item.health"></div>
                               </div>
                             </div>
                             <div class="table-col table-col-4" align>
@@ -874,17 +866,17 @@
                         </div>
                         <template v-else>
                           <div class="table-row" v-for="(item, index) in softwareDatas" :key="index">
-                            <div class="table-col table-col-1" align>
-                              <div class="text-cell">{{ item.service }}</div>
+                            <div class="table-col table-col-1" >
+                              <div class="text-cell">{{ item.name }}</div>
                             </div>
-                            <div class="table-col table-col-2" align>
+                            <div class="table-col table-col-2" >
                               <div class="text-cell">{{ item.ip }}</div>
                             </div>
                             <div class="table-col table-col-3" align>
-                              <div class="text-cell">{{ item.use }}</div>
+                              <div class="text-cell">{{ item.type }}</div>
                             </div>
-                            <div class="table-col table-col-4" align>
-                              <div class="text-cell">{{ item.status }}</div>
+                            <div class="table-col table-col-4" :class="{error: item.status > 0}" align>
+                              <div class="text-cell">{{ item.status > 0 ? '异常' : '正常' }}</div>
                             </div>
                           </div>
                         </template>
@@ -976,7 +968,17 @@
                         <div class="header">
                           <i class="icon"></i>
                         </div>
-                        <div class="content">{{ item.content }}</div>
+                        <!-- <div class="content">{{ item.content }}</div> -->
+                        <div class="content">
+                          <div class="left">
+                            <div class="left-item name" :class="{error: item.severity === 1, normal: item.severity !== 1}">{{ item.object_name }}</div>
+                            <div class="left-item content">{{ item.rule_name }}</div>
+                          </div>
+                          <div class="right">
+                            <div class="right-item">{{ computedTimeHeader(item.trigger_time) }}</div>
+                            <div class="right-item">{{ computedTimeBody(item.trigger_time) }}</div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div class="fault-warning-empty" v-else>
@@ -1298,7 +1300,7 @@
     <script src="/assets/js/vue.js"></script>
     <script src="./js/day.js"></script>
     <script src="/assets/element-ui/index.js"></script>
-    <script src="/assets/js/axios.min.js"></script>
+    <script src="./assets/js/axios.min.js"></script>
     <script src="/assets/vue-echarts/echarts@5.1.2.js"></script>
     <script src="/static/js/name.js"></script>
     <script src="/static/js/sysname.js"></script>
@@ -1354,7 +1356,7 @@
         { src: 'zt', value: 'SDWAN_POP', label: '直通专线' },
         { src: 'bd', value: 'SDWAN_VPS', label: '绑定专线' },
         { src: 'zz', value: 'STATIC_RESIDENCE_PROXY', label: '静态住宅代理' },
-        { src: 'zz', value: 'TRENDS_RESIDENCE_PROXY', label: '动态住宅代理' },
+        { src: 'zz', value: 'DYNAMIC_RESIDENCE_PROXY', label: '动态住宅代理' },
       ];
       // 底下的资源类字典映射
       let resourceTypeBottom = [
@@ -1363,7 +1365,7 @@
         { type: 'yzj', value: 'VPS', label: '云主机' },
         { type: 'jc', value: 'AIRPORT_PROXY', label: '机场代理' },
         { type: 'zz', value: 'STATIC_RESIDENCE_PROXY', label: '住宅代理' },
-        { type: 'zz', value: 'TRENDS_RESIDENCE_PROXY', label: '住宅代理' },
+        { type: 'zz', value: 'DYNAMIC_RESIDENCE_PROXY', label: '住宅代理' },
         { type: 'wlw', value: 'IOT', label: '物联网代理' },
         { type: 'yzx', value: 'DPN_VPS', label: '云专线' },
         { type: 'nm', value: 'ANONYMOUS_NETWORK', label: '匿名网络' },
@@ -1379,9 +1381,15 @@
         { start: [111.6, 40.8], end: [116.4, 39.9] },
         { start: [121.4, 31.2], end: [116.4, 39.9] },
       ];
+      let flightData2 = [
+        { start: [116.4, 39.9], end: [91.1, 29.6] },
+        { start: [100.2, 25.5], end: [91.1, 29.6] },
+        { start: [126.5, 43.8], end: [91.1, 29.6] },
+        { start: [87.6, 43.7], end: [91.1, 29.6] },
+        { start: [111.6, 40.8], end: [91.1, 29.6] },
+        { start: [121.4, 31.2], end: [91.1, 29.6] },
+      ];
       let chartColors = ['rgba(5, 253, 252, 1)', 'rgba(58, 137, 255, 1)', 'rgba(246, 255, 0, 1)', 'rgba(151, 235, 205, 1)', 'rgba(9, 187, 255, 1)', 'rgba(255, 204, 128, 1)', 'rgba(250, 145, 150, 1)', 'rgba(128, 188, 255, 1)'];
-      let linearChartColors = ['rgba(5, 253, 252, .5)', 'rgba(58, 137, 255, .5)', 'rgba(246, 255, 0, .5)', 'rgba(151, 235, 205, .5)', 'rgba(9, 187, 255, .5)', 'rgba(255, 204, 128, .5)', 'rgba(250, 145, 150, .5)', 'rgba(128, 188, 255, .5)'];
-      let transparentColors = ['rgba(5, 253, 252, 0)', 'rgba(58, 137, 255, 0)', 'rgba(246, 255, 0, 0)', 'rgba(151, 235, 205, 0)', 'rgba(9, 187, 255, 0)', 'rgba(255, 204, 128, 0)', 'rgba(250, 145, 150, 0)', 'rgba(128, 188, 255, 0)'];
       // 资源分布折线图使用的颜色
       let resourceLineChartColors = [ 'rgba(5,253,252, 1)', 'rgba(246, 255, 0, 1)'];
       let resourceLineChartLinearColors = ['rgba(5,253,252, .8)', 'rgba(246, 255, 0, .8)'];
@@ -1572,122 +1580,6 @@
           data: []
         }]
       };
-
-      // 双线图基本配置
-      let defaultMutipleLineOption = {
-        // 总的背景色
-        backgroundColor: 'rgba(255, 255, 255, 0)',
-        color: chartColors,
-        // 全局字体样式
-        textStyle: {
-          color: '#868e97',
-          fontSize: setChartSize(14)
-        },
-        grid: {
-          // left: 35,
-          // top: 35,
-          // right: 20,
-          // bottom: 20,
-          left: setChartSize(5),
-          // top: setChartSize(35),
-          top: setChartSize(10),
-          right: setChartSize(5),
-          bottom: setChartSize(5),
-          containLabel: true,
-          backgroundColor: 'transparent'
-        },
-        tooltip: {
-          trigger: 'axis',
-          backgroundColor: 'rgba(24, 34, 107, .7)',
-          borderColor: 'rgba(50, 57, 103, 0.9)',
-          borderWidth: 1,
-          textStyle: {
-            color: '#ddeeff',
-            fontSize: setChartSize(14)
-          },
-          axisPointer: {
-            type: 'line', // 设置为线型指示器
-            lineStyle: {
-              type: 'dashed' // 线的类型，可以是 'solid', 'dashed', 或 'dotted'
-            }
-          }
-        },
-        legend: {
-          data: [],
-          // icon: 'circle',
-          // itemWidth: 8,
-          // itemHeight: 8,
-          // icon: 'roundRect',
-          icon: 'rect',
-          itemWidth: setChartSize(20),
-          itemHeight: setChartSize(2),
-          textStyle: {
-            fontSize: setChartSize(14),
-            color: '#868e97'
-          },
-          // top: setChartSize(0),
-          top: 0,
-          // right: 0
-          right: setChartSize(20)
-        },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: [],
-          // x轴轴线刻度字
-          axisLabel: {
-            color: '#868e97',
-            // fontSize: 14,
-            fontSize: setChartSize(14),
-            margin: setChartSize(12)
-          },
-          // 背景刻度线
-          splitLine: {
-            lineStyle: {
-              type: 'dashed'
-            }
-          }
-        },
-        // yAxis.axisLabel.formatter
-        yAxis: {
-          type: 'value',
-          name: '单位: bps',
-          nameLocation: 'end',
-          nameTextStyle: {
-            padding: [0, 0, 0, 0], //间距分别是 上 右 下 左
-            align: 'left'
-          },
-          // splitLine: {
-          //   lineStyle: {
-          //     type: 'solid'
-          //   }
-          // },
-          // y轴轴线刻度字
-          axisLabel: {
-            // 设置格式
-            // formatter: '{(value / 1000).toFixed(0)}Kbps',
-            color: '#868e97',
-            fontSize: setChartSize(14),
-            margin: setChartSize(12)
-          },
-          // axisLine: {
-          // 	show: true
-          // },
-          // 背景刻度线
-          splitLine: {
-            show: true,
-            lineStyle: {
-              type: 'dashed',
-              color: '#868e97'
-            }
-          }
-        },
-        series: []
-      };
-      // 工具函数
-      function round(number, precision = 2) {
-        return Math.round(+number + "e" + precision) / Math.pow(10, precision);
-      }
       $app = new Vue({
         el: '#app',
         data() {
@@ -1723,17 +1615,8 @@
                 { label: '覆盖地区', key: 'region_count',value: '0' },
                 { label: '补给渠道', key: 'provider_count',value: '0' }
               ],
-              mapDatas: [
-                { E: 121.564438, N: 25.037555, name: "台北市", type: 'bj', rank: 'middle' },
-                { E: -77.48727, N: 39.04364, name: "阿什本", type: 'wx', rank: 'small' },
-                { E: 104.058986, N: 30.676235, name: "成都市", type: 'yzj', rank: 'large' },
-                { E: 118.766351, N: 32.053245, name: "南京市", type: 'jc', rank: 'middle' },
-                { E: 121.019789, N: 14.472021, name: "帕拉尼亚克", type: 'zz', rank: 'small' },
-                { E: -119.417932, N: 36.778261, name: "加利福尼亚州", type: 'wlw', rank: 'large' },
-                { E: 100.506322, N: 13.761612, name: "曼谷", type: 'yzx', rank: 'middle' },
-                { E: 103.762593, N: 1.470747, name: "新山", type: 'yys', rank: 'small' },
-                { E: 90.402832, N: 23.715806, name: "达卡", type: 'nm', rank: 'large' },
-              ]
+              // { E: 121.564438, N: 25.037555, name: "台北市", type: 'bj', rank: 'small || middle || large' },
+              mapDatas: []
             },
             // 网络视图
             viewNetwork: {
@@ -1773,28 +1656,6 @@
               { index: 7, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'yzj', typeName: '云主机', tl: null, positionTL: null },
               { index: 8, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'wx', typeName: '卫星通讯', tl: null, positionTL: null },
               { index: 9, mapDatas: [], statistic: { use: 0, connect: 0, import: 0, collect: 0, supply: 0 }, nodeCounts: 0, type: 'bj', typeName: '边境无线', tl: null, positionTL: null }
-            ],
-            // 小球点位对应的样式
-            ballPoints: [
-              // 在椭圆左侧
-              { positionIndex: 0, opacity: 1, scale: 1 },
-              { positionIndex: 1, opacity: 1, scale: 1 },
-              { positionIndex: 2, opacity: 1, scale: 1 },
-              { positionIndex: 3, opacity: 1, scale: 1 },
-              { positionIndex: 4, opacity: 1, scale: 1 },
-              { positionIndex: 5, opacity: 1, scale: 1 },
-              { positionIndex: 6, opacity: 1, scale: 1 },
-              { positionIndex: 7, opacity: 1, scale: 1 },
-              { positionIndex: 8, opacity: 1, scale: 1 }
-              // { positionIndex: 0, opacity: 1, scale: 1 },
-              // { positionIndex: 1, opacity: 1 / 9, scale: 1 },
-              // { positionIndex: 2, opacity: 0, scale: 1 },
-              // { positionIndex: 3, opacity: 0, scale: 1 },
-              // { positionIndex: 4, opacity: 5 / 9, scale: 1 },
-              // { positionIndex: 5, opacity: 1, scale: 1 },
-              // { positionIndex: 6, opacity: 1, scale: 1 },
-              // { positionIndex: 7, opacity: 1, scale: 1 },
-              // { positionIndex: 8, opacity: 1, scale: 1 }
             ],
             // 小球聚拢状态下的位置，index => 从椭圆右顶点0.5的位置开始算: index * (半圈的进度为0.5 / (10段距离))
             ballShowPoints: [
@@ -1871,28 +1732,34 @@
                 title: '硬件设施',
                 key: 1,
                 counts: {
-                  normal: '200',
-                  wrong: '15'
+                  normal: '0',
+                  wrong: '0'
                 },
-                warning: '硬件设施异常'
+                currentWarning: 0,
+                warningTL: null,
+                warning: []
               },
               {
                 title: '软件环境',
                 key: 2,
                 counts: {
-                  normal: '23',
+                  normal: '0',
                   wrong: '0'
                 },
-                warning: null
+                currentWarning: 0,
+                warningTL: null,
+                warning: []
               },
               {
                 title: '系统组件',
                 key: 3,
                 counts: {
-                  normal: '34',
-                  wrong: '5'
+                  normal: '0',
+                  wrong: '0'
                 },
-                warning: '系统组件异常'
+                currentWarning: 0,
+                warningTL: null,
+                warning: []
               },
             ],
             // 巡检的标题
@@ -1903,16 +1770,13 @@
             // 三个切换表格对应数据 注意数值一定要保证为Number类型且在0-100之间(尽量保持1位小数)
             // 硬件
             hardwareDatas: [],
+            hardwareHealthThreshold: 75,
+            // 软件状态池
+            softwareStatus: [],
+            // 软件服务resource_type枚举映射
+            softwareTypeEnums: [],
             // 软件
-            softwareDatas: [
-              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
-              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
-              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
-              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
-              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
-              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
-              { service: '服务', ip: 'https://192.168.10.247:3013', use: '用途', status: '正常' },
-            ],
+            softwareDatas: [],
             // 系统
             systemDatas: [
               { name: '数据库监控', description: '这里是组件描述内容,展示组件描述真实内容', status: '正常' },
@@ -1926,13 +1790,7 @@
             // 右侧接口表格数据
             apiDatas: [],
             // 故障告警列表
-            faults: [
-              { content: 'MySQL服务器  数据库服务器性能异常' },
-              { content: 'MySQL服务器  数据库服务器性能异常' },
-              { content: 'MySQL服务器  数据库服务器性能异常' },
-              { content: 'MySQL服务器  数据库服务器性能异常' },
-              { content: 'MySQL服务器  数据库服务器性能异常' },
-            ], 
+            faults: [], 
             // 选择的隔离域
             selectTask: null,
             // todo 任务面板数据
@@ -2454,6 +2312,17 @@
           $app = this;
           // 初始时设置当前视图为初始视图
           this.currentView = this.viewNow;
+          // 右侧的系统表格数据
+          // axios({
+          //   method: "get",
+          //   url: "https://rxnet.z.uat.4.cn:9379/3/KEYS/*",
+          //   timeout: 300000,
+          // })
+          //   .then(res => {
+          //     console.log('组件列表')
+          //     console.log(res)
+          //   })
+        
         },
         mounted() {
           this.init();
@@ -2568,23 +2437,9 @@
             // this.isEarthMap = !this.isEarthMap;
             // gsap.fromTo('.position-center-top-bottom', { opacity: 0 }, { opacity: 1, duration: 0.8});
 
-            // 地球下钻
-            // this.animateDownInEarthMap();
-
           },  
           ttt(){
-            // 地球上窜
-            // this.animateUpToEarth()
-            // 驱动小球恢复旋转
-            // this.animateBallsRotate();system-table-container
-            let dom = '.system-table-container'
-            this.$nextTick(() => {
-              let numContainer = document.querySelector(dom);
-              let numContents = Array.from(numContainer.querySelectorAll('.table-col-child'));
-              numContents.forEach((num) => {
-                gsap.to(num, { width: `${num.dataset.width}%`, duration: 1.8, ease: 'power4.inOut' });
-              });
-            });
+
           },
           render() {
             this.$refs.earth.renderDatas([
@@ -3166,14 +3021,15 @@
           },
           // 尝试驱动地球下方小球椭圆轨迹旋转
           animateBalls(){
+            // 原来是1.5
+            let stepTime = 2.5;
             this.balls.forEach((ball, ballIndex) => {
               ball.tl = gsap.timeline();
               for (let currentIndex = ball.index;currentIndex < 10;currentIndex++){
                 const opacityIndex = currentIndex === 9 ? 0 : currentIndex;
                 ball.tl.to(`.ball${ball.index}`, {
-                  duration: 1.5,
+                  duration: stepTime,
                   ease: 'none',
-                  opacity: $app.ballPoints[opacityIndex].opacity,
                   motionPath: {
                     path: '#ellipsePath',
                     align: '#ellipsePath',
@@ -3186,8 +3042,7 @@
               if (ball.index > 1){
                 for (let restart = 0; restart < (ball.index - 1); restart++) {
                   ball.tl.to(`.ball${ball.index}`, {
-                    opacity: $app.ballPoints[restart].opacity,
-                    duration: 1.5,
+                    duration: stepTime,
                     ease: 'none',
                     motionPath: {
                       path: '#ellipsePath',
@@ -3673,7 +3528,7 @@
             gsap.to('.position-animate-container-back', {
               rotationY: 180,
               duration: 1.5,
-              zIndex: 1,
+              zIndex: 0,
               ease: "power2.inOut"
             })
           },
@@ -3785,10 +3640,16 @@
             this.getTopThree();
             // 获取右侧硬件
             this.getRightHardwareDatas();
+            // 获取右侧软件 - 本地直连
+            this.getRightSoftwareTest();
+            // 获取右侧软件 - 线上部署
+            // this.getRightSoftware();
             // 获取右侧QPS图表数据
             this.getRightQPS();
             // 获取右侧api请求表格数据
             this.getRightApiDatas();
+            // 获取右侧故障告警列表数据
+            this.getRightFaultList();
             // 获取地球右侧数据
             this.getEarthRight();
           },
@@ -3808,6 +3669,8 @@
           },
           // 点击地球的图例 - 控制不同类型的飞线显隐
           clearFlyLine(key, item) {
+            if (this.isEarthMap) return;
+            if (this.currentView && (this.currentView.key === 'task' || this.currentView.key === 'source')) return;
             item.flag = !item.flag;
             if (this.$refs.earth) {
               this.$refs.earth.clearFlyLine(key, item.key, item.flag);
@@ -3843,6 +3706,7 @@
           },
           // 地球上方的控制器暂停 / 恢复地球旋转
           changeRotation() {
+            if (this.isEarthMap) return;
             if (this.positionTop.earthRotation) {
               this.positionTop.earthRotation = false;
               this.$refs.earth.stopRotation();
@@ -3853,6 +3717,7 @@
           },
           // 恢复初始地球视角
           resetCamera() {
+            if (this.isEarthMap) return;
             this.$refs.earth.resetCamera();
           },
           // 切换模式
@@ -3869,6 +3734,8 @@
             }
           },
           changeLineMode() {
+            if (this.isEarthMap) return;
+            if (this.currentView && (this.currentView.key === 'task' || this.currentView.key === 'source')) return;
             if (this.positionTop.isDashed) {
               this.changeFlyLineSolid();
               this.positionTop.isDashed = false;
@@ -3906,6 +3773,8 @@
           },
           // 关闭 / 开启起终点的光柱及波纹
           closeMarkupPoint() {
+            if (this.isEarthMap) return;
+            if (this.currentView && (this.currentView.key === 'task' || this.currentView.key === 'source')) return;
             this.positionTop.showMarkupPoint = !this.positionTop.showMarkupPoint;
             let markupGroup = this.$refs.earth.earth.earthGroup.children.find((item) => {
               return item.userData['isMarkupPoint'];
@@ -3918,6 +3787,8 @@
           },
           // 改变飞线段的大小
           changeFlyLineSize() {
+            if (this.isEarthMap) return;
+            if (this.currentView && (this.currentView.key === 'task' || this.currentView.key === 'source')) return;
             if (this.positionTop.flyLineSize == 1) {
               this.positionTop.flyLineSize = 2;
             } else if (this.positionTop.flyLineSize == 2) {
@@ -3959,7 +3830,6 @@
                     let mapDatas = $app.currentBall ? $app.currentBall.mapDatas : $app.viewSource.mapDatas;
                     $app.$refs.earth.outRenderSourcePoint(mapDatas);
                     $app.currentBall && $app.$refs.earth.outRenderSourceLabel(mapDatas);
-                    // $app.$refs.earth.outRenderSourceLabel(mapDatas);
                   }
                   $app.viewChanging = false;
                 }})
@@ -4034,6 +3904,8 @@
           },
           // 任务视图点击选择对应的隔离域事件
           changeTask(taskItem){
+            if (this.isEarthMap) return;
+            console.log('看一下是否触发了任务隔离域的选择事件')
             if (this.selectTask.igroup_id && this.selectTask.igroup_id === taskItem.igroup_id) {
               this.animateFlyToPoint(taskItem.position);
               return;
@@ -4655,9 +4527,17 @@
                     let findType = resourceTypeBottom.find(resourceType => resourceType.value === item.resource_type);
                     resourceObj.type = findType ? findType.type : 'nm';
                     //  <= splitNum  |  > splitNum <= splitNum * 2 | > splitNum * 3
-                    if (item.count <= splitNum) {
+                    // if (item.count <= splitNum) {
+                    //   resourceObj.rank = 'small';
+                    // } else if (item.count > splitNum && item.count <= (splitNum * 2)) {
+                    //   resourceObj.rank = 'middle';
+                    // } else {
+                    //   resourceObj.rank = 'large';
+                    // }
+                    // 另一种等级分类 <= 10 || >10 <=100 || > 100
+                    if (item.count <= 10) {
                       resourceObj.rank = 'small';
-                    } else if (item.count > splitNum && item.count <= (splitNum * 2)) {
+                    } else if (item.count >10 && item.count <= 100) {
                       resourceObj.rank = 'middle';
                     } else {
                       resourceObj.rank = 'large';
@@ -4840,21 +4720,194 @@
             $api.situation.getRightHardwareDatas({}, function(res){
               if (res.code === 200 && Array.isArray(res.data) && res.data > 0){
                 let datas = res.data;
+                let hardwareSystem = $app.systems.find(systemItem => systemItem.key === 1);
                 $app.hardwareDatas = datas.map(item => {
                   let data = Object.assign({}, item);
                   data.load = `${data.load.toFixed(2)}`;
                   let percageKeys = ['health','cpu_usage', 'memory_usage', 'disk_usage'];
                   percageKeys.forEach(key => {
+                    if (key === 'health' && data[key] >= $app.hardwareHealthThreshold){
+                      hardwareSystem.counts.normal = (+hardwareSystem.counts.normal + 1) + '';
+                    } else if (key === 'health' && data[key] < $app.hardwareHealthThreshold) {
+                      hardwareSystem.counts.wrong = (+hardwareSystem.counts.wrong + 1) + '';
+                      hardwareSystem.warning.push(data.ip);
+                    }
                     if (typeof data[key] === 'number' && data[key] >= 0 && data[key] <= 100){
                       data[key] = +(data[key].toFixed(1));
+                    } else {
+                      data[key] = 0;
                     }
                   });
                   return data;
                 });
+                if (hardwareSystem.warning.length > 0) {
+                  hardwareSystem.warningTL && hardwareSystem.warningTL.clear();
+                  hardwareSystem.warningTL = gsap.timeline();
+                  hardwareSystem.warningTL.to(hardwareSystem, {
+                    currentWarning: hardwareSystem.warning.length - 1,
+                    snap: { currentWarning: 1 },
+                    duration: 3 * hardwareSystem.warning.length,
+                  });
+                  hardwareSystem.warningTL.repeat(-1)
+                }
               }
             }, function(err){
               console.log(err)
             });
+          },
+          // 获取右侧服务表格的状态池数据
+          getRightSoftwareStatus(){
+            return new Promise((resolve, reject) => {
+              $api.situation.getRightSoftwareStatus({}, function(res){
+                if (res.code === 200 && Array.isArray(res.data) && res.data.length > 0){
+                  $app.softwareStatus = res.data.reduce((statusPools, item) => {
+                    if (Array.isArray(item.mesh_group_coords) && item.mesh_group_coords.length > 0) {
+                      item.mesh_group_coords.forEach(it => {
+                        if (it.host_id && typeof it.max_severity === 'number') {
+                          statusPools.push(it);
+                        }
+                      });
+                    }
+                    return statusPools;
+                  }, []);
+                }
+                resolve();
+              }, function (err){
+                console.log('获取右侧服务表格的状态池失败')
+                console.log(err);
+                resolve();
+              })
+            });
+          },
+          // 获取右侧服务表格的resource_type枚举映射数据
+          getRightSoftwareTypeEnums(){
+            return new Promise((resolve, reject) => {
+              $api.situation.getRightSoftwareTypeEnums({}, function (res){
+                if (res.code === 200 && res.data?.resource_type?.list){
+                  $app.softwareTypeEnums = res.data.resource_type.list;
+                }
+                resolve();
+              }, function(err){
+                console.log('获取右侧服务表格的类型枚举失败')
+                console.log(err);
+                resolve();
+              });
+            });
+          },
+          // 获取右侧软件表格状态池数据
+          getRightSoftware(){
+            Promise.allSettled([this.getRightSoftwareStatus(), this.getRightSoftwareTypeEnums()])
+              .then(() => {
+                $api.situation.getRightSoftwareDatas({ params: { page: 1, page_size: 100} }, function (res){
+                  if (res.code === 200 && res.data && Array.isArray(res.data.items) && res.data.items.length > 0){
+                    let softwareSystem = $app.systems.find(systemItem => systemItem.key === 2);
+                    $app.softwareDatas = res.data.data.items.map(item => {
+                      let result = {};
+                      result.ip = item.ip ? `${item.ip}${item.port ? `:${item.port}` : ''}` : '--';
+                      result.name = item.name;
+                      let typeMap = $app.softwareTypeEnums.find(enumItem => enumItem.value === item.resource_type);
+                      result.type = typeMap ? typeMap.label : item.resource_type;
+                      let itemStatus = $app.softwareStatus.find(statusItem => statusItem.host_id === item.host_id);
+                      result.status = itemStatus && typeof itemStatus.max_severity === 'number' ? itemStatus.max_severity : 0;
+                      if (result.status === 0) {
+                        softwareSystem.counts.normal = (+softwareSystem.counts.normal + 1) + '';
+                      } else {
+                        softwareSystem.counts.wrong = (+softwareSystem.counts.wrong + 1) + '';
+                        softwareSystem.warning.push(result.name);
+                      }
+                      return result;
+                    });
+                    if (softwareSystem.warning.length > 0) {
+                      softwareSystem.warningTL && softwareSystem.warningTL.clear();
+                      softwareSystem.warningTL = gsap.timeline();
+                      softwareSystem.warningTL.to(softwareSystem, {
+                        currentWarning: softwareSystem.warning.length - 1,
+                        snap: { currentWarning: 1 },
+                        duration: 3 * softwareSystem.warning.length,
+                      });
+                      softwareSystem.warningTL.repeat(-1)
+                    }
+                  }
+                }, function (err){
+                  console.log('获取右侧软件表格数据失败')
+                  console.log(err)
+                });
+              })
+          },
+          // 直连sit环境本地开发版
+          async getRightSoftwareTest(){
+            try {
+              let res = await axios({ method: 'get', url: 'https://web-proxy.z.sit.4.cn/oc/api/v1/resource-nodes/enums', timeout: 300000 });
+              $app.softwareTypeEnums = res.data && res.data.code === 200 && res.data?.data?.resource_type?.list ? res.data.data.resource_type.list : [];
+            } catch (err){
+              console.log(err)
+            }
+            console.log('获取的枚举映射')
+            console.log($app.softwareTypeEnums);
+            try {
+              let res = await axios({ method: 'get', url: 'https://web-proxy.z.sit.4.cn/oc/api/v1/resource-topo/topology/mesh', timeout: 300000 });
+              if (res.data && res.data.code === 200 && Array.isArray(res.data.data) && res.data.data.length > 0){
+                $app.softwareStatus = res.data.data.reduce((statusPools, item) => {
+                  if (Array.isArray(item.mesh_group_coords) && item.mesh_group_coords.length > 0) {
+                    item.mesh_group_coords.forEach(it => {
+                      if (it.host_id && typeof it.max_severity === 'number') {
+                        statusPools.push(it);
+                      }
+                    });
+                  }
+                  return statusPools;
+                }, []);
+                console.log('服务状态池');
+                console.log($app.softwareStatus)
+              }
+            } catch (err){
+              console.log(err);
+            }
+            axios({
+              method: "get",
+              url: "https://web-proxy.z.sit.4.cn/oc/api/v1/resource-nodes/",
+              params: {
+                page: 1,
+                page_size: 100
+              },
+              timeout: 300000,
+            })
+              .then(res => {
+                console.log('软件表格数据')
+                console.log(res)
+                if (res.data && res.data.code === 200 && res.data.data && Array.isArray(res.data.data.items) && res.data.data.items.length > 0) {
+                  let softwareSystem = $app.systems.find(systemItem => systemItem.key === 2);
+                  $app.softwareDatas = res.data.data.items.map(item => {
+                    let result = {};
+                    result.ip = item.ip ? `${item.ip}${item.port ? `:${item.port}` : ''}` : '--';
+                    result.name = item.name;
+                    let typeMap = $app.softwareTypeEnums.find(enumItem => enumItem.value === item.resource_type);
+                    result.type = typeMap ? typeMap.label : item.resource_type;
+                    let itemStatus = $app.softwareStatus.find(statusItem => statusItem.host_id === item.host_id);
+                    result.status = itemStatus && typeof itemStatus.max_severity === 'number' ? itemStatus.max_severity : 0;
+                    if (result.status === 0){
+                      softwareSystem.counts.normal = (+softwareSystem.counts.normal + 1) + '';
+                    } else {
+                      softwareSystem.counts.wrong = (+softwareSystem.counts.wrong + 1) + '';
+                      softwareSystem.warning.push(result.name);
+                    }
+                    return result;
+                  });
+                  if (softwareSystem.warning.length > 0){
+                    softwareSystem.warningTL && softwareSystem.warningTL.clear();
+                    softwareSystem.warningTL = gsap.timeline();
+                    softwareSystem.warningTL.to(softwareSystem, {
+                      currentWarning: softwareSystem.warning.length - 1,
+                      snap: { currentWarning: 1 },
+                      duration: 3 * softwareSystem.warning.length,
+                    });
+                    softwareSystem.warningTL.repeat(-1)
+                  }
+                }
+              })
+              .catch(err => {
+                console.log(err)
+              })
           },
           // 获取右侧QPS图表数据
           getRightQPS(){
@@ -4889,6 +4942,19 @@
             }, function (err){
               console.log(err)
             })
+          },
+          // 获取右侧故障告警列表数据
+          getRightFaultList(){
+            $api.situation.getRightFaultList({ "order": "desc", "order_by": "update_time", "page": 1, "page_size": 100, "history": true, "start_time": null, "end_time": null, "rule_name": null, "event": [], "status": null, "severity": [], "igroup_id": [4, 0] }, function(res){
+              console.log('故障告警列表')
+              console.log(res)
+              if (res.code === 200 && res.data && Array.isArray(res.data.alerts) && res.data.alerts.length > 0){
+                $app.faults = res.data.alerts;
+              }
+            }, function(err){
+              console.log('获取故障告警列表错误')
+              console.log(err)
+            });
           },
           // earthleftdata
           // 获取地球左侧资源分布数据 - 饼图和折线图
