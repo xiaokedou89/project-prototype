@@ -20,8 +20,8 @@ gl_FragColor = vec4(base_color.rgb + bloom_color.rgb, max(base_color.a, lum));
 }`;
 
 // 预加载中性灰度纹理，避免颜色混合污染
-const staticTexture = new THREE.TextureLoader().load('./assets/earth/china_hc.png');
-const pointTexture = new THREE.TextureLoader().load('./assets/earth/point.png');
+const staticTexture = new THREE.TextureLoader().load('../assets/earth/china_hc.png');
+const pointTexture = new THREE.TextureLoader().load('../assets/earth/point.png');
 // ============> 所有的utils工具函数
 // 创建标签的配置项
 function createLabel(){
@@ -62,7 +62,10 @@ function createDefaultOptions(){
       disableZoom: false, // 是否禁用鼠标缩放控制
       autoScaleFactor: 1, // 自动缩放的额外系数（1 = 原始大小）
       scale: 100, // 地图整体缩放比例
-      depth: 35, // 区域拉伸高度（ExtrudeGeometry 的挤出深度）
+      // 区域拉伸高度（ExtrudeGeometry 的挤出深度）
+      // todo 优化
+      // depth: 35, 
+      depth: 15, 
     },
     // ========== 自动旋转配置 ==========
     autoRotate: {
@@ -130,7 +133,9 @@ function createDefaultOptions(){
     },
     // ========== 区域表面纹理配置 ==========
     texture: {
-      show: true, // 是否启用纹理贴图
+      // 是否启用纹理贴图
+      // todo 优化
+      show: true, 
       autoRepeat: false, // 是否自动计算纹理重复（false 时使用手动 repeat 值）
       repeat: { x: 0.0927, y: 0.124 }, // 纹理 UV 重复次数
       offset: { x: 0.5918, y: 0.324 }, // 纹理 UV 偏移量
@@ -141,7 +146,10 @@ function createDefaultOptions(){
     mapName: "china", // 地图名称标识
     // ========== Bloom 辉光后处理配置 ==========
     glow: {
-      show: true, // 是否启用 Bloom 效果
+      // 是否启用 Bloom 效果
+      // todo 优化 禁用辉光
+      // show: true, 
+      show: false,
       threshold: 0, // 发光阈值（亮度低于此值的不会发光）
       strength: 1, // 发光强度
       radius: 0, // 发光扩散半径
@@ -182,12 +190,9 @@ function createDefaultOptions(){
           },
         },
       },
-      // topColor: "rgba(42, 233, 255, 0.95)", // 区域顶面颜色（ExtrudeGeometry 上表面）
-      // sideColor: "rgba(59, 132, 255, 0.92)", // 区域侧面颜色（挤出侧面）
-      // uColor: "rgba(19, 48, 128, 1)", // Shader 扫光动画的 U 通道颜色
-      topColor: 'rgba(13, 255, 255, 0.95)',
-      sideColor: "rgba(255, 255, 255, 0.92)", // 区域侧面颜色（挤出侧面）
-      uColor: "rgba(13, 255, 255, 1)", // Shader 扫光动画的 U 通道颜色
+      topColor: "rgba(42, 233, 255, 0.95)", // 区域顶面颜色（ExtrudeGeometry 上表面）
+      sideColor: "rgba(59, 132, 255, 0.92)", // 区域侧面颜色（挤出侧面）
+      uColor: "rgba(19, 48, 128, 1)", // Shader 扫光动画的 U 通道颜色
     },
     // ========== 鼠标悬停高亮配置 ==========
     emphasis: {
@@ -206,12 +211,10 @@ function createDefaultOptions(){
     },
     // ========== 边界线样式配置 ==========
     lineStyle: {
-      // color: "#78CFFF", // 区域内部边界线颜色（如省内市界）
-      color: '#0dffff'
+      color: "#78CFFF", // 区域内部边界线颜色（如省内市界）
     },
     outLineStyle: {
-      // color: "rgba(83, 198, 230, 1)", // 区域外部轮廓线颜色（如省界）
-      color: '#0dffff'
+      color: "rgba(83, 198, 230, 1)", // 区域外部轮廓线颜色（如省界）
     },
     // ========== 区域标签配置 ==========
     label: {
@@ -262,8 +265,8 @@ function labelStringToFunction(template, data) {
 function register(code){
   code = code.toString();
 
-  const fullPath = `./assets/geoJSON/${code}.json`;
-  const boundPath = `./assets/geoJSON/${code}_bound.json`;
+  const fullPath = `../assets/geoJSON/${code}.json`;
+  const boundPath = `../assets/geoJSON/${code}_bound.json`;
   return Promise.all([boundPath,fullPath].map(path => {
     return new Promise((resolve, reject) => {
       fetch(path)
@@ -625,7 +628,15 @@ function drawGlow(options){
   const renderPass = new THREE.RenderPass(scene, camera);
 
   // 创建 Bloom 通道
-  const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(renderer.domElement.offsetWidth, renderer.domElement.offsetHeight), 1, 1, 0.1);
+  // const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(renderer.domElement.offsetWidth, renderer.domElement.offsetHeight), 1, 1, 0.1);
+
+  const bloomPass = new THREE.UnrealBloomPass();
+  // 修改分辨率，降低计算量
+  bloomPass.renderToScreen = false;
+  // 原代码可能是 new THREE.Vector2(width, height)，改为
+  bloomPass.resolutionX = window.innerWidth / 4; // 1/4 分辨率
+  bloomPass.resolutionY = window.innerHeight / 4;
+  console.log('修改辉光')
   bloomPass.threshold = glow.threshold; // 亮度阈值
   bloomPass.strength = glow.strength; // 发光强度
   bloomPass.radius = glow.radius; // 扩散半径
@@ -812,8 +823,6 @@ function createMesh({ curvePoints, speed, color, size, len }){
 }
 // 绘制飞线
 function drawFlight(options, config){
-  // console.log('看一下传入绘制飞线时的options数据')
-  // console.log(options)
   const projection = this.projection;
   const modelScale = this.scale; // 地图缩放比例
   const data = options.data || [];
@@ -1043,11 +1052,19 @@ function drawDistrict(data, options, features, config){
         const lineGeometry = new THREE.BufferGeometry().setFromPoints(points);
         // ExtrudeGeometry 拉伸设置：深度 + 斜角参数
         const extrudeSettings= {
-          depth: depth / 2, // 拉伸深度（为 depth 的一半，后续缩放 2x）
-          bevelEnabled: true, // 启用斜角
-          bevelSegments: 10, // 斜角分段数，增加圆滑度
+          // 拉伸深度（为 depth 的一半，后续缩放 2x）
+          depth: depth / 2, 
+          // 启用斜角
+          bevelEnabled: true, 
+          // 斜角分段数，增加圆滑度
+          // bevelSegments: 10, 
+          // todo 优化：大幅减少顶点数
+          bevelSegments: 2, 
           bevelThickness: 0.1, // 斜角厚度
+          // todo 优化：添加bevelSize 限制细分步数step
+          steps: 1 
         };
+        console.log('减少了顶点数1')
         // 决定顶面颜色：用户 data 中的 color > 默认 topColor
         const color = item && item.color ? item.color : topColor;
         const polygonFormat = tinycolor(color);
@@ -1172,29 +1189,53 @@ function drawDistrict(data, options, features, config){
    * @returns Promise<THREE.Group> - 包含所有 ExtrudeGeometry Mesh 的 Group
    */
   let _realShapeTimerId = null;
-  const _realShape = () => {
-    return new Promise((resolve) => {
-      // setTimeout 17ms 约等于 1 帧（60fps），让浏览器先渲染平面版
-      _realShapeTimerId = setTimeout(() => {
-        _realShapeTimerId = null;
-        if (!isClearRef.isClear) {
-          // 调用 drawShapeAssist 批量构建 ExtrudeGeometry
-          const group = drawShapeAssist(shapeData);
-          resolve(group);
-        } else {
-          // 已销毁，返回空 Group
-          resolve(new THREE.Group());
-        }
-      }, 17);
-    });
-  };
+  // const _realShape = () => {
+  //   return new Promise((resolve) => {
+  //     // setTimeout 17ms 约等于 1 帧（60fps），让浏览器先渲染平面版
+  //     _realShapeTimerId = setTimeout(() => {
+  //       _realShapeTimerId = null;
+  //       if (!isClearRef.isClear) {
+  //         // 调用 drawShapeAssist 批量构建 ExtrudeGeometry
+  //         const group = drawShapeAssist(shapeData);
+  //         resolve(group);
+  //       } else {
+  //         // 已销毁，返回空 Group
+  //         resolve(new THREE.Group());
+  //       }
+  //     }, 17);
+  //   });
+  // };
 
-  const _cancelRealShape = () => {
-    if (_realShapeTimerId !== null) {
-      clearTimeout(_realShapeTimerId);
-      _realShapeTimerId = null;
-    }
-  };
+  // const _cancelRealShape = () => {
+  //   if (_realShapeTimerId !== null) {
+  //     clearTimeout(_realShapeTimerId);
+  //     _realShapeTimerId = null;
+  //   }
+  // };
+  // todo 优化 降低延迟创建
+  const _realShape = () => {
+  return new Promise((resolve) => {
+    // 使用 requestIdleCallback 替代 setTimeout
+    const idleCallback = requestIdleCallback(() => {
+      if (!isClearRef.isClear) {
+        const group = drawShapeAssist(shapeData);
+        resolve(group);
+      } else {
+        resolve(new THREE.Group());
+      }
+    }, { timeout: 100 });
+    
+    // 保存以便清理
+    _realShapeTimerId = idleCallback;
+  });
+};
+
+const _cancelRealShape = () => {
+  if (_realShapeTimerId !== null) {
+    cancelIdleCallback(_realShapeTimerId);
+    _realShapeTimerId = null;
+  }
+};
   return { mapUf, meshGroup, advanceMeshGroup, districtData, _realShape, _cancelRealShape, mapTexture };
 }
 
@@ -1577,7 +1618,6 @@ class ThreeMap {
   }
   // 设置地图配置项
   setOption(options, refresh){
-    // console.log('调用map.setOption')
     this.mapKey = uuid();
     this.clearMap();
     this.isClear = false;
@@ -1771,7 +1811,6 @@ const EarthMap = {
     // 添加飞线数据
     addFlightData(data){
       let flightIndex = this.map.seriesGroup.children.findIndex(item => item.name === 'flight');
-      console.log(flightIndex)
       flightIndex > 0 && this.map.seriesGroup.children.splice(flightIndex, 1);
       let flightSeries = this.options.series.find(s => s.type === 'flight');
       if (!flightSeries){
@@ -1781,6 +1820,16 @@ const EarthMap = {
         //   points: 200, // 路径上的粒子总数，越多越平滑但性能开销越大
         //   flightLen: 50, // 飞行流光的长度（粒子数量），决定可见窗口大小
         //   speed: 10, // 飞行速度，每帧移动的索引步长
+        //   flightColor: ["#ffff00", "#FFFFFF"], // 粒子渐变色：[起始颜色, 结束颜色]
+        //   headSize: 1, // 粒子头部放大系数，用于强调飞行方向
+        //   data
+        // });
+        // this.options.series.push({
+        //   type: "flight", // 系列类型标识
+        //   seriesName: "flight", // 系列名称
+        //   points: 100, // 路径上的粒子总数，越多越平滑但性能开销越大
+        //   flightLen: 50, // 飞行流光的长度（粒子数量），决定可见窗口大小
+        //   speed: 5, // 飞行速度，每帧移动的索引步长
         //   flightColor: ["#ffff00", "#FFFFFF"], // 粒子渐变色：[起始颜色, 结束颜色]
         //   headSize: 1, // 粒子头部放大系数，用于强调飞行方向
         //   data
