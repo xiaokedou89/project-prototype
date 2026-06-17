@@ -37,3 +37,7 @@ File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
 File "/data/yx_client/send_client/mysql_fastapi.py", line 10, in <module>
 from sqlalchemy import (create_engine, Column, Integer, String, DateTime, Text, Index, text)
 ModuleNotFoundError: No module named 'sqlalchemy'
+需要切换一下source send_venv/bin/activate
+send_venv
+.venv
+
