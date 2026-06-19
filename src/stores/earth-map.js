@@ -627,6 +627,7 @@ function drawGlow(options){
   // 创建渲染通道
   const renderPass = new THREE.RenderPass(scene, camera);
 
+  // todo 减低辉光通道计算
   // 创建 Bloom 通道
   // const bloomPass = new THREE.UnrealBloomPass(new THREE.Vector2(renderer.domElement.offsetWidth, renderer.domElement.offsetHeight), 1, 1, 0.1);
 
@@ -867,6 +868,66 @@ function drawFlight(options, config){
   });
   group._category = "flight"; // 标记类型
   return group;
+}
+// todo 绘制地标标牌
+function drawMarker(options, config){
+  const projection = this.projection;
+  const seriesName = options.seriesName;
+  const data = options.data || [];
+  const markerGroup = new THREE.Group();
+  /* data里的点位要用这种格式: { name: '', position: []} */
+  data.forEach(it => {
+    let x = 0, y = 0;
+    const point = projection(it.position);
+    x = point[0];
+    y = point[1];
+    // 创建 Marker DOM 元素
+    const marker = document.createElement("div");
+    marker.ondragstart = function () {
+      return false; // 禁止拖拽
+    };
+    const { symbolSize, symbolSizeFormatter, symbol = "default", offset = [0, 0], className, label } = options;
+    let [width, height] = symbolSize;
+    let [offsetX, offsetY] = offset;
+    // todo 这里的路径可能会有问题，需要debuger调试
+    const markerPath = symbol === "default" ? '../assets/earth/arrow.png' : symbol;
+    if (typeof symbolSizeFormatter == "function") {
+      const size = symbolSizeFormatter(data);
+      width = size[0];
+      height = size[1];
+    }
+    const icon = document.createElement("div");
+    function transformPx(val){
+      if (typeof val === "number") return val + "px";
+      if (typeof val === "string" && /^\d+(\.\d+)?$/.test(val)) return val + "px";
+      return val ?? "";
+    }
+    icon.style.width = transformPx(width);
+    icon.style.height = transformPx(height);
+    icon.style.backgroundImage = `url(${markerPath})`;
+    icon.style.backgroundSize = "100% 100%";
+    marker.appendChild(icon);
+    marker.className = `three-point-tag ${className || ""}`;
+    marker.setAttribute("series", `three-point-tag_${seriesName}`);
+    marker.style.userSelect = "none";
+    marker.style.pointerEvents = "auto";
+    marker.style.cursor = "pointer";
+    const markerMesh = new THREE.CSS2DObject(marker);
+     const { depth, scale } = config;
+    const z = (depth + 1) / scale;
+    offsetX = offsetX / scale;
+    offsetY = offsetY / scale;
+    const offsetZ = 12 / scale;
+    markerMesh.position.set(x + offsetX, z + offsetZ, y + offsetY);
+    markerMesh._type = "marker";
+    if (label.show) {
+      const labelDom = drawLabel(label, { ...it, seriesName });
+      marker.appendChild(labelDom);
+    }
+    markerGroup.add(markerMesh);
+  });
+  markerGroup._category = "marker";
+  return markerGroup;
 }
 // 绘制区域名称
 function drawDistrictName(data, options, properties, feature, config){
@@ -1238,7 +1299,126 @@ const _cancelRealShape = () => {
 };
   return { mapUf, meshGroup, advanceMeshGroup, districtData, _realShape, _cancelRealShape, mapTexture };
 }
+// 定义网格类
+class Grid {
+  constructor({ scene, time }, options){
+    // 要看下time
+    this.scene = scene;
+    this.time = time;
+    this.instance = null;
+    let defaultOptions = {
+      position: new THREE.Vector3(0, 0, 0),
+      gridSize: 100,
+      gridDivision: 20,
+      gridColor: 0x28373a,
+      shapeSize: 1,
+      shapeColor: 0x8e9b9e,
+      pointSize: 0.2,
+      pointColor: 0x28373a,
+      pointLayout: {
+        row: 200,
+        col: 200,
+      },
+      pointBlending: THREE.NormalBlending
+    };
+    this.options = Object.assign({}, defaultOptions, options);
+    this.init();
+  }
+  init(){
+    let group = new THREE.Group();
+    group.name = "Grid";
+    let grid = this.createGridHelp();
+    let shapes = this.createShapes();
+    let points = this.createPoint();
+    group.add(grid, shapes, points);
+    group.position.copy(this.options.position);
+    this.instance = group;
+    this.scene.add(group);
+  }
+  createGridHelp() {
+    let { gridSize, gridDivision, gridColor } = this.options;
+    let gridHelp = new THREE.GridHelper(gridSize, gridDivision, gridColor, gridColor);
+    return gridHelp;
+  }
+  createShapes() {
+    let { gridSize, gridDivision, shapeSize, shapeColor } = this.options;
+    let shapeSpace = gridSize / gridDivision;
+    let range = gridSize / 2;
+    let shapeMaterial = new THREE.MeshBasicMaterial({
+      color: shapeColor,
+      side: THREE.DoubleSide,
+    });
+    let shapeGeometrys = [];
+    for (let i = 0; i < gridDivision + 1; i++) {
+      for (let j = 0; j < gridDivision + 1; j++) {
+        let shapeGeometry = this.createPlus(shapeSize);
+        shapeGeometry.translate(
+          -range + i * shapeSpace,
+          -range + j * shapeSpace,
+          0
+        );
+        shapeGeometrys.push(shapeGeometry);
+      }
+    }
+    let geometry = THREE.BufferGeometryUtils.mergeBufferGeometries(shapeGeometrys);
+    let shapeMesh = new THREE.Mesh(geometry, shapeMaterial);
+    shapeMesh.renderOrder = -1;
+    shapeMesh.rotateX(-Math.PI / 2);
+    shapeMesh.position.y += 0.01;
+    return shapeMesh;
+  }
+  createPoint() {
+    let { gridSize, pointSize, pointColor, pointBlending, pointLayout } =
+      this.options;
+    const rows = pointLayout.row;
+    const cols = pointLayout.col;
+    const positions = new Float32Array(rows * cols * 3);
+    for (let i = 0; i < rows; i++) {
+      for (let j = 0; j < cols; j++) {
+        let x = (i / (rows - 1)) * gridSize - gridSize / 2;
+        let y = 0;
+        let z = (j / (cols - 1)) * gridSize - gridSize / 2;
+        let index = (i * cols + j) * 3;
+        positions[index] = x;
+        positions[index + 1] = y;
+        positions[index + 2] = z;
+      }
+    }
+    var geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+    let material = new THREE.PointsMaterial({
+      size: pointSize,
+      sizeAttenuation: true,
+      color: pointColor,
+      blending: pointBlending,
+    });
+    const particles = new THREE.Points(geometry, material);
 
+    return particles;
+  }
+  createPlus(shapeSize = 50) {
+    let w = shapeSize / 6 / 3;
+    let h = shapeSize / 3;
+    let points = [
+      new THREE.Vector2(-h, -w),
+      new THREE.Vector2(-w, -w),
+      new THREE.Vector2(-w, -h),
+      new THREE.Vector2(w, -h),
+      new THREE.Vector2(w, -h),
+      new THREE.Vector2(w, -w),
+      new THREE.Vector2(h, -w),
+      new THREE.Vector2(h, w),
+      new THREE.Vector2(w, w),
+      new THREE.Vector2(w, h),
+      new THREE.Vector2(-w, h),
+      new THREE.Vector2(-w, w),
+      new THREE.Vector2(-h, w),
+    ];
+    let shape = new THREE.Shape(points);
+    let shapeGeometry = new THREE.ShapeGeometry(shape, 24);
+    return shapeGeometry;
+  }
+}
 
 // ============> 定义的地图类
 class ThreeMap {
@@ -1338,6 +1518,10 @@ class ThreeMap {
 
     // 初始化场景
     this.scene = new THREE.Scene();
+    // todo 增加雾化效果和背景色
+    // this.scene.fog = new THREE.Fog(0x102736, 1, 50)
+    this.scene.background = new THREE.Color(0x102736)
+
     this.scene.add(this.seriesGroup);
     this.scene.add(this.environmentGroup);
     this.clock = new THREE.Clock();
@@ -1356,7 +1540,8 @@ class ThreeMap {
     this.addHelper();
     // 设置控制器
     this.setController();
-
+    // todo - 添加网格线
+    this.createGrid();
     this.resizeObserver = new ResizeObserver(() => this.resize());
     this.resizeObserver.observe(this.el);
   }
@@ -1503,6 +1688,20 @@ class ThreeMap {
     // this.controls.maxDistance = 8;
     
   }
+  // todo 添加辅助线平面
+  createGrid(){
+    this.gridInstance = new Grid(this, {
+      // gridSize: 50,
+      gridSize: 30,
+      gridDivision: 20,
+      gridColor: 0x1b4b70,
+      shapeSize: 0.5,
+      shapeColor: 0x2a5f8a,
+      // pointSize: 0.1,
+      pointSize: 0.05,
+      pointColor: 0x154d7d,
+    })
+  }
   // 添加坐标辅助器（默认长度为 0，可按需调试时放大）
   addHelper() {
     const axesHelper = new THREE.AxesHelper(0);
@@ -1589,6 +1788,18 @@ class ThreeMap {
           modelBox.union(itemBox);
         });
         this.cacheModel.modelBox = modelBox;
+        // todo 调整辅助平面的角度
+        const mapCenter = new THREE.Vector3();
+        modelBox.getCenter(mapCenter);
+        if (this.gridInstance && this.gridInstance.instance) {
+          const gridGroup = this.gridInstance.instance;
+
+          // 旋转网格面对齐地图
+          gridGroup.rotation.y = 1.1 * Math.PI;
+
+          // 将网格移动到地图的中心位置
+          gridGroup.position.set(mapCenter.x, mapCenter.y, mapCenter.z);
+        }
       }
       const modelBox = this.cacheModel.modelBox;
       const modelScale = [];
@@ -1615,6 +1826,12 @@ class ThreeMap {
     const group = drawFlight.call(this, options, config);
     group.name = 'flight';
     this.seriesGroup.add(group);
+  }
+  // todo 添加地标名称
+  addMarkerLayer(options){
+    const config = this.options.config;
+    const markerGroup = drawMarker.call(this, options, config);
+    this.seriesGroup.add(markerGroup);
   }
   // 设置地图配置项
   setOption(options, refresh){
@@ -1852,7 +2069,30 @@ const EarthMap = {
         flightSeries.data = data;
         this.map.addLinkLayer(flightSeries);
       }
+      this.addMarkerData()
       // this.setMap();
+    },
+    // todo 添加地点标牌
+    addMarkerData(data){
+      const label = createLabel();
+      label.itemStyle.padding = [2, 5, 2, 5]; // 设置紧凑的内边距
+      label.itemStyle.backgroundColor = "rgba(50,50,50,0.7)"; // 半透明深色背景
+      let markerSeries = {
+        type: "marker", // 系列类型标识
+        seriesName: "marker", // 系列名称
+        symbol: "default", // 标记图标类型，'default' 使用内置 Pin 图标
+        symbolSize: [20, 20], // 标记尺寸 [宽, 高]（像素单位）
+        symbolSizeFormatter: null, // 动态尺寸函数 (value) => [width, height]
+        offset: [0, 0], // 位置偏移 [x, y]（像素单位）
+        className: "", // 自定义 CSS 类名，用于样式覆盖
+        label, // 标签配置，通常显示数据名称或值
+        data: [], // 数据数组，每项需包含 name, code 或坐标信息
+      }
+      markerSeries.data = [{
+        name: '北京',
+        position: [116.4, 39.9]
+      }];
+      this.map.addMarkerLayer(markerSeries);
     }
   }
 }
