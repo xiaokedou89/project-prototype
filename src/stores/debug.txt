@@ -1,43 +1,43 @@
-root@ubuntu:/data/yx_client/send_client# uvicorn mysql_fastapi:app --reload --host 0.0.0.0 --port 19500
-INFO: Will watch for changes in these directories: ['/data/yx_client/send_client']
-INFO: Uvicorn running on http://0.0.0.0:19500 (Press CTRL+C to quit)
-INFO: Started reloader process [3509196] using StatReload
-Process SpawnProcess-1:
-Traceback (most recent call last):
-File "/usr/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
-self.run()
-File "/usr/lib/python3.10/multiprocessing/process.py", line 108, in run
-self._target(*self._args, **self._kwargs)
-File "/usr/local/lib/python3.10/dist-packages/uvicorn/_subprocess.py", line 80, in subprocess_started
-target(sockets=sockets)
-File "/usr/local/lib/python3.10/dist-packages/uvicorn/server.py", line 66, in run
-return asyncio.run(self.serve(sockets=sockets))
-File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
-return loop.run_until_complete(main)
-File "/usr/lib/python3.10/asyncio/base_events.py", line 649, in run_until_complete
-return future.result()
-File "/usr/local/lib/python3.10/dist-packages/uvicorn/server.py", line 70, in serve
-await self._serve(sockets)
-File "/usr/local/lib/python3.10/dist-packages/uvicorn/server.py", line 77, in _serve
-config.load()
-File "/usr/local/lib/python3.10/dist-packages/uvicorn/config.py", line 435, in load
-self.loaded_app = import_from_string(self.app)
-File "/usr/local/lib/python3.10/dist-packages/uvicorn/importer.py", line 22, in import_from_string
-raise exc from None
-File "/usr/local/lib/python3.10/dist-packages/uvicorn/importer.py", line 19, in import_from_string
-module = importlib.import_module(module_str)
-File "/usr/lib/python3.10/importlib/init.py", line 126, in import_module
-return _bootstrap._gcd_import(name[level:], package, level)
-File "<frozen importlib._bootstrap>", line 1050, in _gcd_import
-File "<frozen importlib._bootstrap>", line 1027, in _find_and_load
-File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
-File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
-File "<frozen importlib._bootstrap_external>", line 883, in exec_module
-File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-File "/data/yx_client/send_client/mysql_fastapi.py", line 10, in <module>
-from sqlalchemy import (create_engine, Column, Integer, String, DateTime, Text, Index, text)
-ModuleNotFoundError: No module named 'sqlalchemy'
-需要切换一下source send_venv/bin/activate
-send_venv
-.venv
+要实现暂停时间线后隔几秒再启动，且不受其他异步队列任务影响，你可以利用 GSAP 自带的 `delay` 属性或 `gsap.delayedCall()` 工具方法。这两种方式都基于 GSAP 内部的时间轴机制，能够保证动画的精准同步，完全避免了原生 `setTimeout` 可能因主线程阻塞或任务队列堆积导致的延迟不准问题。
 
+以下是具体的实现方法：
+
+### 方法一：直接在 `play()` 方法中传入延迟时间
+这是最简单直接的方式。GSAP 的 `play()` 方法支持传入一个数值作为延迟参数（单位为秒），它会在 GSAP 的内部时间轴上安排启动任务。
+
+```javascript
+// 暂停时间线
+tl.pause();
+
+// 暂停 2 秒后，自动在 GSAP 内部时间轴上恢复播放
+tl.play(2); 
+```
+
+### 方法二：使用 `gsap.delayedCall()`
+`gsap.delayedCall()` 是 GSAP 提供的专门用于替代 `setTimeout` 的工具方法。它创建的回调函数同样受 GSAP 时间轴管理，不会被其他异步任务干扰。
+
+```javascript
+// 暂停时间线
+tl.pause();
+
+// 2秒后执行回调，在回调中恢复播放
+gsap.delayedCall(2, () => {
+  tl.play();
+});
+```
+
+### 💡 进阶技巧：使用 `timeScale(0)` 替代 `pause()`
+如果你希望时间线在“暂停”期间依然能够响应某些内部逻辑，或者未来需要更平滑地过渡回播放状态，你可以使用 `timeScale(0)` 将时间线的播放速度降为 0（这在视觉上等同于暂停，但动画实例依然处于“活跃”状态），然后再通过 `timeScale(1)` 恢复正常播放：
+
+```javascript
+// 将播放速度降为0，达到暂停效果
+tl.timeScale(0);
+
+// 2秒后恢复正常的播放速度（1倍速）
+gsap.delayedCall(2, () => {
+  tl.timeScale(1);
+});
+```
+
+**总结建议**：
+在日常开发中，推荐优先使用**方法一（`tl.play(2)`）**，它的代码最为简洁且完全符合你的需求。只要确保你的动画是由 GSAP 驱动的，这些基于 GSAP 内部时钟的延迟调用就能保证极高的精准度，不会受到浏览器其他异步任务队列的影响。
